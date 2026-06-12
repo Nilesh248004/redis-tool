@@ -295,3 +295,20 @@ Added CLI support for data verify
 Saved data seed output
 Saved verify output
 ```
+
+---
+
+## Phase 3: Redis Cluster Status Command
+
+In Phase 3, I added a status command to check the current health and details of the Redis Cluster.
+
+The main goal of this phase is to provide one command that shows the complete status of the cluster, including node details, roles, Redis versions, key count, memory usage, and cluster topology.
+
+---
+
+### 1. Created Status Playbook
+
+I created an Ansible playbook named:
+
+```text
+ansible/playbooks/status.yml

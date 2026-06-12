@@ -10,6 +10,7 @@ OUTPUT_DIR="output"
 
 PROVISION_OUTPUT="$OUTPUT_DIR/provision_output.txt"
 DATA_SEED_OUTPUT="$OUTPUT_DIR/data_seed_output.txt"
+STATUS_OUTPUT="$OUTPUT_DIR/status_output.txt"
 VERIFY_OUTPUT="$OUTPUT_DIR/verify_output.txt"
 
 mkdir -p "$OUTPUT_DIR"
@@ -199,6 +200,23 @@ data_command() {
 }
 
 # -----------------------------
+# Phase 3: Status command
+# -----------------------------
+status_command() {
+  echo "Checking Redis Cluster status..."
+
+  {
+    echo "===== Redis Cluster Status Started ====="
+    date
+
+    ansible-playbook -i "$INVENTORY" ansible/playbooks/status.yml
+
+    echo "===== Redis Cluster Status Completed ====="
+    date
+  } | tee "$STATUS_OUTPUT"
+}
+
+# -----------------------------
 # Main command router
 # -----------------------------
 case "$1" in
@@ -214,11 +232,18 @@ case "$1" in
     data_command "$@"
     ;;
 
+  status)
+    shift
+    check_prerequisites
+    status_command "$@"
+    ;;
+
   *)
     echo "Usage:"
     echo "  ./redis-tool provision --version 7.0.15 --masters 3 --replicas-per-master 1"
     echo "  ./redis-tool data seed --keys 1000"
     echo "  ./redis-tool data verify"
+    echo "  ./redis-tool status"
     exit 1
     ;;
 esac

@@ -1,0 +1,60 @@
+---
+- name: Show Redis Cluster status
+  hosts: redis_nodes
+  become: no
+  gather_facts: no
+
+  tasks:
+    - name: Get Redis version
+      command: redis-server --version
+      register: redis_version
+      changed_when: false
+
+    - name: Get Redis role
+      shell: redis-cli -h "{{ internal_ip }}" -p 6379 info replication | grep "^role:"
+      register: redis_role
+      changed_when: false
+
+    - name: Get Redis memory usage
+      shell: redis-cli -h "{{ internal_ip }}" -p 6379 info memory | grep "^used_memory_human:"
+      register: redis_memory
+      changed_when: false
+
+    - name: Get Redis key count
+      shell: redis-cli -h "{{ internal_ip }}" -p 6379 dbsize
+      register: redis_keys
+      changed_when: false
+
+    - name: Show node status
+      debug:
+        msg:
+          - "Node: {{ inventory_hostname }}"
+          - "IP: {{ internal_ip }}"
+          - "{{ redis_version.stdout }}"
+          - "{{ redis_role.stdout }}"
+          - "keys: {{ redis_keys.stdout }}"
+          - "{{ redis_memory.stdout }}"
+
+- name: Show overall Redis Cluster topology
+  hosts: redis-node-1
+  become: no
+  gather_facts: no
+
+  tasks:
+    - name: Get cluster info
+      command: redis-cli -h 10.10.0.11 -p 6379 cluster info
+      register: cluster_info
+      changed_when: false
+
+    - name: Get cluster nodes
+      command: redis-cli -h 10.10.0.11 -p 6379 cluster nodes
+      register: cluster_nodes
+      changed_when: false
+
+    - name: Show cluster info
+      debug:
+        msg: "{{ cluster_info.stdout_lines }}"
+
+    - name: Show cluster nodes
+      debug:
+        msg: "{{ cluster_nodes.stdout_lines }}"
