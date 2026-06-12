@@ -1,0 +1,14 @@
+
+PLAY [Seed deterministic data into Redis Cluster] ******************************
+
+TASK [Seed deterministic key-value pairs] **************************************
+changed: [redis-node-1]
+
+TASK [Show seed summary] *******************************************************
+ok: [redis-node-1] => {
+    "msg": "Successfully seeded 1000 deterministic keys into Redis Cluster"
+}
+
+PLAY RECAP *********************************************************************
+redis-node-1               : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+

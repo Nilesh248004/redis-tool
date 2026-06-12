@@ -1,0 +1,36 @@
+---
+- name: Verify deterministic data in Redis Cluster
+  hosts: redis-node-1
+  become: no
+  gather_facts: no
+
+  vars:
+    key_count: "{{ keys | default(1000) }}"
+
+  tasks:
+    - name: Verify all seeded keys
+      shell: |
+        failed=0
+
+        for i in $(seq 1 {{ key_count }}); do
+          value=$(redis-cli -c -h 10.10.0.11 -p 6379 GET "user:$i")
+
+          if [ "$value" != "value-$i" ]; then
+            echo "FAILED: user:$i expected value-$i but got $value"
+            failed=$((failed + 1))
+          fi
+        done
+
+        if [ "$failed" -eq 0 ]; then
+          echo "Verification successful: all {{ key_count }} keys matched"
+          exit 0
+        else
+          echo "Verification failed: $failed keys mismatched"
+          exit 1
+        fi
+      register: verify_output
+      changed_when: false
+
+    - name: Show verification result
+      debug:
+        msg: "{{ verify_output.stdout_lines }}"

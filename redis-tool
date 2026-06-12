@@ -1,0 +1,181 @@
+#!/bin/bash
+
+set -e
+
+INVENTORY="ansible/inventory/hosts.ini"
+OUTPUT_DIR="output"
+
+PROVISION_OUTPUT="$OUTPUT_DIR/provision_output.txt"
+DATA_SEED_OUTPUT="$OUTPUT_DIR/data_seed_output.txt"
+VERIFY_OUTPUT="$OUTPUT_DIR/verify_output.txt"
+
+mkdir -p "$OUTPUT_DIR"
+
+check_prerequisites() {
+  echo "Checking prerequisites..."
+
+  if command -v podman >/dev/null 2>&1; then
+    echo "Podman found: $(podman --version)"
+    RUNTIME="podman"
+  elif command -v docker >/dev/null 2>&1; then
+    echo "Docker found: $(docker --version)"
+    RUNTIME="docker"
+  else
+    echo "Container runtime not found. Install Docker or Podman."
+    exit 1
+  fi
+
+  if command -v ansible-playbook >/dev/null 2>&1; then
+    echo "Ansible found: $(ansible-playbook --version | head -n 1)"
+  else
+    echo "Ansible not found. Install Ansible first."
+    exit 1
+  fi
+
+  echo "Proceeding..."
+}
+
+provision() {
+  VERSION="7.0.15"
+  MASTERS="3"
+  REPLICAS_PER_MASTER="1"
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --version)
+        VERSION="$2"
+        shift 2
+        ;;
+      --masters)
+        MASTERS="$2"
+        shift 2
+        ;;
+      --replicas-per-master)
+        REPLICAS_PER_MASTER="$2"
+        shift 2
+        ;;
+      *)
+        echo "Unknown option: $1"
+        exit 1
+        ;;
+    esac
+  done
+
+  echo "Provisioning Redis Cluster..."
+  echo "Version: $VERSION"
+  echo "Masters: $MASTERS"
+  echo "Replicas per master: $REPLICAS_PER_MASTER"
+
+  {
+    echo "===== Redis Cluster Provision Started ====="
+    date
+    echo "Redis version: $VERSION"
+    echo "Masters: $MASTERS"
+    echo "Replicas per master: $REPLICAS_PER_MASTER"
+
+    echo ""
+    echo "===== Installing Redis ====="
+    ansible-playbook -i "$INVENTORY" ansible/playbooks/install_redis.yml -e redis_version="$VERSION"
+
+    echo ""
+    echo "===== Configuring Redis Cluster Mode ====="
+    ansible-playbook -i "$INVENTORY" ansible/playbooks/configure_redis.yml
+
+    echo ""
+    echo "===== Creating Redis Cluster ====="
+    ansible-playbook -i "$INVENTORY" ansible/playbooks/create_cluster.yml
+
+    echo ""
+    echo "===== Final Cluster Info ====="
+    ansible -i "$INVENTORY" redis-node-1 -m shell -a "redis-cli -h 10.10.0.11 -p 6379 cluster info"
+
+    echo ""
+    echo "===== Final Cluster Nodes ====="
+    ansible -i "$INVENTORY" redis-node-1 -m shell -a "redis-cli -h 10.10.0.11 -p 6379 cluster nodes"
+
+    echo ""
+    echo "===== Redis Cluster Provision Completed ====="
+    date
+  } | tee "$PROVISION_OUTPUT"
+}
+
+data_command() {
+  ACTION="$1"
+  shift
+
+  KEYS="1000"
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --keys)
+        KEYS="$2"
+        shift 2
+        ;;
+      *)
+        echo "Unknown option: $1"
+        exit 1
+        ;;
+    esac
+  done
+
+  case "$ACTION" in
+    seed)
+      echo "Seeding $KEYS keys into Redis Cluster..."
+
+      {
+        echo "===== Redis Data Seed Started ====="
+        date
+        echo "Keys: $KEYS"
+
+        ansible-playbook -i "$INVENTORY" ansible/playbooks/data_seed.yml -e keys="$KEYS"
+
+        echo "===== Redis Data Seed Completed ====="
+        date
+      } | tee "$DATA_SEED_OUTPUT"
+      ;;
+
+    verify)
+      echo "Verifying Redis Cluster data..."
+
+      {
+        echo "===== Redis Data Verify Started ====="
+        date
+        echo "Keys: $KEYS"
+
+        ansible-playbook -i "$INVENTORY" ansible/playbooks/data_verify.yml -e keys="$KEYS"
+
+        echo "===== Redis Data Verify Completed ====="
+        date
+      } | tee "$VERIFY_OUTPUT"
+      ;;
+
+    *)
+      echo "Usage:"
+      echo "  ./redis-tool data seed --keys 1000"
+      echo "  ./redis-tool data verify"
+      exit 1
+      ;;
+  esac
+}
+
+case "$1" in
+  provision)
+    shift
+    check_prerequisites
+    provision "$@"
+    ;;
+
+  data)
+    shift
+    check_prerequisites
+    data_command "$@"
+    ;;
+
+  *)
+    echo "Usage:"
+    echo "  ./redis-tool provision --version 7.0.15 --masters 3 --replicas-per-master 1"
+    echo "  ./redis-tool data seed --keys 1000"
+    echo "  ./redis-tool data verify"
+    exit 1
+    ;;
+esac

@@ -1,0 +1,137 @@
+---
+- name: Install exact Redis version on all Redis nodes
+  hosts: redis_nodes
+  become: yes
+  gather_facts: yes
+
+  vars:
+    requested_redis_version: "{{ redis_version | default('7.0.15') }}"
+    redis_tarball: "redis-{{ requested_redis_version }}.tar.gz"
+    redis_download_url: "https://download.redis.io/releases/{{ redis_tarball }}"
+    redis_source_dir: "/usr/local/src/redis-{{ requested_redis_version }}"
+
+  tasks:
+    - name: Update apt package index
+      apt:
+        update_cache: yes
+
+    - name: Install build dependencies required for Redis source installation
+      apt:
+        name:
+          - build-essential
+          - gcc
+          - make
+          - tcl
+          - wget
+          - curl
+          - tar
+          - ca-certificates
+        state: present
+
+    - name: Stop existing Redis service if present
+      service:
+        name: redis-server
+        state: stopped
+      ignore_errors: yes
+
+    - name: Remove Ubuntu repository Redis packages if installed
+      apt:
+        name:
+          - redis-server
+          - redis-tools
+        state: absent
+        purge: yes
+      ignore_errors: yes
+
+    - name: Remove old Redis binaries from /usr/bin if present
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /usr/bin/redis-server
+        - /usr/bin/redis-cli
+        - /usr/bin/redis-check-rdb
+        - /usr/bin/redis-check-aof
+        - /usr/bin/redis-benchmark
+
+    - name: Remove old Redis source directory for this version if present
+      file:
+        path: "{{ redis_source_dir }}"
+        state: absent
+
+    - name: Download Redis source tarball
+      get_url:
+        url: "{{ redis_download_url }}"
+        dest: "/tmp/{{ redis_tarball }}"
+        mode: "0644"
+
+    - name: Extract Redis source code
+      unarchive:
+        src: "/tmp/{{ redis_tarball }}"
+        dest: /usr/local/src
+        remote_src: yes
+
+    - name: Build Redis from source
+      command: make -j2
+      args:
+        chdir: "{{ redis_source_dir }}"
+
+    - name: Install Redis binaries into /usr/local/bin
+      command: make install
+      args:
+        chdir: "{{ redis_source_dir }}"
+
+    - name: Link redis-server command to source-installed binary
+      file:
+        src: /usr/local/bin/redis-server
+        dest: /usr/bin/redis-server
+        state: link
+        force: yes
+
+    - name: Link redis-cli command to source-installed binary
+      file:
+        src: /usr/local/bin/redis-cli
+        dest: /usr/bin/redis-cli
+        state: link
+        force: yes
+
+    - name: Link redis-benchmark command to source-installed binary
+      file:
+        src: /usr/local/bin/redis-benchmark
+        dest: /usr/bin/redis-benchmark
+        state: link
+        force: yes
+
+    - name: Create redis system user
+      user:
+        name: redis
+        system: yes
+        shell: /usr/sbin/nologin
+        create_home: no
+
+    - name: Create Redis required directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: redis
+        group: redis
+        mode: "0755"
+      loop:
+        - /etc/redis
+        - /var/lib/redis
+        - /var/log/redis
+        - /var/run/redis
+
+    - name: Verify installed Redis version
+      command: redis-server --version
+      register: redis_version_output
+      changed_when: false
+
+    - name: Fail if installed Redis version does not match requested version
+      fail:
+        msg: "Redis version mismatch. Expected {{ requested_redis_version }}, got: {{ redis_version_output.stdout }}"
+      when: "'v=' + requested_redis_version not in redis_version_output.stdout"
+
+    - name: Show installed Redis version
+      debug:
+        msg: "{{ inventory_hostname }} installed {{ redis_version_output.stdout }}"

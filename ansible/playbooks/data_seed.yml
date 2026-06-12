@@ -1,0 +1,20 @@
+---
+- name: Seed deterministic data into Redis Cluster
+  hosts: redis-node-1
+  become: no
+  gather_facts: no
+
+  vars:
+    key_count: "{{ keys | default(1000) }}"
+
+  tasks:
+    - name: Seed deterministic key-value pairs
+      shell: |
+        for i in $(seq 1 {{ key_count }}); do
+          redis-cli -c -h 10.10.0.11 -p 6379 SET "user:$i" "value-$i" >/dev/null
+        done
+      changed_when: true
+
+    - name: Show seed summary
+      debug:
+        msg: "Successfully seeded {{ key_count }} deterministic keys into Redis Cluster"
