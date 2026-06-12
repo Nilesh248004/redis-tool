@@ -1,60 +1,42 @@
 ---
-- name: Show Redis Cluster status
-  hosts: redis_nodes
-  become: no
-  gather_facts: no
-
-  tasks:
-    - name: Get Redis version
-      command: redis-server --version
-      register: redis_version
-      changed_when: false
-
-    - name: Get Redis role
-      shell: redis-cli -h "{{ internal_ip }}" -p 6379 info replication | grep "^role:"
-      register: redis_role
-      changed_when: false
-
-    - name: Get Redis memory usage
-      shell: redis-cli -h "{{ internal_ip }}" -p 6379 info memory | grep "^used_memory_human:"
-      register: redis_memory
-      changed_when: false
-
-    - name: Get Redis key count
-      shell: redis-cli -h "{{ internal_ip }}" -p 6379 dbsize
-      register: redis_keys
-      changed_when: false
-
-    - name: Show node status
-      debug:
-        msg:
-          - "Node: {{ inventory_hostname }}"
-          - "IP: {{ internal_ip }}"
-          - "{{ redis_version.stdout }}"
-          - "{{ redis_role.stdout }}"
-          - "keys: {{ redis_keys.stdout }}"
-          - "{{ redis_memory.stdout }}"
-
-- name: Show overall Redis Cluster topology
+- name: Show clean Redis Cluster status
   hosts: redis-node-1
   become: no
   gather_facts: no
 
   tasks:
-    - name: Get cluster info
-      command: redis-cli -h 10.10.0.11 -p 6379 cluster info
-      register: cluster_info
+    - name: Generate clean Redis Cluster status output
+      shell: |
+        echo "Cluster State: $(redis-cli -h 10.10.0.11 -p 6379 cluster info | grep cluster_state | cut -d: -f2 | tr -d '\r')"
+        echo ""
+
+        echo "MASTERS"
+        for ip in 10.10.0.11 10.10.0.12 10.10.0.13; do
+          version=$(redis-cli -h $ip -p 6379 info server | grep redis_version | cut -d: -f2 | tr -d '\r')
+          keys=$(redis-cli -h $ip -p 6379 dbsize)
+          mem=$(redis-cli -h $ip -p 6379 info memory | grep used_memory_human | cut -d: -f2 | tr -d '\r')
+
+          slots=$(redis-cli -h 10.10.0.11 -p 6379 cluster nodes | grep "$ip:6379" | grep master | awk '{print $9}')
+
+          echo "$ip:6379 [master] v$version slots: $slots keys: $keys mem: $mem"
+        done
+
+        echo ""
+        echo "REPLICAS"
+        for ip in 10.10.0.14 10.10.0.15 10.10.0.16; do
+          version=$(redis-cli -h $ip -p 6379 info server | grep redis_version | cut -d: -f2 | tr -d '\r')
+          keys=$(redis-cli -h $ip -p 6379 dbsize)
+          mem=$(redis-cli -h $ip -p 6379 info memory | grep used_memory_human | cut -d: -f2 | tr -d '\r')
+
+          master_id=$(redis-cli -h $ip -p 6379 info replication | grep master_replid | cut -d: -f2 | tr -d '\r')
+          master_host=$(redis-cli -h $ip -p 6379 info replication | grep master_host | cut -d: -f2 | tr -d '\r')
+          master_port=$(redis-cli -h $ip -p 6379 info replication | grep master_port | cut -d: -f2 | tr -d '\r')
+
+          echo "$ip:6379 [replica] v$version replicating: $master_host:$master_port keys: $keys mem: $mem"
+        done
+      register: clean_status
       changed_when: false
 
-    - name: Get cluster nodes
-      command: redis-cli -h 10.10.0.11 -p 6379 cluster nodes
-      register: cluster_nodes
-      changed_when: false
-
-    - name: Show cluster info
+    - name: Print clean Redis Cluster status
       debug:
-        msg: "{{ cluster_info.stdout_lines }}"
-
-    - name: Show cluster nodes
-      debug:
-        msg: "{{ cluster_nodes.stdout_lines }}"
+        msg: "{{ clean_status.stdout_lines }}"

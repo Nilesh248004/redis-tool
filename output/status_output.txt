@@ -1,151 +1,30 @@
 ===== Redis Cluster Status Started =====
-Fri Jun 12 23:11:55 IST 2026
+Fri Jun 12 23:19:33 IST 2026
 
-PLAY [Show Redis Cluster status] ***********************************************
+PLAY [Show clean Redis Cluster status] *****************************************
 
-TASK [Get Redis version] *******************************************************
-ok: [redis-node-4]
+TASK [Generate clean Redis Cluster status output] ******************************
 ok: [redis-node-1]
-ok: [redis-node-2]
-ok: [redis-node-3]
-ok: [redis-node-5]
-ok: [redis-node-6]
 
-TASK [Get Redis role] **********************************************************
-ok: [redis-node-2]
-ok: [redis-node-1]
-ok: [redis-node-4]
-ok: [redis-node-3]
-ok: [redis-node-5]
-ok: [redis-node-6]
-
-TASK [Get Redis memory usage] **************************************************
-ok: [redis-node-2]
-ok: [redis-node-3]
-ok: [redis-node-1]
-ok: [redis-node-4]
-ok: [redis-node-5]
-ok: [redis-node-6]
-
-TASK [Get Redis key count] *****************************************************
-ok: [redis-node-2]
-ok: [redis-node-4]
-ok: [redis-node-1]
-ok: [redis-node-3]
-ok: [redis-node-5]
-ok: [redis-node-6]
-
-TASK [Show node status] ********************************************************
+TASK [Print clean Redis Cluster status] ****************************************
 ok: [redis-node-1] => {
     "msg": [
-        "Node: redis-node-1",
-        "IP: 10.10.0.11",
-        "Redis server v=7.0.15 sha=00000000:0 malloc=jemalloc-5.2.1 bits=64 build=e8725881a85dd5bf",
-        "role:master",
-        "keys: 332",
-        "used_memory_human:1.89M"
-    ]
-}
-ok: [redis-node-2] => {
-    "msg": [
-        "Node: redis-node-2",
-        "IP: 10.10.0.12",
-        "Redis server v=7.0.15 sha=00000000:0 malloc=jemalloc-5.2.1 bits=64 build=9321efb829798e58",
-        "role:master",
-        "keys: 337",
-        "used_memory_human:1.84M"
-    ]
-}
-ok: [redis-node-3] => {
-    "msg": [
-        "Node: redis-node-3",
-        "IP: 10.10.0.13",
-        "Redis server v=7.0.15 sha=00000000:0 malloc=jemalloc-5.2.1 bits=64 build=5cd8609e61e8c9dc",
-        "role:master",
-        "keys: 331",
-        "used_memory_human:1.84M"
-    ]
-}
-ok: [redis-node-4] => {
-    "msg": [
-        "Node: redis-node-4",
-        "IP: 10.10.0.14",
-        "Redis server v=7.0.15 sha=00000000:0 malloc=jemalloc-5.2.1 bits=64 build=658681cb2b313996",
-        "role:slave",
-        "keys: 331",
-        "used_memory_human:1.77M"
-    ]
-}
-ok: [redis-node-5] => {
-    "msg": [
-        "Node: redis-node-5",
-        "IP: 10.10.0.15",
-        "Redis server v=7.0.15 sha=00000000:0 malloc=jemalloc-5.2.1 bits=64 build=aa7f0eed63a07e12",
-        "role:slave",
-        "keys: 332",
-        "used_memory_human:1.77M"
-    ]
-}
-ok: [redis-node-6] => {
-    "msg": [
-        "Node: redis-node-6",
-        "IP: 10.10.0.16",
-        "Redis server v=7.0.15 sha=00000000:0 malloc=jemalloc-5.2.1 bits=64 build=c940bc7ee9826645",
-        "role:slave",
-        "keys: 337",
-        "used_memory_human:1.77M"
-    ]
-}
-
-PLAY [Show overall Redis Cluster topology] *************************************
-
-TASK [Get cluster info] ********************************************************
-ok: [redis-node-1]
-
-TASK [Get cluster nodes] *******************************************************
-ok: [redis-node-1]
-
-TASK [Show cluster info] *******************************************************
-ok: [redis-node-1] => {
-    "msg": [
-        "cluster_state:ok",
-        "cluster_slots_assigned:16384",
-        "cluster_slots_ok:16384",
-        "cluster_slots_pfail:0",
-        "cluster_slots_fail:0",
-        "cluster_known_nodes:6",
-        "cluster_size:3",
-        "cluster_current_epoch:6",
-        "cluster_my_epoch:1",
-        "cluster_stats_messages_ping_sent:5234",
-        "cluster_stats_messages_pong_sent:5123",
-        "cluster_stats_messages_sent:10357",
-        "cluster_stats_messages_ping_received:5123",
-        "cluster_stats_messages_pong_received:5234",
-        "cluster_stats_messages_received:10357",
-        "total_cluster_links_buffer_limit_exceeded:0"
-    ]
-}
-
-TASK [Show cluster nodes] ******************************************************
-ok: [redis-node-1] => {
-    "msg": [
-        "4067acdf42a4e219671021b725661fac8c5e203e 10.10.0.14:6379@16379 slave aaf944a6dad7d098e738d336529e4686c164645b 0 1781286116594 3 connected",
-        "aaf944a6dad7d098e738d336529e4686c164645b 10.10.0.13:6379@16379 master - 0 1781286116000 3 connected 10923-16383",
-        "33fb0329e8890cb8743b6bde0b83d6fdfabc020f 10.10.0.16:6379@16379 slave 2a8361ab4c8406edb233c0578949dedaec57a10f 0 1781286117101 2 connected",
-        "c8c02446718bae85d34720024460895f8e5d9e35 10.10.0.15:6379@16379 slave f0840ca535b2b878a5a4337c1e722cace56122a3 0 1781286116000 1 connected",
-        "2a8361ab4c8406edb233c0578949dedaec57a10f 10.10.0.12:6379@16379 master - 0 1781286116695 2 connected 5461-10922",
-        "f0840ca535b2b878a5a4337c1e722cace56122a3 10.10.0.11:6379@16379 myself,master - 0 1781286116000 1 connected 0-5460"
+        "Cluster State: ok",
+        "",
+        "MASTERS",
+        "10.10.0.11:6379 [master] v7.0.15 slots: 0-5460 keys: 332 mem: 1.89M",
+        "10.10.0.12:6379 [master] v7.0.15 slots: 5461-10922 keys: 337 mem: 1.84M",
+        "10.10.0.13:6379 [master] v7.0.15 slots: 10923-16383 keys: 331 mem: 1.84M",
+        "",
+        "REPLICAS",
+        "10.10.0.14:6379 [replica] v7.0.15 replicating: 10.10.0.13:6379 keys: 331 mem: 1.77M",
+        "10.10.0.15:6379 [replica] v7.0.15 replicating: 10.10.0.11:6379 keys: 332 mem: 1.77M",
+        "10.10.0.16:6379 [replica] v7.0.15 replicating: 10.10.0.12:6379 keys: 337 mem: 1.77M"
     ]
 }
 
 PLAY RECAP *********************************************************************
-redis-node-1               : ok=9    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-redis-node-2               : ok=5    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-redis-node-3               : ok=5    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-redis-node-4               : ok=5    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-redis-node-5               : ok=5    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-redis-node-6               : ok=5    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+redis-node-1               : ok=2    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 
 ===== Redis Cluster Status Completed =====
-Fri Jun 12 23:11:57 IST 2026
+Fri Jun 12 23:19:33 IST 2026
