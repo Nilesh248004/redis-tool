@@ -157,3 +157,141 @@ Created Redis Cluster with 3 masters and 3 replicas
 Verified cluster_state:ok
 Saved provision output
 ```
+
+---
+
+## Phase 2: Data Seed and Verification
+
+In Phase 2, I added data seeding and verification for the Redis Cluster.
+
+The main goal of this phase is to insert test data into the cluster and then verify that the same data can be read back correctly.
+
+---
+
+### 1. Created Data Seed Playbook
+
+I created an Ansible playbook named:
+
+```text
+ansible/playbooks/data_seed.yml
+```
+
+This playbook connects to the Redis Cluster through `redis-node-1` and inserts 1000 deterministic key-value pairs.
+
+The keys are created in this format:
+
+```text
+user:1   -> value-1
+user:2   -> value-2
+user:3   -> value-3
+...
+user:1000 -> value-1000
+```
+
+I used deterministic data because it makes verification simple. Since the expected value is already known for each key, we can easily check whether the data is correct or not.
+
+---
+
+### 2. Used Redis Cluster Mode While Seeding Data
+
+While inserting data, I used the Redis CLI with cluster mode enabled:
+
+```bash
+redis-cli -c
+```
+
+The `-c` option is important because this is a Redis Cluster. Keys may belong to different hash slots, and Redis may redirect the command to the correct master node.
+
+So even though the command starts from `10.10.0.11`, Redis Cluster automatically routes the key to the correct node.
+
+---
+
+### 3. Created Data Verify Playbook
+
+I created another Ansible playbook named:
+
+```text
+ansible/playbooks/data_verify.yml
+```
+
+This playbook checks all 1000 keys one by one.
+
+For every key, it compares the actual value from Redis with the expected value.
+
+Example:
+
+```text
+Expected: user:10 -> value-10
+Actual:   user:10 -> value-10
+Result:   matched
+```
+
+If any key has a wrong value or is missing, the playbook reports a failure.
+
+---
+
+### 4. Added CLI Support for Data Commands
+
+I updated the `redis-tool` CLI to support Phase 2 commands.
+
+The seed command is:
+
+```bash
+./redis-tool data seed --keys 1000
+```
+
+The verify command is:
+
+```bash
+./redis-tool data verify
+```
+
+These commands internally run the Ansible playbooks:
+
+```text
+ansible/playbooks/data_seed.yml
+ansible/playbooks/data_verify.yml
+```
+
+---
+
+### 5. Saved Phase 2 Output Files
+
+The output of the seed command is saved in:
+
+```text
+output/data_seed_output.txt
+```
+
+The output of the verify command is saved in:
+
+```text
+output/verify_output.txt
+```
+
+The final verification output showed:
+
+```text
+Verification successful: all 1000 keys matched
+```
+
+This confirms that all 1000 keys were inserted and verified successfully.
+
+---
+
+## Phase 2 Status
+
+Phase 2 is completed successfully.
+
+Completed work:
+
+```text
+Created data seed playbook
+Created data verify playbook
+Inserted 1000 deterministic keys
+Verified all 1000 keys
+Added CLI support for data seed
+Added CLI support for data verify
+Saved data seed output
+Saved verify output
+```
