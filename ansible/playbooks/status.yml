@@ -5,7 +5,7 @@
   gather_facts: no
 
   tasks:
-    - name: Generate clean Redis Cluster status output
+    - name: Cluster status output
       shell: |
         echo "Cluster State: $(redis-cli -h 10.10.0.11 -p 6379 cluster info | grep cluster_state | cut -d: -f2 | tr -d '\r')"
         echo ""
