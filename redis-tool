@@ -2,6 +2,9 @@
 
 set -e
 
+# -----------------------------
+# Common paths
+# -----------------------------
 INVENTORY="ansible/inventory/hosts.ini"
 OUTPUT_DIR="output"
 
@@ -11,41 +14,48 @@ VERIFY_OUTPUT="$OUTPUT_DIR/verify_output.txt"
 
 mkdir -p "$OUTPUT_DIR"
 
+# -----------------------------
+# Prerequisite check
+# This runs before every command.
+# -----------------------------
 check_prerequisites() {
   echo "Checking prerequisites..."
 
   MISSING=0
 
+  # Prefer Podman if available, otherwise use Docker.
   if command -v podman >/dev/null 2>&1; then
     RUNTIME="podman"
     RUNTIME_VERSION=$(podman --version)
-    echo "✓ $RUNTIME_VERSION found"
+    echo "[OK] $RUNTIME_VERSION found"
   elif command -v docker >/dev/null 2>&1; then
     RUNTIME="docker"
     RUNTIME_VERSION=$(docker --version)
-    echo "✓ $RUNTIME_VERSION found"
+    echo "[OK] $RUNTIME_VERSION found"
   else
-    echo "✗ Container runtime not found (Docker or Podman)"
+    echo "[ERROR] Container runtime not found. Docker or Podman is required."
     echo "Install Podman: https://podman.io/docs/installation"
     echo "Install Docker: https://docs.docker.com/engine/install/"
     MISSING=1
   fi
 
+  # Check Ansible availability and version.
   if command -v ansible-playbook >/dev/null 2>&1; then
     ANSIBLE_VERSION=$(ansible-playbook --version | head -n 1 | awk '{print $3}' | tr -d '[]')
-    echo "✓ Ansible $ANSIBLE_VERSION found"
+    echo "[OK] Ansible $ANSIBLE_VERSION found"
 
-    REQUIRED_VERSION="2.14"
+    ANSIBLE_MAJOR=$(echo "$ANSIBLE_VERSION" | cut -d. -f1)
+    ANSIBLE_MINOR=$(echo "$ANSIBLE_VERSION" | cut -d. -f2)
 
-    if printf '%s\n%s\n' "$REQUIRED_VERSION" "$ANSIBLE_VERSION" | sort -V | head -n1 | grep -qx "$REQUIRED_VERSION"; then
+    if [ "$ANSIBLE_MAJOR" -gt 2 ] || { [ "$ANSIBLE_MAJOR" -eq 2 ] && [ "$ANSIBLE_MINOR" -ge 14 ]; }; then
       :
     else
-      echo "✗ Ansible version must be 2.14 or higher. Found: $ANSIBLE_VERSION"
+      echo "[ERROR] Ansible version must be 2.14 or higher. Found: $ANSIBLE_VERSION"
       echo "Install or upgrade: pip install --upgrade ansible"
       MISSING=1
     fi
   else
-    echo "✗ Ansible not found"
+    echo "[ERROR] Ansible not found."
     echo "Install: pip install ansible"
     echo "Or use your OS package manager."
     MISSING=1
@@ -58,6 +68,10 @@ check_prerequisites() {
 
   echo "Proceeding..."
 }
+
+# -----------------------------
+# Phase 1: Provision Redis Cluster
+# -----------------------------
 provision() {
   VERSION="7.0.15"
   MASTERS="3"
@@ -78,7 +92,7 @@ provision() {
         shift 2
         ;;
       *)
-        echo "Unknown option: $1"
+        echo "[ERROR] Unknown option: $1"
         exit 1
         ;;
     esac
@@ -122,6 +136,9 @@ provision() {
   } | tee "$PROVISION_OUTPUT"
 }
 
+# -----------------------------
+# Phase 2: Data seed and verify
+# -----------------------------
 data_command() {
   ACTION="$1"
   shift
@@ -135,7 +152,7 @@ data_command() {
         shift 2
         ;;
       *)
-        echo "Unknown option: $1"
+        echo "[ERROR] Unknown option: $1"
         exit 1
         ;;
     esac
@@ -181,6 +198,9 @@ data_command() {
   esac
 }
 
+# -----------------------------
+# Main command router
+# -----------------------------
 case "$1" in
   provision)
     shift
