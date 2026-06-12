@@ -14,27 +14,50 @@ mkdir -p "$OUTPUT_DIR"
 check_prerequisites() {
   echo "Checking prerequisites..."
 
+  MISSING=0
+
   if command -v podman >/dev/null 2>&1; then
-    echo "Podman found: $(podman --version)"
     RUNTIME="podman"
+    RUNTIME_VERSION=$(podman --version)
+    echo "✓ $RUNTIME_VERSION found"
   elif command -v docker >/dev/null 2>&1; then
-    echo "Docker found: $(docker --version)"
     RUNTIME="docker"
+    RUNTIME_VERSION=$(docker --version)
+    echo "✓ $RUNTIME_VERSION found"
   else
-    echo "Container runtime not found. Install Docker or Podman."
-    exit 1
+    echo "✗ Container runtime not found (Docker or Podman)"
+    echo "Install Podman: https://podman.io/docs/installation"
+    echo "Install Docker: https://docs.docker.com/engine/install/"
+    MISSING=1
   fi
 
   if command -v ansible-playbook >/dev/null 2>&1; then
-    echo "Ansible found: $(ansible-playbook --version | head -n 1)"
+    ANSIBLE_VERSION=$(ansible-playbook --version | head -n 1 | awk '{print $3}' | tr -d '[]')
+    echo "✓ Ansible $ANSIBLE_VERSION found"
+
+    REQUIRED_VERSION="2.14"
+
+    if printf '%s\n%s\n' "$REQUIRED_VERSION" "$ANSIBLE_VERSION" | sort -V | head -n1 | grep -qx "$REQUIRED_VERSION"; then
+      :
+    else
+      echo "✗ Ansible version must be 2.14 or higher. Found: $ANSIBLE_VERSION"
+      echo "Install or upgrade: pip install --upgrade ansible"
+      MISSING=1
+    fi
   else
-    echo "Ansible not found. Install Ansible first."
+    echo "✗ Ansible not found"
+    echo "Install: pip install ansible"
+    echo "Or use your OS package manager."
+    MISSING=1
+  fi
+
+  if [ "$MISSING" -ne 0 ]; then
+    echo "Please install the missing dependencies and retry."
     exit 1
   fi
 
   echo "Proceeding..."
 }
-
 provision() {
   VERSION="7.0.15"
   MASTERS="3"
