@@ -1,0 +1,572 @@
+===== Redis Rolling Upgrade Started =====
+Sat Jun 13 13:34:50 IST 2026
+Target version: 7.2.6
+Strategy: rolling
+
+===== Pre-upgrade Cluster Info =====
+redis-node-1 | CHANGED | rc=0 >>
+cluster_state:ok
+cluster_slots_assigned:16384
+cluster_slots_ok:16384
+cluster_slots_pfail:0
+cluster_slots_fail:0
+cluster_known_nodes:6
+cluster_size:3
+cluster_current_epoch:9
+cluster_my_epoch:7
+cluster_stats_messages_ping_sent:5985
+cluster_stats_messages_pong_sent:6021
+cluster_stats_messages_sent:12006
+cluster_stats_messages_ping_received:6021
+cluster_stats_messages_pong_received:5987
+cluster_stats_messages_auth-req_received:2
+cluster_stats_messages_received:12010
+total_cluster_links_buffer_limit_exceeded:0
+
+===== Pre-upgrade Data Verification =====
+
+PLAY [Verify deterministic data in Redis Cluster] ******************************
+
+TASK [Verify all seeded keys] **************************************************
+ok: [redis-node-1]
+
+TASK [Show verification result] ************************************************
+ok: [redis-node-1] => {
+    "msg": [
+        "Verification successful: all 1000 keys matched"
+    ]
+}
+
+PLAY RECAP *********************************************************************
+redis-node-1               : ok=2    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+
+===== Rolling Upgrade Playbook =====
+
+PLAY [Rolling upgrade Redis node] **********************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [redis-node-1]
+
+TASK [Check cluster state before upgrade] **************************************
+ok: [redis-node-1]
+
+TASK [Fail if cluster is not healthy before upgrade] ***************************
+skipping: [redis-node-1]
+
+TASK [Show node selected for rolling upgrade] **********************************
+ok: [redis-node-1] => {
+    "msg": "Upgrading redis-node-1 to Redis 7.2.6"
+}
+
+TASK [Check current Redis version] *********************************************
+ok: [redis-node-1]
+
+TASK [Show current Redis version] **********************************************
+ok: [redis-node-1] => {
+    "msg": "redis-node-1 current version: Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=667020e11023e8e7"
+}
+
+TASK [Install build dependencies] **********************************************
+ok: [redis-node-1]
+
+TASK [Remove old source directory for target version] **************************
+changed: [redis-node-1]
+
+TASK [Download Redis target version source] ************************************
+ok: [redis-node-1]
+
+TASK [Extract Redis target version source] *************************************
+changed: [redis-node-1]
+
+TASK [Build Redis target version from source] **********************************
+changed: [redis-node-1]
+
+TASK [Stop Redis gracefully on this node] **************************************
+changed: [redis-node-1]
+
+TASK [Wait for Redis port to stop] *********************************************
+ok: [redis-node-1]
+
+TASK [Install Redis target version binaries] ***********************************
+changed: [redis-node-1]
+
+TASK [Start Redis again using existing cluster config] *************************
+changed: [redis-node-1]
+
+TASK [Wait for Redis port to start] ********************************************
+ok: [redis-node-1]
+
+TASK [Check Redis ping after upgrade] ******************************************
+ok: [redis-node-1]
+
+TASK [Verify upgraded Redis version] *******************************************
+ok: [redis-node-1]
+
+TASK [Show upgraded Redis version] *********************************************
+ok: [redis-node-1] => {
+    "msg": [
+        "redis-node-1 ping result: PONG",
+        "redis-node-1 upgraded version: Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=a54b6c84b2152cc8"
+    ]
+}
+
+TASK [Wait for cluster to become healthy after this node upgrade] **************
+ok: [redis-node-1]
+
+TASK [Show cluster state after this node upgrade] ******************************
+ok: [redis-node-1] => {
+    "msg": "Cluster state after upgrading redis-node-1: cluster_state:ok"
+}
+
+PLAY [Rolling upgrade Redis node] **********************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [redis-node-2]
+
+TASK [Check cluster state before upgrade] **************************************
+ok: [redis-node-2]
+
+TASK [Fail if cluster is not healthy before upgrade] ***************************
+skipping: [redis-node-2]
+
+TASK [Show node selected for rolling upgrade] **********************************
+ok: [redis-node-2] => {
+    "msg": "Upgrading redis-node-2 to Redis 7.2.6"
+}
+
+TASK [Check current Redis version] *********************************************
+ok: [redis-node-2]
+
+TASK [Show current Redis version] **********************************************
+ok: [redis-node-2] => {
+    "msg": "redis-node-2 current version: Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=651e4f82b5c213bd"
+}
+
+TASK [Install build dependencies] **********************************************
+ok: [redis-node-2]
+
+TASK [Remove old source directory for target version] **************************
+changed: [redis-node-2]
+
+TASK [Download Redis target version source] ************************************
+ok: [redis-node-2]
+
+TASK [Extract Redis target version source] *************************************
+changed: [redis-node-2]
+
+TASK [Build Redis target version from source] **********************************
+changed: [redis-node-2]
+
+TASK [Stop Redis gracefully on this node] **************************************
+changed: [redis-node-2]
+
+TASK [Wait for Redis port to stop] *********************************************
+ok: [redis-node-2]
+
+TASK [Install Redis target version binaries] ***********************************
+changed: [redis-node-2]
+
+TASK [Start Redis again using existing cluster config] *************************
+changed: [redis-node-2]
+
+TASK [Wait for Redis port to start] ********************************************
+ok: [redis-node-2]
+
+TASK [Check Redis ping after upgrade] ******************************************
+ok: [redis-node-2]
+
+TASK [Verify upgraded Redis version] *******************************************
+ok: [redis-node-2]
+
+TASK [Show upgraded Redis version] *********************************************
+ok: [redis-node-2] => {
+    "msg": [
+        "redis-node-2 ping result: PONG",
+        "redis-node-2 upgraded version: Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=65db4fed5ba595fb"
+    ]
+}
+
+TASK [Wait for cluster to become healthy after this node upgrade] **************
+ok: [redis-node-2]
+
+TASK [Show cluster state after this node upgrade] ******************************
+ok: [redis-node-2] => {
+    "msg": "Cluster state after upgrading redis-node-2: cluster_state:ok"
+}
+
+PLAY [Rolling upgrade Redis node] **********************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [redis-node-3]
+
+TASK [Check cluster state before upgrade] **************************************
+ok: [redis-node-3]
+
+TASK [Fail if cluster is not healthy before upgrade] ***************************
+skipping: [redis-node-3]
+
+TASK [Show node selected for rolling upgrade] **********************************
+ok: [redis-node-3] => {
+    "msg": "Upgrading redis-node-3 to Redis 7.2.6"
+}
+
+TASK [Check current Redis version] *********************************************
+ok: [redis-node-3]
+
+TASK [Show current Redis version] **********************************************
+ok: [redis-node-3] => {
+    "msg": "redis-node-3 current version: Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=b7a6a66bbc1ebb1"
+}
+
+TASK [Install build dependencies] **********************************************
+ok: [redis-node-3]
+
+TASK [Remove old source directory for target version] **************************
+changed: [redis-node-3]
+
+TASK [Download Redis target version source] ************************************
+ok: [redis-node-3]
+
+TASK [Extract Redis target version source] *************************************
+changed: [redis-node-3]
+
+TASK [Build Redis target version from source] **********************************
+changed: [redis-node-3]
+
+TASK [Stop Redis gracefully on this node] **************************************
+changed: [redis-node-3]
+
+TASK [Wait for Redis port to stop] *********************************************
+ok: [redis-node-3]
+
+TASK [Install Redis target version binaries] ***********************************
+changed: [redis-node-3]
+
+TASK [Start Redis again using existing cluster config] *************************
+changed: [redis-node-3]
+
+TASK [Wait for Redis port to start] ********************************************
+ok: [redis-node-3]
+
+TASK [Check Redis ping after upgrade] ******************************************
+ok: [redis-node-3]
+
+TASK [Verify upgraded Redis version] *******************************************
+ok: [redis-node-3]
+
+TASK [Show upgraded Redis version] *********************************************
+ok: [redis-node-3] => {
+    "msg": [
+        "redis-node-3 ping result: PONG",
+        "redis-node-3 upgraded version: Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=801f58405ed9212b"
+    ]
+}
+
+TASK [Wait for cluster to become healthy after this node upgrade] **************
+ok: [redis-node-3]
+
+TASK [Show cluster state after this node upgrade] ******************************
+ok: [redis-node-3] => {
+    "msg": "Cluster state after upgrading redis-node-3: cluster_state:ok"
+}
+
+PLAY [Rolling upgrade Redis node] **********************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [redis-node-4]
+
+TASK [Check cluster state before upgrade] **************************************
+ok: [redis-node-4]
+
+TASK [Fail if cluster is not healthy before upgrade] ***************************
+skipping: [redis-node-4]
+
+TASK [Show node selected for rolling upgrade] **********************************
+ok: [redis-node-4] => {
+    "msg": "Upgrading redis-node-4 to Redis 7.2.6"
+}
+
+TASK [Check current Redis version] *********************************************
+ok: [redis-node-4]
+
+TASK [Show current Redis version] **********************************************
+ok: [redis-node-4] => {
+    "msg": "redis-node-4 current version: Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=d93ef491188383e0"
+}
+
+TASK [Install build dependencies] **********************************************
+ok: [redis-node-4]
+
+TASK [Remove old source directory for target version] **************************
+changed: [redis-node-4]
+
+TASK [Download Redis target version source] ************************************
+ok: [redis-node-4]
+
+TASK [Extract Redis target version source] *************************************
+changed: [redis-node-4]
+
+TASK [Build Redis target version from source] **********************************
+changed: [redis-node-4]
+
+TASK [Stop Redis gracefully on this node] **************************************
+changed: [redis-node-4]
+
+TASK [Wait for Redis port to stop] *********************************************
+ok: [redis-node-4]
+
+TASK [Install Redis target version binaries] ***********************************
+changed: [redis-node-4]
+
+TASK [Start Redis again using existing cluster config] *************************
+changed: [redis-node-4]
+
+TASK [Wait for Redis port to start] ********************************************
+ok: [redis-node-4]
+
+TASK [Check Redis ping after upgrade] ******************************************
+ok: [redis-node-4]
+
+TASK [Verify upgraded Redis version] *******************************************
+ok: [redis-node-4]
+
+TASK [Show upgraded Redis version] *********************************************
+ok: [redis-node-4] => {
+    "msg": [
+        "redis-node-4 ping result: PONG",
+        "redis-node-4 upgraded version: Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=1a4fa72d46c45809"
+    ]
+}
+
+TASK [Wait for cluster to become healthy after this node upgrade] **************
+ok: [redis-node-4]
+
+TASK [Show cluster state after this node upgrade] ******************************
+ok: [redis-node-4] => {
+    "msg": "Cluster state after upgrading redis-node-4: cluster_state:ok"
+}
+
+PLAY [Rolling upgrade Redis node] **********************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [redis-node-5]
+
+TASK [Check cluster state before upgrade] **************************************
+ok: [redis-node-5]
+
+TASK [Fail if cluster is not healthy before upgrade] ***************************
+skipping: [redis-node-5]
+
+TASK [Show node selected for rolling upgrade] **********************************
+ok: [redis-node-5] => {
+    "msg": "Upgrading redis-node-5 to Redis 7.2.6"
+}
+
+TASK [Check current Redis version] *********************************************
+ok: [redis-node-5]
+
+TASK [Show current Redis version] **********************************************
+ok: [redis-node-5] => {
+    "msg": "redis-node-5 current version: Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=db7486e7b1539723"
+}
+
+TASK [Install build dependencies] **********************************************
+ok: [redis-node-5]
+
+TASK [Remove old source directory for target version] **************************
+changed: [redis-node-5]
+
+TASK [Download Redis target version source] ************************************
+ok: [redis-node-5]
+
+TASK [Extract Redis target version source] *************************************
+changed: [redis-node-5]
+
+TASK [Build Redis target version from source] **********************************
+changed: [redis-node-5]
+
+TASK [Stop Redis gracefully on this node] **************************************
+changed: [redis-node-5]
+
+TASK [Wait for Redis port to stop] *********************************************
+ok: [redis-node-5]
+
+TASK [Install Redis target version binaries] ***********************************
+changed: [redis-node-5]
+
+TASK [Start Redis again using existing cluster config] *************************
+changed: [redis-node-5]
+
+TASK [Wait for Redis port to start] ********************************************
+ok: [redis-node-5]
+
+TASK [Check Redis ping after upgrade] ******************************************
+ok: [redis-node-5]
+
+TASK [Verify upgraded Redis version] *******************************************
+ok: [redis-node-5]
+
+TASK [Show upgraded Redis version] *********************************************
+ok: [redis-node-5] => {
+    "msg": [
+        "redis-node-5 ping result: PONG",
+        "redis-node-5 upgraded version: Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=633ef655d307cfcc"
+    ]
+}
+
+TASK [Wait for cluster to become healthy after this node upgrade] **************
+ok: [redis-node-5]
+
+TASK [Show cluster state after this node upgrade] ******************************
+ok: [redis-node-5] => {
+    "msg": "Cluster state after upgrading redis-node-5: cluster_state:ok"
+}
+
+PLAY [Rolling upgrade Redis node] **********************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [redis-node-6]
+
+TASK [Check cluster state before upgrade] **************************************
+ok: [redis-node-6]
+
+TASK [Fail if cluster is not healthy before upgrade] ***************************
+skipping: [redis-node-6]
+
+TASK [Show node selected for rolling upgrade] **********************************
+ok: [redis-node-6] => {
+    "msg": "Upgrading redis-node-6 to Redis 7.2.6"
+}
+
+TASK [Check current Redis version] *********************************************
+ok: [redis-node-6]
+
+TASK [Show current Redis version] **********************************************
+ok: [redis-node-6] => {
+    "msg": "redis-node-6 current version: Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=865a0f23dec545c6"
+}
+
+TASK [Install build dependencies] **********************************************
+ok: [redis-node-6]
+
+TASK [Remove old source directory for target version] **************************
+changed: [redis-node-6]
+
+TASK [Download Redis target version source] ************************************
+ok: [redis-node-6]
+
+TASK [Extract Redis target version source] *************************************
+changed: [redis-node-6]
+
+TASK [Build Redis target version from source] **********************************
+changed: [redis-node-6]
+
+TASK [Stop Redis gracefully on this node] **************************************
+changed: [redis-node-6]
+
+TASK [Wait for Redis port to stop] *********************************************
+ok: [redis-node-6]
+
+TASK [Install Redis target version binaries] ***********************************
+changed: [redis-node-6]
+
+TASK [Start Redis again using existing cluster config] *************************
+changed: [redis-node-6]
+
+TASK [Wait for Redis port to start] ********************************************
+ok: [redis-node-6]
+
+TASK [Check Redis ping after upgrade] ******************************************
+ok: [redis-node-6]
+
+TASK [Verify upgraded Redis version] *******************************************
+ok: [redis-node-6]
+
+TASK [Show upgraded Redis version] *********************************************
+ok: [redis-node-6] => {
+    "msg": [
+        "redis-node-6 ping result: PONG",
+        "redis-node-6 upgraded version: Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=12472abd0b809f24"
+    ]
+}
+
+TASK [Wait for cluster to become healthy after this node upgrade] **************
+ok: [redis-node-6]
+
+TASK [Show cluster state after this node upgrade] ******************************
+ok: [redis-node-6] => {
+    "msg": "Cluster state after upgrading redis-node-6: cluster_state:ok"
+}
+
+PLAY RECAP *********************************************************************
+redis-node-1               : ok=20   changed=6    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+redis-node-2               : ok=20   changed=6    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+redis-node-3               : ok=20   changed=6    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+redis-node-4               : ok=20   changed=6    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+redis-node-5               : ok=20   changed=6    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+redis-node-6               : ok=20   changed=6    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+
+
+===== Post-upgrade Cluster Info =====
+redis-node-1 | CHANGED | rc=0 >>
+cluster_state:ok
+cluster_slots_assigned:16384
+cluster_slots_ok:16384
+cluster_slots_pfail:0
+cluster_slots_fail:0
+cluster_known_nodes:6
+cluster_size:3
+cluster_current_epoch:9
+cluster_my_epoch:7
+cluster_stats_messages_ping_sent:363
+cluster_stats_messages_pong_sent:352
+cluster_stats_messages_sent:715
+cluster_stats_messages_ping_received:352
+cluster_stats_messages_pong_received:361
+cluster_stats_messages_received:713
+total_cluster_links_buffer_limit_exceeded:0
+
+===== Post-upgrade Cluster Nodes =====
+redis-node-1 | CHANGED | rc=0 >>
+1b06dce38dfd87e126719e1e946f1a9516270410 10.10.0.11:6379@16379 myself,slave 3efa33e51b0212645ceceb81557a1e635786f2ac 0 1781338125000 7 connected
+41d7ccc44b1a30973e6c9f5c24b555dc1d11a049 10.10.0.12:6379@16379 slave 947edee7385236a6d7aba0574e50249cac2479f1 0 1781338125000 8 connected
+3efa33e51b0212645ceceb81557a1e635786f2ac 10.10.0.15:6379@16379 master - 0 1781338125000 7 connected 0-5460
+92ddefd8de0f3b172987b1de50384a08c61fc78e 10.10.0.14:6379@16379 master - 0 1781338125000 9 connected 10923-16383
+42a5db5ad5d3730307e7c80077be15b337d2b361 10.10.0.13:6379@16379 slave 92ddefd8de0f3b172987b1de50384a08c61fc78e 0 1781338125746 9 connected
+947edee7385236a6d7aba0574e50249cac2479f1 10.10.0.16:6379@16379 master - 0 1781338125238 8 connected 5461-10922
+
+===== Post-upgrade Redis Versions =====
+redis-node-5 | CHANGED | rc=0 >>
+Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=633ef655d307cfcc
+redis-node-1 | CHANGED | rc=0 >>
+Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=a54b6c84b2152cc8
+redis-node-4 | CHANGED | rc=0 >>
+Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=1a4fa72d46c45809
+redis-node-2 | CHANGED | rc=0 >>
+Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=65db4fed5ba595fb
+redis-node-3 | CHANGED | rc=0 >>
+Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=801f58405ed9212b
+redis-node-6 | CHANGED | rc=0 >>
+Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=12472abd0b809f24
+
+===== Post-upgrade Data Verification =====
+
+PLAY [Verify deterministic data in Redis Cluster] ******************************
+
+TASK [Verify all seeded keys] **************************************************
+ok: [redis-node-1]
+
+TASK [Show verification result] ************************************************
+ok: [redis-node-1] => {
+    "msg": [
+        "Verification successful: all 1000 keys matched"
+    ]
+}
+
+PLAY RECAP *********************************************************************
+redis-node-1               : ok=2    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+
+===== Redis Rolling Upgrade Completed =====
+Sat Jun 13 13:38:48 IST 2026

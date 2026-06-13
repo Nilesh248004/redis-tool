@@ -1,0 +1,127 @@
+---
+- name: Rolling upgrade Redis node
+  hosts: redis_nodes
+  become: yes
+  gather_facts: yes
+  serial: 1
+
+  vars:
+    target_version: "{{ target_version | default('7.2.6') }}"
+    redis_tarball: "redis-{{ target_version }}.tar.gz"
+    redis_url: "http://download.redis.io/releases/{{ redis_tarball }}"
+    redis_src_dir: "/tmp/redis-{{ target_version }}"
+
+  pre_tasks:
+    - name: Check cluster state before upgrade
+      shell: redis-cli -h 10.10.0.11 -p 6379 cluster info | grep cluster_state
+      register: pre_cluster_state
+      changed_when: false
+      run_once: true
+
+    - name: Fail if cluster is not healthy before upgrade
+      fail:
+        msg: "Cluster is not healthy before upgrade. Current state: {{ pre_cluster_state.stdout }}"
+      when: "'cluster_state:ok' not in pre_cluster_state.stdout"
+      run_once: true
+
+  tasks:
+    - name: Show node selected for rolling upgrade
+      debug:
+        msg: "Upgrading {{ inventory_hostname }} to Redis {{ target_version }}"
+
+    - name: Check current Redis version
+      command: redis-server --version
+      register: current_redis_version
+      changed_when: false
+
+    - name: Show current Redis version
+      debug:
+        msg: "{{ inventory_hostname }} current version: {{ current_redis_version.stdout }}"
+
+    - name: Install build dependencies
+      apt:
+        name:
+          - build-essential
+          - tcl
+          - wget
+          - tar
+          - make
+          - gcc
+        state: present
+        update_cache: yes
+
+    - name: Remove old source directory for target version
+      file:
+        path: "{{ redis_src_dir }}"
+        state: absent
+
+    - name: Download Redis target version source
+      get_url:
+        url: "{{ redis_url }}"
+        dest: "/tmp/{{ redis_tarball }}"
+        mode: "0644"
+
+    - name: Extract Redis target version source
+      unarchive:
+        src: "/tmp/{{ redis_tarball }}"
+        dest: /tmp
+        remote_src: yes
+
+    - name: Build Redis target version from source
+      command: make -j2
+      args:
+        chdir: "{{ redis_src_dir }}"
+
+    - name: Stop Redis gracefully on this node
+      shell: redis-cli -h "{{ internal_ip }}" -p 6379 shutdown nosave
+      ignore_errors: yes
+
+    - name: Wait for Redis port to stop
+      wait_for:
+        host: "{{ internal_ip }}"
+        port: 6379
+        state: stopped
+        timeout: 30
+
+    - name: Install Redis target version binaries
+      command: make install
+      args:
+        chdir: "{{ redis_src_dir }}"
+
+    - name: Start Redis again using existing cluster config
+      command: redis-server /etc/redis/redis.conf
+
+    - name: Wait for Redis port to start
+      wait_for:
+        host: "{{ internal_ip }}"
+        port: 6379
+        state: started
+        timeout: 60
+
+    - name: Check Redis ping after upgrade
+      command: redis-cli -h "{{ internal_ip }}" -p 6379 ping
+      register: redis_ping
+      changed_when: false
+
+    - name: Verify upgraded Redis version
+      command: redis-server --version
+      register: upgraded_redis_version
+      changed_when: false
+
+    - name: Show upgraded Redis version
+      debug:
+        msg:
+          - "{{ inventory_hostname }} ping result: {{ redis_ping.stdout }}"
+          - "{{ inventory_hostname }} upgraded version: {{ upgraded_redis_version.stdout }}"
+
+    - name: Wait for cluster to become healthy after this node upgrade
+      shell: redis-cli -h 10.10.0.11 -p 6379 cluster info | grep cluster_state
+      register: post_cluster_state
+      changed_when: false
+      retries: 10
+      delay: 3
+      until: "'cluster_state:ok' in post_cluster_state.stdout"
+
+    - name: Show cluster state after this node upgrade
+      debug:
+        msg: "Cluster state after upgrading {{ inventory_hostname }}: {{ post_cluster_state.stdout }}"

@@ -12,6 +12,7 @@ PROVISION_OUTPUT="$OUTPUT_DIR/provision_output.txt"
 DATA_SEED_OUTPUT="$OUTPUT_DIR/data_seed_output.txt"
 STATUS_OUTPUT="$OUTPUT_DIR/status_output.txt"
 VERIFY_OUTPUT="$OUTPUT_DIR/verify_output.txt"
+UPGRADE_OUTPUT="$OUTPUT_DIR/upgrade_output.txt"
 
 mkdir -p "$OUTPUT_DIR"
 
@@ -217,6 +218,79 @@ status_command() {
 }
 
 # -----------------------------
+# Phase 4: Rolling upgrade command
+# -----------------------------
+upgrade_command() {
+  TARGET_VERSION="7.2.6"
+  STRATEGY="rolling"
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --target-version)
+        TARGET_VERSION="$2"
+        shift 2
+        ;;
+      --strategy)
+        STRATEGY="$2"
+        shift 2
+        ;;
+      *)
+        echo "[ERROR] Unknown option: $1"
+        exit 1
+        ;;
+    esac
+  done
+
+  if [ "$STRATEGY" != "rolling" ]; then
+    echo "[ERROR] Only rolling upgrade strategy is supported."
+    exit 1
+  fi
+
+  echo "Starting Redis rolling upgrade..."
+  echo "Target version: $TARGET_VERSION"
+  echo "Strategy: $STRATEGY"
+
+  {
+    echo "===== Redis Rolling Upgrade Started ====="
+    date
+    echo "Target version: $TARGET_VERSION"
+    echo "Strategy: $STRATEGY"
+
+    echo ""
+    echo "===== Pre-upgrade Cluster Info ====="
+    ansible -i "$INVENTORY" redis-node-1 -m shell -a "redis-cli -h 10.10.0.11 -p 6379 cluster info"
+
+    echo ""
+    echo "===== Pre-upgrade Data Verification ====="
+    ansible-playbook -i "$INVENTORY" ansible/playbooks/data_verify.yml -e keys=1000
+
+    echo ""
+    echo "===== Rolling Upgrade Playbook ====="
+    ansible-playbook -i "$INVENTORY" ansible/playbooks/upgrade.yml -e target_version="$TARGET_VERSION"
+
+    echo ""
+    echo "===== Post-upgrade Cluster Info ====="
+    ansible -i "$INVENTORY" redis-node-1 -m shell -a "redis-cli -h 10.10.0.11 -p 6379 cluster info"
+
+    echo ""
+    echo "===== Post-upgrade Cluster Nodes ====="
+    ansible -i "$INVENTORY" redis-node-1 -m shell -a "redis-cli -h 10.10.0.11 -p 6379 cluster nodes"
+
+    echo ""
+    echo "===== Post-upgrade Redis Versions ====="
+    ansible -i "$INVENTORY" redis_nodes -m shell -a "redis-server --version"
+
+    echo ""
+    echo "===== Post-upgrade Data Verification ====="
+    ansible-playbook -i "$INVENTORY" ansible/playbooks/data_verify.yml -e keys=1000
+
+    echo ""
+    echo "===== Redis Rolling Upgrade Completed ====="
+    date
+  } | tee "$UPGRADE_OUTPUT"
+}
+
+# -----------------------------
 # Main command router
 # -----------------------------
 case "$1" in
@@ -238,12 +312,19 @@ case "$1" in
     status_command "$@"
     ;;
 
+  upgrade)
+    shift
+    check_prerequisites
+    upgrade_command "$@"
+    ;;
+
   *)
     echo "Usage:"
     echo "  ./redis-tool provision --version 7.0.15 --masters 3 --replicas-per-master 1"
     echo "  ./redis-tool data seed --keys 1000"
     echo "  ./redis-tool data verify"
     echo "  ./redis-tool status"
+    echo "  ./redis-tool upgrade --target-version 7.2.6 --strategy rolling"
     exit 1
     ;;
 esac
