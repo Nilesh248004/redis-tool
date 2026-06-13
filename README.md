@@ -312,3 +312,151 @@ I created an Ansible playbook named:
 
 ```text
 ansible/playbooks/status.yml
+
+
+
+
+
+⸻
+
+Phase 4: Rolling Upgrade to Redis 7.2.6
+
+In Phase 4, I upgraded the Redis Cluster from version 7.0.15 to 7.2.6.
+
+The main goal of this phase was to upgrade Redis without stopping the full cluster at once.
+
+Since Redis is used to store data, stopping all nodes together can cause downtime. So I followed a rolling upgrade method, where one node is upgraded at a time.
+
+⸻
+
+What I Did in This Phase
+
+First, I upgraded the replica nodes:
+
+redis-node-4
+redis-node-5
+redis-node-6
+
+Replica nodes are safer to upgrade first because they are not directly handling the main hash slots.
+
+After upgrading the replicas, I upgraded the master nodes carefully.
+
+Before upgrading each master, I promoted its replica to become the new master. This process is called failover.
+
+Example:
+
+Before failover:
+redis-node-1 was master
+redis-node-5 was replica
+After failover:
+redis-node-5 became master
+redis-node-1 became replica
+
+After this change, I upgraded redis-node-1 safely because it was no longer the active master.
+
+I followed the same method for the remaining master nodes.
+
+⸻
+
+Why I Used Failover
+
+A master node stores data and handles read/write operations for its hash slots.
+
+If I directly restart a master during upgrade, clients may face temporary issues.
+
+So before upgrading a master, I changed its role by using failover. This allowed the replica to take over the master role first.
+
+In simple words:
+
+I moved the responsibility from the master to its replica before upgrading the master.
+
+This helped keep the Redis Cluster available during the upgrade.
+
+⸻
+
+Upgrade Command
+
+I added the upgrade command inside the redis-tool CLI.
+
+The command is:
+
+./redis-tool upgrade --target-version 7.2.6 --strategy rolling
+
+This command runs the upgrade using Ansible and saves the output in:
+
+output/upgrade_output.txt
+
+⸻
+
+Final Result
+
+After the upgrade, all 6 Redis nodes were running Redis 7.2.6.
+
+redis-node-1 -> Redis 7.2.6
+redis-node-2 -> Redis 7.2.6
+redis-node-3 -> Redis 7.2.6
+redis-node-4 -> Redis 7.2.6
+redis-node-5 -> Redis 7.2.6
+redis-node-6 -> Redis 7.2.6
+
+The cluster was still healthy after the upgrade.
+
+cluster_state:ok
+cluster_slots_assigned:16384
+cluster_slots_ok:16384
+cluster_known_nodes:6
+cluster_size:3
+
+This means all Redis nodes were connected properly and all hash slots were assigned.
+
+⸻
+
+Final Cluster Topology
+
+After the rolling upgrade, some master and replica roles changed because of failover.
+
+Final masters:
+
+10.10.0.15 -> master, slots 0-5460
+10.10.0.16 -> master, slots 5461-10922
+10.10.0.14 -> master, slots 10923-16383
+
+Final replicas:
+
+10.10.0.11 -> replica of 10.10.0.15
+10.10.0.12 -> replica of 10.10.0.16
+10.10.0.13 -> replica of 10.10.0.14
+
+This is expected because the replicas were promoted before upgrading the old master nodes.
+
+⸻
+
+Data Verification
+
+After the upgrade, I verified the data again.
+
+The result was:
+
+Verification successful: all 1000 keys matched
+
+This confirms that the data was still available after the upgrade.
+
+⸻
+
+Phase 4 Status
+
+Phase 4 is completed successfully.
+
+Completed work:
+
+Created upgrade.yml playbook
+Added ./redis-tool upgrade command
+Upgraded Redis from 7.0.15 to 7.2.6
+Upgraded one node at a time
+Used failover before upgrading master nodes
+Checked cluster_state:ok
+Verified all 6 nodes are running Redis 7.2.6
+Verified all 1000 keys after upgrade
+Saved upgrade output in output/upgrade_output.txt
+
+⸻
