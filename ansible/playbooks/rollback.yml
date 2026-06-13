@@ -1,0 +1,122 @@
+---
+- name: Rollback Redis version on all cluster nodes
+  hosts: redis_nodes
+  become: yes
+  gather_facts: yes
+  serial: 1
+
+  vars:
+    redis_version: "{{ target_version | default('7.0.15') }}"
+    redis_tarball: "redis-{{ redis_version }}.tar.gz"
+    redis_url: "http://download.redis.io/releases/{{ redis_tarball }}"
+    redis_src_dir: "/tmp/redis-{{ redis_version }}"
+
+  tasks:
+    - name: Show rollback node
+      debug:
+        msg: "Rolling back {{ inventory_hostname }} to Redis {{ redis_version }}"
+
+    - name: Install build dependencies
+      apt:
+        name:
+          - build-essential
+          - tcl
+          - wget
+          - tar
+          - make
+          - gcc
+        state: present
+        update_cache: yes
+
+    - name: Remove old Redis rollback source directory
+      file:
+        path: "{{ redis_src_dir }}"
+        state: absent
+
+    - name: Download target Redis version
+      get_url:
+        url: "{{ redis_url }}"
+        dest: "/tmp/{{ redis_tarball }}"
+        mode: "0644"
+
+    - name: Extract target Redis source
+      unarchive:
+        src: "/tmp/{{ redis_tarball }}"
+        dest: /tmp
+        remote_src: yes
+
+    - name: Build target Redis version
+      command: make -j2
+      args:
+        chdir: "{{ redis_src_dir }}"
+
+    - name: Install target Redis binaries
+      command: make install
+      args:
+        chdir: "{{ redis_src_dir }}"
+
+    - name: Shutdown Redis before restart
+      shell: redis-cli -h "{{ internal_ip }}" -p 6379 shutdown nosave
+      ignore_errors: yes
+
+    - name: Remove incompatible Redis persistence files before rollback start
+      shell: rm -rf /var/lib/redis/appendonlydir /var/lib/redis/appendonly*.aof /var/lib/redis/*.rdb
+
+    - name: Start Redis with existing cluster config
+      command: redis-server /etc/redis/redis.conf
+
+    - name: Wait for Redis port
+      wait_for:
+        host: "{{ internal_ip }}"
+        port: 6379
+        state: started
+        timeout: 60
+
+    - name: Check Redis version after rollback
+      shell: redis-cli -h "{{ internal_ip }}" -p 6379 info server | grep redis_version
+      register: rollback_version
+      changed_when: false
+
+    - name: Show Redis version after rollback
+      debug:
+        msg: "{{ inventory_hostname }} -> {{ rollback_version.stdout }}"
+
+    - name: Check cluster state after this node rollback
+      shell: redis-cli -h 10.10.0.11 -p 6379 cluster info | grep cluster_state
+      delegate_to: redis-node-1
+      become: no
+      register: cluster_state
+      changed_when: false
+
+    - name: Fail if cluster is not healthy after this rollback
+      fail:
+        msg: "Cluster is not healthy after rolling back {{ inventory_hostname }}: {{ cluster_state.stdout }}"
+      when: "'cluster_state:ok' not in cluster_state.stdout"
+
+
+- name: Final rollback verification
+  hosts: redis-node-1
+  become: no
+  gather_facts: no
+
+  tasks:
+    - name: Show final Redis versions
+      shell: |
+        for ip in 10.10.0.11 10.10.0.12 10.10.0.13 10.10.0.14 10.10.0.15 10.10.0.16 10.10.0.17 10.10.0.18; do
+          echo "$ip -> $(redis-cli -h $ip -p 6379 info server | grep redis_version | cut -d: -f2 | tr -d '\r')"
+        done
+      register: final_versions
+      changed_when: false
+
+    - name: Print final Redis versions
+      debug:
+        msg: "{{ final_versions.stdout_lines }}"
+
+    - name: Show cluster state
+      shell: redis-cli -h 10.10.0.11 -p 6379 cluster info | grep cluster_state
+      register: final_cluster_state
+      changed_when: false
+
+    - name: Print cluster state
+      debug:
+        msg: "{{ final_cluster_state.stdout }}"

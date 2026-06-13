@@ -11,11 +11,15 @@ STATUS_OUTPUT="$OUTPUT_DIR/status_output.txt"
 VERIFY_OUTPUT="$OUTPUT_DIR/verify_output.txt"
 UPGRADE_OUTPUT="$OUTPUT_DIR/upgrade_output.txt"
 FULL_VERIFY_OUTPUT="$OUTPUT_DIR/full_verify_output.txt"
+SCALE_OUT_OUTPUT="$OUTPUT_DIR/scale_out_output.txt"
+ROLLBACK_OUTPUT="$OUTPUT_DIR/rollback_output.txt"
+
+
 mkdir -p "$OUTPUT_DIR"
-# -----------------------------
+# -------------------------------
 # Prerequisite check
 # This runs before every command.
-# -----------------------------
+# -------------------------------
 check_prerequisites() {
   echo "Checking prerequisites..."
   MISSING=0
@@ -59,9 +63,9 @@ check_prerequisites() {
   fi
   echo "Proceeding..."
 }
-# -----------------------------
+# --------------------------------
 # Phase 1: Provision Redis Cluster
-# -----------------------------
+# --------------------------------
 provision() {
   VERSION="7.0.15"
   MASTERS="3"
@@ -166,9 +170,9 @@ data_command() {
       ;;
   esac
 }
-# -----------------------------
+# -----------------------
 # Phase 3: Status command
-# -----------------------------
+# -----------------------
 status_command() {
   echo "Checking Redis Cluster status..."
   {
@@ -179,9 +183,9 @@ status_command() {
     date
   } | tee "$STATUS_OUTPUT"
 }
-# -----------------------------
+# --------------------------------
 # Phase 4: Rolling upgrade command
-# -----------------------------
+# --------------------------------
 upgrade_command() {
   TARGET_VERSION="7.2.6"
   STRATEGY="rolling"
@@ -239,9 +243,9 @@ upgrade_command() {
     date
   } | tee "$UPGRADE_OUTPUT"
 }
-# -----------------------------
+# ----------------------------------
 # Phase 5: Full verification command
-# -----------------------------
+# ----------------------------------
 verify_command() {
   OPTION="$1"
   if [ "$OPTION" != "--full" ]; then
@@ -257,6 +261,87 @@ verify_command() {
     echo "===== Redis Full Verification Completed ====="
     date
   } | tee "$FULL_VERIFY_OUTPUT"
+}
+
+
+# ----------------------------------
+# Stretch Goal S1: Scale out command
+# ----------------------------------
+scale_command() {
+  ACTION="$1"
+  VALUE="$2"
+
+  if [ "$ACTION" != "--add-nodes" ] || [ "$VALUE" != "2" ]; then
+    echo "Usage:"
+    echo "  ./redis-tool scale --add-nodes 2"
+    exit 1
+  fi
+
+  echo "Starting Redis Cluster scale out..."
+  echo "Adding 2 nodes: 1 master and 1 replica"
+
+  {
+    echo "===== Redis Scale Out Started ====="
+    date
+
+    echo ""
+    echo "===== Running Scale Out Playbook ====="
+    ansible-playbook -i "$INVENTORY" ansible/playbooks/scale_out.yml
+
+    echo ""
+    echo "===== Full Verification After Scale Out ====="
+    ansible-playbook -i "$INVENTORY" ansible/playbooks/verify_full.yml
+
+    echo ""
+    echo "===== Redis Scale Out Completed ====="
+    date
+  } | tee "$SCALE_OUT_OUTPUT"
+}
+# -------------------------
+# Stretch Goal S3: Rollback 
+# -------------------------
+
+rollback_command() {
+  TARGET_VERSION=""
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --target-version)
+        TARGET_VERSION="$2"
+        shift 2
+        ;;
+      *)
+        echo "Unknown rollback option: $1"
+        echo "Usage: ./redis-tool rollback --target-version 7.0.15"
+        exit 1
+        ;;
+    esac
+  done
+
+  if [ -z "$TARGET_VERSION" ]; then
+    echo "Usage: ./redis-tool rollback --target-version 7.0.15"
+    exit 1
+  fi
+
+  echo "Starting Redis rollback..."
+  echo "Target version: $TARGET_VERSION"
+
+  {
+    echo "===== Redis Rollback Started ====="
+    date
+
+    echo ""
+    echo "===== Running Rollback Playbook ====="
+    ansible-playbook -i "$INVENTORY" ansible/playbooks/rollback.yml -e "target_version=$TARGET_VERSION"
+
+    echo ""
+    echo "===== Full Verification After Rollback ====="
+    ansible-playbook -i "$INVENTORY" ansible/playbooks/verify_full.yml
+
+    echo ""
+    echo "===== Redis Rollback Completed ====="
+    date
+  } | tee "$ROLLBACK_OUTPUT"
 }
 # -----------------------------
 # Main command router
@@ -287,6 +372,16 @@ case "$1" in
     check_prerequisites
     verify_command "$@"
     ;;
+  scale)
+    shift
+    check_prerequisites
+    scale_command "$@"
+    ;;
+    rollback)
+    shift
+    check_prerequisites
+    rollback_command "$@"
+    ;;
   *)
     echo "Usage:"
     echo "  ./redis-tool provision --version 7.0.15 --masters 3 --replicas-per-master 1"
@@ -295,6 +390,8 @@ case "$1" in
     echo "  ./redis-tool status"
     echo "  ./redis-tool upgrade --target-version 7.2.6 --strategy rolling"
     echo "  ./redis-tool verify --full"
+    echo "  ./redis-tool scale --add-nodes 2"
+    echo "  ./redis-tool rollback --target-version 7.0.15"
     exit 1
     ;;
 esac

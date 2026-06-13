@@ -249,4 +249,88 @@ The output is saved in:
 output/full_verify_output.txt
 ```
 
+Stretch Goal S1: Scale Out
+
+I implemented scale out to add two more Redis nodes to the existing Redis Cluster.
+
+Command used:
+
+./redis-tool scale --add-nodes 2
+
+Before scale out:
+
+3 masters + 3 replicas = 6 nodes
+
+After scale out:
+
+4 masters + 4 replicas = 8 nodes
+
+New nodes added:
+
+redis-node-7 -> 10.10.0.17 -> master
+redis-node-8 -> 10.10.0.18 -> replica of redis-node-7
+
+The scale out command adds the new nodes, rebalances hash slots, and verifies the cluster.
+
+Final result:
+
+Cluster state: ok
+All 16384 slots covered
+Every master has a replica
+1000 keys verified
+FULL VERIFICATION RESULT: PASS
+
+Output file:
+
+output/scale_out_output.txt
+
+⸻
+
+Stretch Goal S3: Rollback
+
+I implemented rollback to downgrade Redis to a previous version if needed.
+
+Command used:
+
+./redis-tool rollback --target-version 7.0.15
+
+Rollback tested:
+
+Redis 7.2.6 -> Redis 7.0.15
+
+The rollback command downgrades Redis one node at a time and checks cluster health after each node.
+
+During rollback, Redis 7.0.15 could not read some Redis 7.2.6 persistence files, so the playbook removes incompatible AOF/RDB files before restarting Redis.
+
+Final rollback result:
+
+All 8 nodes running Redis 7.0.15
+Cluster state: ok
+All 16384 slots covered
+Every master has a replica
+
+After rollback, data was reseeded:
+
+./redis-tool data seed --keys 1000
+
+Then full verification passed:
+
+Data integrity verified: all 1000 keys matched
+FULL VERIFICATION RESULT: PASS
+
+Output file:
+
+output/rollback_output.txt
+
+⸻
+
+Stretch Goal Summary
+
+S1 Scale Out completed
+S3 Rollback completed
+
+Both are available through the CLI:
+
+./redis-tool scale --add-nodes 2
+./redis-tool rollback --target-version 7.0.15
 ---

@@ -1,0 +1,210 @@
+---
+- name: Prepare new Redis scale-out nodes only if they are not already in cluster
+  hosts: redis_new_nodes
+  become: yes
+  gather_facts: yes
+
+  vars:
+    redis_version: "7.2.6"
+    redis_tarball: "redis-{{ redis_version }}.tar.gz"
+    redis_url: "http://download.redis.io/releases/{{ redis_tarball }}"
+    redis_src_dir: "/tmp/redis-{{ redis_version }}"
+
+  tasks:
+    - name: Check if this node is already part of Redis Cluster
+      shell: redis-cli -h 10.10.0.11 -p 6379 cluster nodes | grep -q "{{ internal_ip }}:6379"
+      delegate_to: redis-node-1
+      become: no
+      register: node_already_in_cluster
+      failed_when: false
+      changed_when: false
+
+    - name: Show node cluster membership status
+      debug:
+        msg: "{{ inventory_hostname }} is already in cluster: {{ node_already_in_cluster.rc == 0 }}"
+
+    - name: Install build dependencies
+      apt:
+        name:
+          - build-essential
+          - tcl
+          - wget
+          - tar
+          - make
+          - gcc
+        state: present
+        update_cache: yes
+      when: node_already_in_cluster.rc != 0
+
+    - name: Remove old Redis source directory
+      file:
+        path: "{{ redis_src_dir }}"
+        state: absent
+      when: node_already_in_cluster.rc != 0
+
+    - name: Download Redis source
+      get_url:
+        url: "{{ redis_url }}"
+        dest: "/tmp/{{ redis_tarball }}"
+        mode: "0644"
+      when: node_already_in_cluster.rc != 0
+
+    - name: Extract Redis source
+      unarchive:
+        src: "/tmp/{{ redis_tarball }}"
+        dest: /tmp
+        remote_src: yes
+      when: node_already_in_cluster.rc != 0
+
+    - name: Build Redis from source
+      command: make -j2
+      args:
+        chdir: "{{ redis_src_dir }}"
+      when: node_already_in_cluster.rc != 0
+
+    - name: Install Redis binaries
+      command: make install
+      args:
+        chdir: "{{ redis_src_dir }}"
+      when: node_already_in_cluster.rc != 0
+
+    - name: Create redis user
+      user:
+        name: redis
+        shell: /usr/sbin/nologin
+        system: yes
+        create_home: no
+      when: node_already_in_cluster.rc != 0
+
+    - name: Create Redis directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: redis
+        group: redis
+        mode: "0755"
+      loop:
+        - /etc/redis
+        - /var/lib/redis
+        - /var/log/redis
+      when: node_already_in_cluster.rc != 0
+
+    - name: Create Redis cluster configuration
+      copy:
+        dest: /etc/redis/redis.conf
+        owner: redis
+        group: redis
+        mode: "0644"
+        content: |
+          bind 0.0.0.0
+          protected-mode no
+          port 6379
+          daemonize yes
+          supervised no
+          dir /var/lib/redis
+          logfile /var/log/redis/redis-server.log
+          appendonly yes
+
+          cluster-enabled yes
+          cluster-config-file nodes.conf
+          cluster-node-timeout 5000
+
+          cluster-announce-ip {{ internal_ip }}
+          cluster-announce-port 6379
+          cluster-announce-bus-port 16379
+      when: node_already_in_cluster.rc != 0
+
+    - name: Stop Redis if already running before first cluster join
+      shell: redis-cli -h "{{ internal_ip }}" -p 6379 shutdown nosave
+      ignore_errors: yes
+      when: node_already_in_cluster.rc != 0
+
+    - name: Start Redis with cluster config
+      command: redis-server /etc/redis/redis.conf
+      when: node_already_in_cluster.rc != 0
+
+    - name: Wait for Redis port
+      wait_for:
+        host: "{{ internal_ip }}"
+        port: 6379
+        state: started
+        timeout: 60
+
+    - name: Check Redis ping
+      command: redis-cli -h "{{ internal_ip }}" -p 6379 ping
+      register: redis_ping
+      changed_when: false
+
+    - name: Show Redis ping result
+      debug:
+        msg: "{{ inventory_hostname }} ping result: {{ redis_ping.stdout }}"
+
+
+- name: Add new master and replica to existing Redis Cluster
+  hosts: redis-node-1
+  become: no
+  gather_facts: no
+
+  tasks:
+    - name: Check current cluster health before scale out
+      shell: redis-cli -h 10.10.0.11 -p 6379 cluster info | grep cluster_state
+      register: cluster_state_before
+      changed_when: false
+
+    - name: Fail if cluster is not healthy before scale out
+      fail:
+        msg: "Cluster is not healthy before scale out: {{ cluster_state_before.stdout }}"
+      when: "'cluster_state:ok' not in cluster_state_before.stdout"
+
+    - name: Add redis-node-7 as new master if not already added
+      shell: |
+        if redis-cli -h 10.10.0.11 -p 6379 cluster nodes | grep -q "10.10.0.17:6379"; then
+          echo "redis-node-7 already exists in cluster"
+        else
+          redis-cli --cluster add-node 10.10.0.17:6379 10.10.0.11:6379 --cluster-yes
+        fi
+      register: add_master_output
+      changed_when: "'New node added correctly' in add_master_output.stdout"
+
+    - name: Get redis-node-7 node id
+      shell: redis-cli -h 10.10.0.11 -p 6379 cluster nodes | grep "10.10.0.17:6379" | awk '{print $1}'
+      register: node7_id
+      changed_when: false
+
+    - name: Add redis-node-8 as replica of redis-node-7 if not already added
+      shell: |
+        if redis-cli -h 10.10.0.11 -p 6379 cluster nodes | grep -q "10.10.0.18:6379"; then
+          echo "redis-node-8 already exists in cluster"
+        else
+          redis-cli --cluster add-node 10.10.0.18:6379 10.10.0.11:6379 --cluster-slave --cluster-master-id {{ node7_id.stdout }} --cluster-yes
+        fi
+      register: add_replica_output
+      changed_when: "'New node added correctly' in add_replica_output.stdout"
+
+    - name: Rebalance hash slots across all masters
+      shell: redis-cli --cluster rebalance 10.10.0.11:6379 --cluster-use-empty-masters --cluster-yes
+      register: rebalance_output
+      changed_when: true
+
+    - name: Show rebalance output
+      debug:
+        msg: "{{ rebalance_output.stdout_lines }}"
+
+    - name: Show final cluster nodes after scale out
+      shell: redis-cli -h 10.10.0.11 -p 6379 cluster nodes
+      register: cluster_nodes_after
+      changed_when: false
+
+    - name: Print final cluster nodes
+      debug:
+        msg: "{{ cluster_nodes_after.stdout_lines }}"
+
+    - name: Verify cluster health after scale out
+      shell: redis-cli -h 10.10.0.11 -p 6379 cluster info | grep cluster_state
+      register: cluster_state_after
+      changed_when: false
+
+    - name: Fail if cluster is not healthy after scale out
+      fail:
+        msg: "Cluster is not healthy after scale out: {{ cluster_state_after.stdout }}"
+      when: "'cluster_state:ok' not in cluster_state_after.stdout"

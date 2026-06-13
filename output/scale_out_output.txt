@@ -1,0 +1,183 @@
+===== Redis Scale Out Started =====
+Sat Jun 13 22:25:41 IST 2026
+
+===== Running Scale Out Playbook =====
+
+PLAY [Prepare new Redis scale-out nodes only if they are not already in cluster] ***
+
+TASK [Gathering Facts] *********************************************************
+ok: [redis-node-7]
+ok: [redis-node-8]
+
+TASK [Check if this node is already part of Redis Cluster] *********************
+ok: [redis-node-8 -> redis-node-1(localhost)]
+ok: [redis-node-7 -> redis-node-1(localhost)]
+
+TASK [Show node cluster membership status] *************************************
+ok: [redis-node-7] => {
+    "msg": "redis-node-7 is already in cluster: True"
+}
+ok: [redis-node-8] => {
+    "msg": "redis-node-8 is already in cluster: True"
+}
+
+TASK [Install build dependencies] **********************************************
+skipping: [redis-node-7]
+skipping: [redis-node-8]
+
+TASK [Remove old Redis source directory] ***************************************
+skipping: [redis-node-7]
+skipping: [redis-node-8]
+
+TASK [Download Redis source] ***************************************************
+skipping: [redis-node-7]
+skipping: [redis-node-8]
+
+TASK [Extract Redis source] ****************************************************
+skipping: [redis-node-7]
+skipping: [redis-node-8]
+
+TASK [Build Redis from source] *************************************************
+skipping: [redis-node-7]
+skipping: [redis-node-8]
+
+TASK [Install Redis binaries] **************************************************
+skipping: [redis-node-7]
+skipping: [redis-node-8]
+
+TASK [Create redis user] *******************************************************
+skipping: [redis-node-7]
+skipping: [redis-node-8]
+
+TASK [Create Redis directories] ************************************************
+skipping: [redis-node-7] => (item=/etc/redis) 
+skipping: [redis-node-7] => (item=/var/lib/redis) 
+skipping: [redis-node-7] => (item=/var/log/redis) 
+skipping: [redis-node-7]
+skipping: [redis-node-8] => (item=/etc/redis) 
+skipping: [redis-node-8] => (item=/var/lib/redis) 
+skipping: [redis-node-8] => (item=/var/log/redis) 
+skipping: [redis-node-8]
+
+TASK [Create Redis cluster configuration] **************************************
+skipping: [redis-node-7]
+skipping: [redis-node-8]
+
+TASK [Stop Redis if already running before first cluster join] *****************
+skipping: [redis-node-7]
+skipping: [redis-node-8]
+
+TASK [Start Redis with cluster config] *****************************************
+skipping: [redis-node-7]
+skipping: [redis-node-8]
+
+TASK [Wait for Redis port] *****************************************************
+ok: [redis-node-8]
+ok: [redis-node-7]
+
+TASK [Check Redis ping] ********************************************************
+ok: [redis-node-7]
+ok: [redis-node-8]
+
+TASK [Show Redis ping result] **************************************************
+ok: [redis-node-7] => {
+    "msg": "redis-node-7 ping result: PONG"
+}
+ok: [redis-node-8] => {
+    "msg": "redis-node-8 ping result: PONG"
+}
+
+PLAY [Add new master and replica to existing Redis Cluster] ********************
+
+TASK [Check current cluster health before scale out] ***************************
+ok: [redis-node-1]
+
+TASK [Fail if cluster is not healthy before scale out] *************************
+skipping: [redis-node-1]
+
+TASK [Add redis-node-7 as new master if not already added] *********************
+ok: [redis-node-1]
+
+TASK [Get redis-node-7 node id] ************************************************
+ok: [redis-node-1]
+
+TASK [Add redis-node-8 as replica of redis-node-7 if not already added] ********
+ok: [redis-node-1]
+
+TASK [Rebalance hash slots across all masters] *********************************
+changed: [redis-node-1]
+
+TASK [Show rebalance output] ***************************************************
+ok: [redis-node-1] => {
+    "msg": [
+        "\u001b[29;1m>>> Performing Cluster Check (using node 10.10.0.11:6379)",
+        "\u001b[0m\u001b[32;1m[OK] All nodes agree about slots configuration.",
+        "\u001b[0m\u001b[29;1m>>> Check for open slots...",
+        "\u001b[0m\u001b[29;1m>>> Check slots coverage...",
+        "\u001b[0m\u001b[32;1m[OK] All 16384 slots covered.",
+        "\u001b[0m\u001b[33;1m*** No rebalancing needed! All nodes are within the 2.00% threshold.",
+        "\u001b[0m"
+    ]
+}
+
+TASK [Show final cluster nodes after scale out] ********************************
+ok: [redis-node-1]
+
+TASK [Print final cluster nodes] ***********************************************
+ok: [redis-node-1] => {
+    "msg": [
+        "1b06dce38dfd87e126719e1e946f1a9516270410 10.10.0.11:6379@16379 myself,slave 3efa33e51b0212645ceceb81557a1e635786f2ac 0 1781369741000 7 connected",
+        "6beaf6bc48b0e50364d192d3680f3ae12181fc70 10.10.0.18:6379@16379 slave e13c092179a9a76c16b9d5866aabeba913b728b9 0 1781369742000 11 connected",
+        "41d7ccc44b1a30973e6c9f5c24b555dc1d11a049 10.10.0.12:6379@16379 slave 947edee7385236a6d7aba0574e50249cac2479f1 0 1781369742510 8 connected",
+        "e13c092179a9a76c16b9d5866aabeba913b728b9 10.10.0.17:6379@16379 master - 0 1781369743000 11 connected 0-1364 5461-6826 10923-12287",
+        "3efa33e51b0212645ceceb81557a1e635786f2ac 10.10.0.15:6379@16379 master - 0 1781369742000 7 connected 1365-5460",
+        "92ddefd8de0f3b172987b1de50384a08c61fc78e 10.10.0.14:6379@16379 master - 0 1781369743329 9 connected 12288-16383",
+        "42a5db5ad5d3730307e7c80077be15b337d2b361 10.10.0.13:6379@16379 slave 92ddefd8de0f3b172987b1de50384a08c61fc78e 0 1781369743838 9 connected",
+        "947edee7385236a6d7aba0574e50249cac2479f1 10.10.0.16:6379@16379 master - 0 1781369742819 8 connected 6827-10922"
+    ]
+}
+
+TASK [Verify cluster health after scale out] ***********************************
+ok: [redis-node-1]
+
+TASK [Fail if cluster is not healthy after scale out] **************************
+skipping: [redis-node-1]
+
+PLAY RECAP *********************************************************************
+redis-node-1               : ok=9    changed=1    unreachable=0    failed=0    skipped=2    rescued=0    ignored=0   
+redis-node-7               : ok=6    changed=0    unreachable=0    failed=0    skipped=11   rescued=0    ignored=0   
+redis-node-8               : ok=6    changed=0    unreachable=0    failed=0    skipped=11   rescued=0    ignored=0   
+
+
+===== Full Verification After Scale Out =====
+
+PLAY [Full Redis Cluster verification] *****************************************
+
+TASK [Run full Redis Cluster verification] *************************************
+ok: [redis-node-1]
+
+TASK [Show full verification result] *******************************************
+ok: [redis-node-1] => {
+    "msg": [
+        "===== Full Redis Cluster Verification =====",
+        "",
+        "[PASS] Cluster state is ok",
+        "[PASS] All 16384 hash slots are covered",
+        "[PASS] All nodes are running the same Redis version: 7.2.6",
+        "[PASS] Every master has at least one replica",
+        "[PASS] All replicas have master_link_status:up",
+        "[PASS] Data integrity verified: all 1000 keys matched",
+        "",
+        "===== Verification Summary =====",
+        "Passed checks: 6",
+        "Failed checks: 0",
+        "FULL VERIFICATION RESULT: PASS"
+    ]
+}
+
+PLAY RECAP *********************************************************************
+redis-node-1               : ok=2    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+
+===== Redis Scale Out Completed =====
+Sat Jun 13 22:25:45 IST 2026

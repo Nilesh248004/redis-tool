@@ -1,0 +1,493 @@
+===== Redis Rollback Started =====
+Sat Jun 13 22:41:53 IST 2026
+
+===== Running Rollback Playbook =====
+
+PLAY [Rollback Redis version on all cluster nodes] *****************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [redis-node-1]
+
+TASK [Show rollback node] ******************************************************
+ok: [redis-node-1] => {
+    "msg": "Rolling back redis-node-1 to Redis 7.0.15"
+}
+
+TASK [Install build dependencies] **********************************************
+ok: [redis-node-1]
+
+TASK [Remove old Redis rollback source directory] ******************************
+changed: [redis-node-1]
+
+TASK [Download target Redis version] *******************************************
+ok: [redis-node-1]
+
+TASK [Extract target Redis source] *********************************************
+changed: [redis-node-1]
+
+TASK [Build target Redis version] **********************************************
+changed: [redis-node-1]
+
+TASK [Install target Redis binaries] *******************************************
+changed: [redis-node-1]
+
+TASK [Shutdown Redis before restart] *******************************************
+changed: [redis-node-1]
+
+TASK [Remove incompatible Redis persistence files before rollback start] *******
+changed: [redis-node-1]
+
+TASK [Start Redis with existing cluster config] ********************************
+changed: [redis-node-1]
+
+TASK [Wait for Redis port] *****************************************************
+ok: [redis-node-1]
+
+TASK [Check Redis version after rollback] **************************************
+ok: [redis-node-1]
+
+TASK [Show Redis version after rollback] ***************************************
+ok: [redis-node-1] => {
+    "msg": "redis-node-1 -> redis_version:7.0.15"
+}
+
+TASK [Check cluster state after this node rollback] ****************************
+ok: [redis-node-1]
+
+TASK [Fail if cluster is not healthy after this rollback] **********************
+skipping: [redis-node-1]
+
+PLAY [Rollback Redis version on all cluster nodes] *****************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [redis-node-2]
+
+TASK [Show rollback node] ******************************************************
+ok: [redis-node-2] => {
+    "msg": "Rolling back redis-node-2 to Redis 7.0.15"
+}
+
+TASK [Install build dependencies] **********************************************
+ok: [redis-node-2]
+
+TASK [Remove old Redis rollback source directory] ******************************
+ok: [redis-node-2]
+
+TASK [Download target Redis version] *******************************************
+ok: [redis-node-2]
+
+TASK [Extract target Redis source] *********************************************
+changed: [redis-node-2]
+
+TASK [Build target Redis version] **********************************************
+changed: [redis-node-2]
+
+TASK [Install target Redis binaries] *******************************************
+changed: [redis-node-2]
+
+TASK [Shutdown Redis before restart] *******************************************
+changed: [redis-node-2]
+
+TASK [Remove incompatible Redis persistence files before rollback start] *******
+changed: [redis-node-2]
+
+TASK [Start Redis with existing cluster config] ********************************
+changed: [redis-node-2]
+
+TASK [Wait for Redis port] *****************************************************
+ok: [redis-node-2]
+
+TASK [Check Redis version after rollback] **************************************
+ok: [redis-node-2]
+
+TASK [Show Redis version after rollback] ***************************************
+ok: [redis-node-2] => {
+    "msg": "redis-node-2 -> redis_version:7.0.15"
+}
+
+TASK [Check cluster state after this node rollback] ****************************
+ok: [redis-node-2 -> redis-node-1(localhost)]
+
+TASK [Fail if cluster is not healthy after this rollback] **********************
+skipping: [redis-node-2]
+
+PLAY [Rollback Redis version on all cluster nodes] *****************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [redis-node-3]
+
+TASK [Show rollback node] ******************************************************
+ok: [redis-node-3] => {
+    "msg": "Rolling back redis-node-3 to Redis 7.0.15"
+}
+
+TASK [Install build dependencies] **********************************************
+ok: [redis-node-3]
+
+TASK [Remove old Redis rollback source directory] ******************************
+ok: [redis-node-3]
+
+TASK [Download target Redis version] *******************************************
+ok: [redis-node-3]
+
+TASK [Extract target Redis source] *********************************************
+changed: [redis-node-3]
+
+TASK [Build target Redis version] **********************************************
+changed: [redis-node-3]
+
+TASK [Install target Redis binaries] *******************************************
+changed: [redis-node-3]
+
+TASK [Shutdown Redis before restart] *******************************************
+changed: [redis-node-3]
+
+TASK [Remove incompatible Redis persistence files before rollback start] *******
+changed: [redis-node-3]
+
+TASK [Start Redis with existing cluster config] ********************************
+changed: [redis-node-3]
+
+TASK [Wait for Redis port] *****************************************************
+ok: [redis-node-3]
+
+TASK [Check Redis version after rollback] **************************************
+ok: [redis-node-3]
+
+TASK [Show Redis version after rollback] ***************************************
+ok: [redis-node-3] => {
+    "msg": "redis-node-3 -> redis_version:7.0.15"
+}
+
+TASK [Check cluster state after this node rollback] ****************************
+ok: [redis-node-3 -> redis-node-1(localhost)]
+
+TASK [Fail if cluster is not healthy after this rollback] **********************
+skipping: [redis-node-3]
+
+PLAY [Rollback Redis version on all cluster nodes] *****************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [redis-node-4]
+
+TASK [Show rollback node] ******************************************************
+ok: [redis-node-4] => {
+    "msg": "Rolling back redis-node-4 to Redis 7.0.15"
+}
+
+TASK [Install build dependencies] **********************************************
+ok: [redis-node-4]
+
+TASK [Remove old Redis rollback source directory] ******************************
+ok: [redis-node-4]
+
+TASK [Download target Redis version] *******************************************
+ok: [redis-node-4]
+
+TASK [Extract target Redis source] *********************************************
+changed: [redis-node-4]
+
+TASK [Build target Redis version] **********************************************
+changed: [redis-node-4]
+
+TASK [Install target Redis binaries] *******************************************
+changed: [redis-node-4]
+
+TASK [Shutdown Redis before restart] *******************************************
+changed: [redis-node-4]
+
+TASK [Remove incompatible Redis persistence files before rollback start] *******
+changed: [redis-node-4]
+
+TASK [Start Redis with existing cluster config] ********************************
+changed: [redis-node-4]
+
+TASK [Wait for Redis port] *****************************************************
+ok: [redis-node-4]
+
+TASK [Check Redis version after rollback] **************************************
+ok: [redis-node-4]
+
+TASK [Show Redis version after rollback] ***************************************
+ok: [redis-node-4] => {
+    "msg": "redis-node-4 -> redis_version:7.0.15"
+}
+
+TASK [Check cluster state after this node rollback] ****************************
+ok: [redis-node-4 -> redis-node-1(localhost)]
+
+TASK [Fail if cluster is not healthy after this rollback] **********************
+skipping: [redis-node-4]
+
+PLAY [Rollback Redis version on all cluster nodes] *****************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [redis-node-5]
+
+TASK [Show rollback node] ******************************************************
+ok: [redis-node-5] => {
+    "msg": "Rolling back redis-node-5 to Redis 7.0.15"
+}
+
+TASK [Install build dependencies] **********************************************
+ok: [redis-node-5]
+
+TASK [Remove old Redis rollback source directory] ******************************
+ok: [redis-node-5]
+
+TASK [Download target Redis version] *******************************************
+ok: [redis-node-5]
+
+TASK [Extract target Redis source] *********************************************
+changed: [redis-node-5]
+
+TASK [Build target Redis version] **********************************************
+changed: [redis-node-5]
+
+TASK [Install target Redis binaries] *******************************************
+changed: [redis-node-5]
+
+TASK [Shutdown Redis before restart] *******************************************
+changed: [redis-node-5]
+
+TASK [Remove incompatible Redis persistence files before rollback start] *******
+changed: [redis-node-5]
+
+TASK [Start Redis with existing cluster config] ********************************
+changed: [redis-node-5]
+
+TASK [Wait for Redis port] *****************************************************
+ok: [redis-node-5]
+
+TASK [Check Redis version after rollback] **************************************
+ok: [redis-node-5]
+
+TASK [Show Redis version after rollback] ***************************************
+ok: [redis-node-5] => {
+    "msg": "redis-node-5 -> redis_version:7.0.15"
+}
+
+TASK [Check cluster state after this node rollback] ****************************
+ok: [redis-node-5 -> redis-node-1(localhost)]
+
+TASK [Fail if cluster is not healthy after this rollback] **********************
+skipping: [redis-node-5]
+
+PLAY [Rollback Redis version on all cluster nodes] *****************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [redis-node-6]
+
+TASK [Show rollback node] ******************************************************
+ok: [redis-node-6] => {
+    "msg": "Rolling back redis-node-6 to Redis 7.0.15"
+}
+
+TASK [Install build dependencies] **********************************************
+ok: [redis-node-6]
+
+TASK [Remove old Redis rollback source directory] ******************************
+ok: [redis-node-6]
+
+TASK [Download target Redis version] *******************************************
+ok: [redis-node-6]
+
+TASK [Extract target Redis source] *********************************************
+changed: [redis-node-6]
+
+TASK [Build target Redis version] **********************************************
+changed: [redis-node-6]
+
+TASK [Install target Redis binaries] *******************************************
+changed: [redis-node-6]
+
+TASK [Shutdown Redis before restart] *******************************************
+changed: [redis-node-6]
+
+TASK [Remove incompatible Redis persistence files before rollback start] *******
+changed: [redis-node-6]
+
+TASK [Start Redis with existing cluster config] ********************************
+changed: [redis-node-6]
+
+TASK [Wait for Redis port] *****************************************************
+ok: [redis-node-6]
+
+TASK [Check Redis version after rollback] **************************************
+ok: [redis-node-6]
+
+TASK [Show Redis version after rollback] ***************************************
+ok: [redis-node-6] => {
+    "msg": "redis-node-6 -> redis_version:7.0.15"
+}
+
+TASK [Check cluster state after this node rollback] ****************************
+ok: [redis-node-6 -> redis-node-1(localhost)]
+
+TASK [Fail if cluster is not healthy after this rollback] **********************
+skipping: [redis-node-6]
+
+PLAY [Rollback Redis version on all cluster nodes] *****************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [redis-node-7]
+
+TASK [Show rollback node] ******************************************************
+ok: [redis-node-7] => {
+    "msg": "Rolling back redis-node-7 to Redis 7.0.15"
+}
+
+TASK [Install build dependencies] **********************************************
+ok: [redis-node-7]
+
+TASK [Remove old Redis rollback source directory] ******************************
+ok: [redis-node-7]
+
+TASK [Download target Redis version] *******************************************
+changed: [redis-node-7]
+
+TASK [Extract target Redis source] *********************************************
+changed: [redis-node-7]
+
+TASK [Build target Redis version] **********************************************
+changed: [redis-node-7]
+
+TASK [Install target Redis binaries] *******************************************
+changed: [redis-node-7]
+
+TASK [Shutdown Redis before restart] *******************************************
+changed: [redis-node-7]
+
+TASK [Remove incompatible Redis persistence files before rollback start] *******
+changed: [redis-node-7]
+
+TASK [Start Redis with existing cluster config] ********************************
+changed: [redis-node-7]
+
+TASK [Wait for Redis port] *****************************************************
+ok: [redis-node-7]
+
+TASK [Check Redis version after rollback] **************************************
+ok: [redis-node-7]
+
+TASK [Show Redis version after rollback] ***************************************
+ok: [redis-node-7] => {
+    "msg": "redis-node-7 -> redis_version:7.0.15"
+}
+
+TASK [Check cluster state after this node rollback] ****************************
+ok: [redis-node-7 -> redis-node-1(localhost)]
+
+TASK [Fail if cluster is not healthy after this rollback] **********************
+skipping: [redis-node-7]
+
+PLAY [Rollback Redis version on all cluster nodes] *****************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [redis-node-8]
+
+TASK [Show rollback node] ******************************************************
+ok: [redis-node-8] => {
+    "msg": "Rolling back redis-node-8 to Redis 7.0.15"
+}
+
+TASK [Install build dependencies] **********************************************
+ok: [redis-node-8]
+
+TASK [Remove old Redis rollback source directory] ******************************
+ok: [redis-node-8]
+
+TASK [Download target Redis version] *******************************************
+changed: [redis-node-8]
+
+TASK [Extract target Redis source] *********************************************
+changed: [redis-node-8]
+
+TASK [Build target Redis version] **********************************************
+changed: [redis-node-8]
+
+TASK [Install target Redis binaries] *******************************************
+changed: [redis-node-8]
+
+TASK [Shutdown Redis before restart] *******************************************
+changed: [redis-node-8]
+
+TASK [Remove incompatible Redis persistence files before rollback start] *******
+changed: [redis-node-8]
+
+TASK [Start Redis with existing cluster config] ********************************
+changed: [redis-node-8]
+
+TASK [Wait for Redis port] *****************************************************
+ok: [redis-node-8]
+
+TASK [Check Redis version after rollback] **************************************
+ok: [redis-node-8]
+
+TASK [Show Redis version after rollback] ***************************************
+ok: [redis-node-8] => {
+    "msg": "redis-node-8 -> redis_version:7.0.15"
+}
+
+TASK [Check cluster state after this node rollback] ****************************
+ok: [redis-node-8 -> redis-node-1(localhost)]
+
+TASK [Fail if cluster is not healthy after this rollback] **********************
+skipping: [redis-node-8]
+
+PLAY [Final rollback verification] *********************************************
+
+TASK [Show final Redis versions] ***********************************************
+ok: [redis-node-1]
+
+TASK [Print final Redis versions] **********************************************
+ok: [redis-node-1] => {
+    "msg": [
+        "10.10.0.11 -> 7.0.15",
+        "10.10.0.12 -> 7.0.15",
+        "10.10.0.13 -> 7.0.15",
+        "10.10.0.14 -> 7.0.15",
+        "10.10.0.15 -> 7.0.15",
+        "10.10.0.16 -> 7.0.15",
+        "10.10.0.17 -> 7.0.15",
+        "10.10.0.18 -> 7.0.15"
+    ]
+}
+
+TASK [Show cluster state] ******************************************************
+ok: [redis-node-1]
+
+TASK [Print cluster state] *****************************************************
+ok: [redis-node-1] => {
+    "msg": "cluster_state:ok"
+}
+
+PLAY RECAP *********************************************************************
+redis-node-1               : ok=19   changed=7    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+redis-node-2               : ok=15   changed=6    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+redis-node-3               : ok=15   changed=6    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+redis-node-4               : ok=15   changed=6    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+redis-node-5               : ok=15   changed=6    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+redis-node-6               : ok=15   changed=6    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+redis-node-7               : ok=15   changed=7    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+redis-node-8               : ok=15   changed=7    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+
+
+===== Full Verification After Rollback =====
+
+PLAY [Full Redis Cluster verification] *****************************************
+
+TASK [Run full Redis Cluster verification] *************************************
+[ERROR]: Task failed: Module failed: The command exited with a non-zero return code.
+Origin: /Users/nileshkrishnamurthy/Documents/Projects/submission/ansible/playbooks/verify_full.yml:7:7
+
+5   gather_facts: no
+6   tasks:
+7     - name: Run full Redis Cluster verification
+        ^ column 7
+
+fatal: [redis-node-1]: FAILED! => {"changed": false, "changed_when_result": false, "cmd": "PASS_COUNT=0\nFAIL_COUNT=0\nprint_pass() {\n  echo \"[PASS] $1\"\n  PASS_COUNT=$((PASS_COUNT + 1))\n}\nprint_fail() {\n  echo \"[FAIL] $1\"\n  FAIL_COUNT=$((FAIL_COUNT + 1))\n}\necho \"===== Full Redis Cluster Verification =====\"\necho \"\"\n# -------------------------------------------------\n# 1. Cluster State Check\n# -------------------------------------------------\ncluster_info=$(redis-cli -h 10.10.0.11 -p 6379 cluster info)\ncluster_state=$(echo \"$cluster_info\" | grep \"^cluster_state:\" | cut -d: -f2 | tr -d '\\r')\nif [ \"$cluster_state\" = \"ok\" ]; then\n  print_pass \"Cluster state is ok\"\nelse\n  print_fail \"Cluster state is not ok\"\nfi\n# -------------------------------------------------\n# 2. Hash Slot Coverage Check\n# -------------------------------------------------\nslots_assigned=$(echo \"$cluster_info\" | grep \"^cluster_slots_assigned:\" | cut -d: -f2 | tr -d '\\r')\nslots_ok=$(echo \"$cluster_info\" | grep \"^cluster_slots_ok:\" | cut -d: -f2 | tr -d '\\r')\nif [ \"$slots_assigned\" = \"16384\" ] && [ \"$slots_ok\" = \"16384\" ]; then\n  print_pass \"All 16384 hash slots are covered\"\nelse\n  print_fail \"Hash slots are not fully covered\"\nfi\n# -------------------------------------------------\n# 3. Version Consistency Check\n# -------------------------------------------------\nversions=\"\"\nfor ip in 10.10.0.11 10.10.0.12 10.10.0.13 10.10.0.14 10.10.0.15 10.10.0.16; do\n  version=$(redis-cli -h \"$ip\" -p 6379 info server | grep \"^redis_version:\" | cut -d: -f2 | tr -d '\\r')\n  versions=\"$versions $version\"\ndone\nunique_versions=$(echo \"$versions\" | tr ' ' '\\n' | grep -v '^$' | sort -u | wc -l | tr -d ' ')\nif [ \"$unique_versions\" = \"1\" ]; then\n  final_version=$(echo \"$versions\" | awk '{print $1}')\n  print_pass \"All nodes are running the same Redis version: $final_version\"\nelse\n  print_fail \"Redis versions are not same across all nodes: $versions\"\nfi\n# -------------------------------------------------\n# 4. Topology Health Check\n# Every master should have at least one replica\n# -------------------------------------------------\ncluster_nodes=$(redis-cli -h 10.10.0.11 -p 6379 cluster nodes)\nfailed_master_replica_check=0\nmaster_ids=$(echo \"$cluster_nodes\" | awk '$3 ~ /master/ && $3 !~ /fail/ {print $1}')\nfor master_id in $master_ids; do\n  replica_count=$(echo \"$cluster_nodes\" | awk -v mid=\"$master_id\" '$3 ~ /slave/ && $4 == mid {count++} END {print count+0}')\n  if [ \"$replica_count\" -lt 1 ]; then\n    failed_master_replica_check=1\n  fi\ndone\nif [ \"$failed_master_replica_check\" = \"0\" ]; then\n  print_pass \"Every master has at least one replica\"\nelse\n  print_fail \"One or more masters do not have replicas\"\nfi\n# -------------------------------------------------\n# 5. Replication Link Status Check\n# All replicas should have master_link_status:up\n# -------------------------------------------------\nfailed_replication_check=0\nfor ip in 10.10.0.11 10.10.0.12 10.10.0.13 10.10.0.14 10.10.0.15 10.10.0.16; do\n  replication_info=$(redis-cli -h \"$ip\" -p 6379 info replication)\n  role=$(echo \"$replication_info\" | grep \"^role:\" | cut -d: -f2 | tr -d '\\r')\n  if [ \"$role\" = \"slave\" ]; then\n    link_status=$(echo \"$replication_info\" | grep \"^master_link_status:\" | cut -d: -f2 | tr -d '\\r')\n    if [ \"$link_status\" != \"up\" ]; then\n      failed_replication_check=1\n    fi\n  fi\ndone\nif [ \"$failed_replication_check\" = \"0\" ]; then\n  print_pass \"All replicas have master_link_status:up\"\nelse\n  print_fail \"One or more replicas have replication link down\"\nfi\n# -------------------------------------------------\n# 6. Data Integrity Check\n# Verify 1000 seeded keys\n# -------------------------------------------------\nfailed_keys=0\nfor i in $(seq 1 1000); do\n  value=$(redis-cli -c -h 10.10.0.11 -p 6379 GET \"user:$i\")\n  if [ \"$value\" != \"value-$i\" ]; then\n    failed_keys=$((failed_keys + 1))\n  fi\ndone\nif [ \"$failed_keys\" = \"0\" ]; then\n  print_pass \"Data integrity verified: all 1000 keys matched\"\nelse\n  print_fail \"Data integrity failed: $failed_keys keys mismatched\"\nfi\necho \"\"\necho \"===== Verification Summary =====\"\necho \"Passed checks: $PASS_COUNT\"\necho \"Failed checks: $FAIL_COUNT\"\nif [ \"$FAIL_COUNT\" = \"0\" ]; then\n  echo \"FULL VERIFICATION RESULT: PASS\"\n  exit 0\nelse\n  echo \"FULL VERIFICATION RESULT: FAIL\"\n  exit 1\nfi\n", "delta": "0:00:00.429489", "end": "2026-06-13 17:16:36.484056", "msg": "The command exited with a non-zero return code.", "rc": 1, "start": "2026-06-13 17:16:36.054567", "stderr": "", "stderr_lines": [], "stdout": "===== Full Redis Cluster Verification =====\n\n[PASS] Cluster state is ok\n[PASS] All 16384 hash slots are covered\n[PASS] All nodes are running the same Redis version: 7.0.15\n[PASS] Every master has at least one replica\n[PASS] All replicas have master_link_status:up\n[FAIL] Data integrity failed: 1000 keys mismatched\n\n===== Verification Summary =====\nPassed checks: 5\nFailed checks: 1\nFULL VERIFICATION RESULT: FAIL", "stdout_lines": ["===== Full Redis Cluster Verification =====", "", "[PASS] Cluster state is ok", "[PASS] All 16384 hash slots are covered", "[PASS] All nodes are running the same Redis version: 7.0.15", "[PASS] Every master has at least one replica", "[PASS] All replicas have master_link_status:up", "[FAIL] Data integrity failed: 1000 keys mismatched", "", "===== Verification Summary =====", "Passed checks: 5", "Failed checks: 1", "FULL VERIFICATION RESULT: FAIL"]}
+
+PLAY RECAP *********************************************************************
+redis-node-1               : ok=0    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+
