@@ -333,4 +333,5 @@ Both are available through the CLI:
 
 ./redis-tool scale --add-nodes 2
 ./redis-tool rollback --target-version 7.0.15
+
 ---
