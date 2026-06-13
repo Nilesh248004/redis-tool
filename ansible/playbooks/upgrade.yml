@@ -1,42 +1,50 @@
 ---
-- name: Rolling upgrade Redis node
+- name: Pre-upgrade health check
+  hosts: redis-node-1
+  become: no
+  gather_facts: no
+
+  tasks:
+    - name: Check cluster state before upgrade
+      shell: |
+        redis-cli -h 10.10.0.11 -p 6379 cluster info | grep "^cluster_state:"
+      register: pre_cluster_state
+      changed_when: false
+
+    - name: Fail if cluster is not healthy before upgrade
+      fail:
+        msg: "Cluster is not healthy before upgrade: {{ pre_cluster_state.stdout }}"
+      when: "'cluster_state:ok' not in pre_cluster_state.stdout"
+
+
+- name: Upgrade Redis replicas first
   hosts: redis_nodes
   become: yes
   gather_facts: yes
   serial: 1
 
   vars:
-    target_version: "{{ target_version | default('7.2.6') }}"
-    redis_tarball: "redis-{{ target_version }}.tar.gz"
+    target_redis_version: "{{ target_version | default('7.2.6') }}"
+    redis_tarball: "redis-{{ target_redis_version }}.tar.gz"
     redis_url: "http://download.redis.io/releases/{{ redis_tarball }}"
-    redis_src_dir: "/tmp/redis-{{ target_version }}"
-
-  pre_tasks:
-    - name: Check cluster state before upgrade
-      shell: redis-cli -h 10.10.0.11 -p 6379 cluster info | grep cluster_state
-      register: pre_cluster_state
-      changed_when: false
-      run_once: true
-
-    - name: Fail if cluster is not healthy before upgrade
-      fail:
-        msg: "Cluster is not healthy before upgrade. Current state: {{ pre_cluster_state.stdout }}"
-      when: "'cluster_state:ok' not in pre_cluster_state.stdout"
-      run_once: true
+    redis_src_dir: "/tmp/redis-{{ target_redis_version }}"
 
   tasks:
-    - name: Show node selected for rolling upgrade
-      debug:
-        msg: "Upgrading {{ inventory_hostname }} to Redis {{ target_version }}"
-
-    - name: Check current Redis version
-      command: redis-server --version
-      register: current_redis_version
+    - name: Check current Redis role
+      shell: |
+        redis-cli -h "{{ internal_ip }}" -p 6379 info replication | grep "^role:" | cut -d: -f2 | tr -d '\r'
+      register: redis_role
       changed_when: false
 
-    - name: Show current Redis version
+    - name: Check current Redis version
+      shell: |
+        redis-cli -h "{{ internal_ip }}" -p 6379 info server | grep "^redis_version:" | cut -d: -f2 | tr -d '\r'
+      register: current_version
+      changed_when: false
+
+    - name: Show replica upgrade decision
       debug:
-        msg: "{{ inventory_hostname }} current version: {{ current_redis_version.stdout }}"
+        msg: "{{ inventory_hostname }} role={{ redis_role.stdout }} version={{ current_version.stdout }} target={{ target_redis_version }}"
 
     - name: Install build dependencies
       apt:
@@ -49,79 +57,335 @@
           - gcc
         state: present
         update_cache: yes
+      when:
+        - redis_role.stdout == "slave"
+        - current_version.stdout != target_redis_version
 
-    - name: Remove old source directory for target version
+    - name: Remove old source directory
       file:
         path: "{{ redis_src_dir }}"
         state: absent
+      when:
+        - redis_role.stdout == "slave"
+        - current_version.stdout != target_redis_version
 
     - name: Download Redis target version source
       get_url:
         url: "{{ redis_url }}"
         dest: "/tmp/{{ redis_tarball }}"
         mode: "0644"
+      when:
+        - redis_role.stdout == "slave"
+        - current_version.stdout != target_redis_version
 
     - name: Extract Redis target version source
       unarchive:
         src: "/tmp/{{ redis_tarball }}"
         dest: /tmp
         remote_src: yes
+      when:
+        - redis_role.stdout == "slave"
+        - current_version.stdout != target_redis_version
 
-    - name: Build Redis target version from source
+    - name: Build Redis target version
       command: make -j2
       args:
         chdir: "{{ redis_src_dir }}"
+      when:
+        - redis_role.stdout == "slave"
+        - current_version.stdout != target_redis_version
 
-    - name: Stop Redis gracefully on this node
-      shell: redis-cli -h "{{ internal_ip }}" -p 6379 shutdown nosave
+    - name: Stop Redis replica
+      shell: |
+        redis-cli -h "{{ internal_ip }}" -p 6379 shutdown nosave
       ignore_errors: yes
+      when:
+        - redis_role.stdout == "slave"
+        - current_version.stdout != target_redis_version
 
-    - name: Wait for Redis port to stop
+    - name: Wait for replica port to stop
       wait_for:
         host: "{{ internal_ip }}"
         port: 6379
         state: stopped
         timeout: 30
+      when:
+        - redis_role.stdout == "slave"
+        - current_version.stdout != target_redis_version
 
-    - name: Install Redis target version binaries
+    - name: Install Redis target binaries
       command: make install
       args:
         chdir: "{{ redis_src_dir }}"
+      when:
+        - redis_role.stdout == "slave"
+        - current_version.stdout != target_redis_version
 
-    - name: Start Redis again using existing cluster config
+    - name: Start Redis replica
       command: redis-server /etc/redis/redis.conf
+      when:
+        - redis_role.stdout == "slave"
+        - current_version.stdout != target_redis_version
 
-    - name: Wait for Redis port to start
+    - name: Wait for replica port to start
       wait_for:
         host: "{{ internal_ip }}"
         port: 6379
         state: started
         timeout: 60
+      when:
+        - redis_role.stdout == "slave"
+        - current_version.stdout != target_redis_version
 
-    - name: Check Redis ping after upgrade
-      command: redis-cli -h "{{ internal_ip }}" -p 6379 ping
-      register: redis_ping
+    - name: Check replica version after upgrade
+      shell: |
+        redis-cli -h "{{ internal_ip }}" -p 6379 info server | grep "^redis_version:"
+      register: replica_upgraded_version
       changed_when: false
+      when:
+        - redis_role.stdout == "slave"
+        - current_version.stdout != target_redis_version
 
-    - name: Verify upgraded Redis version
-      command: redis-server --version
-      register: upgraded_redis_version
-      changed_when: false
-
-    - name: Show upgraded Redis version
+    - name: Show replica upgrade result
       debug:
-        msg:
-          - "{{ inventory_hostname }} ping result: {{ redis_ping.stdout }}"
-          - "{{ inventory_hostname }} upgraded version: {{ upgraded_redis_version.stdout }}"
+        msg: "{{ inventory_hostname }} upgraded replica -> {{ replica_upgraded_version.stdout | default('already target version or not replica') }}"
 
-    - name: Wait for cluster to become healthy after this node upgrade
-      shell: redis-cli -h 10.10.0.11 -p 6379 cluster info | grep cluster_state
-      register: post_cluster_state
-      changed_when: false
+    - name: Verify cluster state after replica upgrade
+      shell: |
+        redis-cli -h 10.10.0.11 -p 6379 cluster info | grep "^cluster_state:"
+      delegate_to: redis-node-1
+      become: no
+      register: replica_cluster_state
       retries: 10
       delay: 3
-      until: "'cluster_state:ok' in post_cluster_state.stdout"
+      until: "'cluster_state:ok' in replica_cluster_state.stdout"
+      changed_when: false
+      when:
+        - redis_role.stdout == "slave"
+        - current_version.stdout != target_redis_version
 
-    - name: Show cluster state after this node upgrade
+
+- name: Upgrade Redis masters using failover
+  hosts: redis_nodes
+  become: yes
+  gather_facts: yes
+  serial: 1
+
+  vars:
+    target_redis_version: "{{ target_version | default('7.2.6') }}"
+    redis_tarball: "redis-{{ target_redis_version }}.tar.gz"
+    redis_url: "http://download.redis.io/releases/{{ redis_tarball }}"
+    redis_src_dir: "/tmp/redis-{{ target_redis_version }}"
+
+  tasks:
+    - name: Check current Redis role before master upgrade
+      shell: |
+        redis-cli -h "{{ internal_ip }}" -p 6379 info replication | grep "^role:" | cut -d: -f2 | tr -d '\r'
+      register: redis_role
+      changed_when: false
+
+    - name: Check current Redis version before master upgrade
+      shell: |
+        redis-cli -h "{{ internal_ip }}" -p 6379 info server | grep "^redis_version:" | cut -d: -f2 | tr -d '\r'
+      register: current_version
+      changed_when: false
+
+    - name: Show master upgrade decision
       debug:
-        msg: "Cluster state after upgrading {{ inventory_hostname }}: {{ post_cluster_state.stdout }}"
+        msg: "{{ inventory_hostname }} role={{ redis_role.stdout }} version={{ current_version.stdout }} target={{ target_redis_version }}"
+
+    - name: Get current master node id
+      shell: |
+        redis-cli -h 10.10.0.11 -p 6379 cluster nodes | grep "{{ internal_ip }}:6379" | awk '{print $1}'
+      delegate_to: redis-node-1
+      become: no
+      register: master_id
+      changed_when: false
+      when:
+        - redis_role.stdout == "master"
+        - current_version.stdout != target_redis_version
+
+    - name: Get replica IP for this master
+      shell: |
+        redis-cli -h 10.10.0.11 -p 6379 cluster nodes | awk -v mid="{{ master_id.stdout }}" '$3 ~ /slave/ && $4 == mid {split($2,a,":"); print a[1]; exit}'
+      delegate_to: redis-node-1
+      become: no
+      register: replica_ip
+      changed_when: false
+      when:
+        - redis_role.stdout == "master"
+        - current_version.stdout != target_redis_version
+
+    - name: Fail if master has no replica for failover
+      fail:
+        msg: "No replica found for master {{ inventory_hostname }}. Cannot safely upgrade master."
+      when:
+        - redis_role.stdout == "master"
+        - current_version.stdout != target_redis_version
+        - replica_ip.stdout == ""
+
+    - name: Trigger CLUSTER FAILOVER on replica
+      shell: |
+        redis-cli -h "{{ replica_ip.stdout }}" -p 6379 cluster failover
+      delegate_to: redis-node-1
+      become: no
+      when:
+        - redis_role.stdout == "master"
+        - current_version.stdout != target_redis_version
+
+    - name: Wait until old master becomes replica
+      shell: |
+        redis-cli -h "{{ internal_ip }}" -p 6379 info replication | grep "^role:" | cut -d: -f2 | tr -d '\r'
+      register: role_after_failover
+      retries: 20
+      delay: 3
+      until: role_after_failover.stdout == "slave"
+      changed_when: false
+      when:
+        - redis_role.stdout == "master"
+        - current_version.stdout != target_redis_version
+
+    - name: Install build dependencies for old master
+      apt:
+        name:
+          - build-essential
+          - tcl
+          - wget
+          - tar
+          - make
+          - gcc
+        state: present
+        update_cache: yes
+      when:
+        - redis_role.stdout == "master"
+        - current_version.stdout != target_redis_version
+
+    - name: Remove old source directory for master
+      file:
+        path: "{{ redis_src_dir }}"
+        state: absent
+      when:
+        - redis_role.stdout == "master"
+        - current_version.stdout != target_redis_version
+
+    - name: Download Redis target version source for master
+      get_url:
+        url: "{{ redis_url }}"
+        dest: "/tmp/{{ redis_tarball }}"
+        mode: "0644"
+      when:
+        - redis_role.stdout == "master"
+        - current_version.stdout != target_redis_version
+
+    - name: Extract Redis target version source for master
+      unarchive:
+        src: "/tmp/{{ redis_tarball }}"
+        dest: /tmp
+        remote_src: yes
+      when:
+        - redis_role.stdout == "master"
+        - current_version.stdout != target_redis_version
+
+    - name: Build Redis target version for master
+      command: make -j2
+      args:
+        chdir: "{{ redis_src_dir }}"
+      when:
+        - redis_role.stdout == "master"
+        - current_version.stdout != target_redis_version
+
+    - name: Stop old master after failover
+      shell: |
+        redis-cli -h "{{ internal_ip }}" -p 6379 shutdown nosave
+      ignore_errors: yes
+      when:
+        - redis_role.stdout == "master"
+        - current_version.stdout != target_redis_version
+
+    - name: Wait for old master port to stop
+      wait_for:
+        host: "{{ internal_ip }}"
+        port: 6379
+        state: stopped
+        timeout: 30
+      when:
+        - redis_role.stdout == "master"
+        - current_version.stdout != target_redis_version
+
+    - name: Install Redis target binaries on old master
+      command: make install
+      args:
+        chdir: "{{ redis_src_dir }}"
+      when:
+        - redis_role.stdout == "master"
+        - current_version.stdout != target_redis_version
+
+    - name: Start old master as replica
+      command: redis-server /etc/redis/redis.conf
+      when:
+        - redis_role.stdout == "master"
+        - current_version.stdout != target_redis_version
+
+    - name: Wait for old master port to start
+      wait_for:
+        host: "{{ internal_ip }}"
+        port: 6379
+        state: started
+        timeout: 60
+      when:
+        - redis_role.stdout == "master"
+        - current_version.stdout != target_redis_version
+
+    - name: Check upgraded old master version
+      shell: |
+        redis-cli -h "{{ internal_ip }}" -p 6379 info server | grep "^redis_version:"
+      register: master_upgraded_version
+      changed_when: false
+      when:
+        - redis_role.stdout == "master"
+        - current_version.stdout != target_redis_version
+
+    - name: Show master upgrade result
+      debug:
+        msg: "{{ inventory_hostname }} upgraded after failover -> {{ master_upgraded_version.stdout | default('already target version or not master') }}"
+
+    - name: Verify cluster state after master upgrade
+      shell: |
+        redis-cli -h 10.10.0.11 -p 6379 cluster info | grep "^cluster_state:"
+      delegate_to: redis-node-1
+      become: no
+      register: master_cluster_state
+      retries: 10
+      delay: 3
+      until: "'cluster_state:ok' in master_cluster_state.stdout"
+      changed_when: false
+      when:
+        - redis_role.stdout == "master"
+        - current_version.stdout != target_redis_version
+
+
+- name: Post-upgrade summary
+  hosts: redis-node-1
+  become: no
+  gather_facts: no
+
+  tasks:
+    - name: Show final cluster info
+      shell: |
+        redis-cli -h 10.10.0.11 -p 6379 cluster info
+      register: final_cluster_info
+      changed_when: false
+
+    - name: Print final cluster info
+      debug:
+        msg: "{{ final_cluster_info.stdout_lines }}"
+
+    - name: Show final cluster nodes
+      shell: |
+        redis-cli -h 10.10.0.11 -p 6379 cluster nodes
+      register: final_cluster_nodes
+      changed_when: false
+
+    - name: Print final cluster nodes
+      debug:
+        msg: "{{ final_cluster_nodes.stdout_lines }}"

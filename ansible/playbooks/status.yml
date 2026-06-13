@@ -1,42 +1,45 @@
 ---
-- name: Show clean Redis Cluster status
+- name: Show dynamic Redis Cluster status
   hosts: redis-node-1
   become: no
   gather_facts: no
 
   tasks:
-    - name: Cluster status output
+    - name: Print Redis Cluster status dynamically
       shell: |
-        echo "Cluster State: $(redis-cli -h 10.10.0.11 -p 6379 cluster info | grep cluster_state | cut -d: -f2 | tr -d '\r')"
+        echo "===== Redis Cluster Status ====="
         echo ""
 
+        cluster_state=$(redis-cli -h 10.10.0.11 -p 6379 cluster info | grep "^cluster_state:" | cut -d: -f2 | tr -d '\r')
+        echo "Cluster State: $cluster_state"
+        echo ""
+
+        cluster_nodes=$(redis-cli -h 10.10.0.11 -p 6379 cluster nodes)
+
         echo "MASTERS"
-        for ip in 10.10.0.11 10.10.0.12 10.10.0.13; do
-          version=$(redis-cli -h $ip -p 6379 info server | grep redis_version | cut -d: -f2 | tr -d '\r')
-          keys=$(redis-cli -h $ip -p 6379 dbsize)
-          mem=$(redis-cli -h $ip -p 6379 info memory | grep used_memory_human | cut -d: -f2 | tr -d '\r')
-
-          slots=$(redis-cli -h 10.10.0.11 -p 6379 cluster nodes | grep "$ip:6379" | grep master | awk '{print $9}')
-
+        echo "$cluster_nodes" | awk '$3 ~ /master/ && $3 !~ /fail/ {print $2}' | while read address; do
+          ip=$(echo "$address" | cut -d: -f1)
+          version=$(redis-cli -h "$ip" -p 6379 info server | grep "^redis_version:" | cut -d: -f2 | tr -d '\r')
+          keys=$(redis-cli -h "$ip" -p 6379 dbsize)
+          mem=$(redis-cli -h "$ip" -p 6379 info memory | grep "^used_memory_human:" | cut -d: -f2 | tr -d '\r')
+          slots=$(echo "$cluster_nodes" | grep "$ip:6379" | awk '{for(i=9;i<=NF;i++) printf $i" "; print ""}')
           echo "$ip:6379 [master] v$version slots: $slots keys: $keys mem: $mem"
         done
 
         echo ""
         echo "REPLICAS"
-        for ip in 10.10.0.14 10.10.0.15 10.10.0.16; do
-          version=$(redis-cli -h $ip -p 6379 info server | grep redis_version | cut -d: -f2 | tr -d '\r')
-          keys=$(redis-cli -h $ip -p 6379 dbsize)
-          mem=$(redis-cli -h $ip -p 6379 info memory | grep used_memory_human | cut -d: -f2 | tr -d '\r')
-
-          master_id=$(redis-cli -h $ip -p 6379 info replication | grep master_replid | cut -d: -f2 | tr -d '\r')
-          master_host=$(redis-cli -h $ip -p 6379 info replication | grep master_host | cut -d: -f2 | tr -d '\r')
-          master_port=$(redis-cli -h $ip -p 6379 info replication | grep master_port | cut -d: -f2 | tr -d '\r')
-
+        echo "$cluster_nodes" | awk '$3 ~ /slave/ && $3 !~ /fail/ {print $2}' | while read address; do
+          ip=$(echo "$address" | cut -d: -f1)
+          version=$(redis-cli -h "$ip" -p 6379 info server | grep "^redis_version:" | cut -d: -f2 | tr -d '\r')
+          keys=$(redis-cli -h "$ip" -p 6379 dbsize)
+          mem=$(redis-cli -h "$ip" -p 6379 info memory | grep "^used_memory_human:" | cut -d: -f2 | tr -d '\r')
+          master_host=$(redis-cli -h "$ip" -p 6379 info replication | grep "^master_host:" | cut -d: -f2 | tr -d '\r')
+          master_port=$(redis-cli -h "$ip" -p 6379 info replication | grep "^master_port:" | cut -d: -f2 | tr -d '\r')
           echo "$ip:6379 [replica] v$version replicating: $master_host:$master_port keys: $keys mem: $mem"
         done
-      register: clean_status
+      register: status_output
       changed_when: false
 
-    - name: Print clean Redis Cluster status
+    - name: Show status output
       debug:
-        msg: "{{ clean_status.stdout_lines }}"
+        msg: "{{ status_output.stdout_lines }}"

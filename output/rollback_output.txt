@@ -1,5 +1,5 @@
 ===== Redis Rollback Started =====
-Sat Jun 13 22:41:53 IST 2026
+Sun Jun 14 00:31:26 IST 2026
 
 ===== Running Rollback Playbook =====
 
@@ -71,7 +71,7 @@ TASK [Install build dependencies] **********************************************
 ok: [redis-node-2]
 
 TASK [Remove old Redis rollback source directory] ******************************
-ok: [redis-node-2]
+changed: [redis-node-2]
 
 TASK [Download target Redis version] *******************************************
 ok: [redis-node-2]
@@ -125,7 +125,7 @@ TASK [Install build dependencies] **********************************************
 ok: [redis-node-3]
 
 TASK [Remove old Redis rollback source directory] ******************************
-ok: [redis-node-3]
+changed: [redis-node-3]
 
 TASK [Download target Redis version] *******************************************
 ok: [redis-node-3]
@@ -179,7 +179,7 @@ TASK [Install build dependencies] **********************************************
 ok: [redis-node-4]
 
 TASK [Remove old Redis rollback source directory] ******************************
-ok: [redis-node-4]
+changed: [redis-node-4]
 
 TASK [Download target Redis version] *******************************************
 ok: [redis-node-4]
@@ -233,7 +233,7 @@ TASK [Install build dependencies] **********************************************
 ok: [redis-node-5]
 
 TASK [Remove old Redis rollback source directory] ******************************
-ok: [redis-node-5]
+changed: [redis-node-5]
 
 TASK [Download target Redis version] *******************************************
 ok: [redis-node-5]
@@ -287,7 +287,7 @@ TASK [Install build dependencies] **********************************************
 ok: [redis-node-6]
 
 TASK [Remove old Redis rollback source directory] ******************************
-ok: [redis-node-6]
+changed: [redis-node-6]
 
 TASK [Download target Redis version] *******************************************
 ok: [redis-node-6]
@@ -341,10 +341,10 @@ TASK [Install build dependencies] **********************************************
 ok: [redis-node-7]
 
 TASK [Remove old Redis rollback source directory] ******************************
-ok: [redis-node-7]
+changed: [redis-node-7]
 
 TASK [Download target Redis version] *******************************************
-changed: [redis-node-7]
+ok: [redis-node-7]
 
 TASK [Extract target Redis source] *********************************************
 changed: [redis-node-7]
@@ -395,10 +395,10 @@ TASK [Install build dependencies] **********************************************
 ok: [redis-node-8]
 
 TASK [Remove old Redis rollback source directory] ******************************
-ok: [redis-node-8]
+changed: [redis-node-8]
 
 TASK [Download target Redis version] *******************************************
-changed: [redis-node-8]
+ok: [redis-node-8]
 
 TASK [Extract target Redis source] *********************************************
 changed: [redis-node-8]
@@ -464,11 +464,11 @@ ok: [redis-node-1] => {
 
 PLAY RECAP *********************************************************************
 redis-node-1               : ok=19   changed=7    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
-redis-node-2               : ok=15   changed=6    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
-redis-node-3               : ok=15   changed=6    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
-redis-node-4               : ok=15   changed=6    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
-redis-node-5               : ok=15   changed=6    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
-redis-node-6               : ok=15   changed=6    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+redis-node-2               : ok=15   changed=7    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+redis-node-3               : ok=15   changed=7    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+redis-node-4               : ok=15   changed=7    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+redis-node-5               : ok=15   changed=7    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+redis-node-6               : ok=15   changed=7    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
 redis-node-7               : ok=15   changed=7    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
 redis-node-8               : ok=15   changed=7    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
 
@@ -477,16 +477,16 @@ redis-node-8               : ok=15   changed=7    unreachable=0    failed=0    s
 
 PLAY [Full Redis Cluster verification] *****************************************
 
-TASK [Run full Redis Cluster verification] *************************************
+TASK [Run full Redis Cluster verification dynamically] *************************
 [ERROR]: Task failed: Module failed: The command exited with a non-zero return code.
-Origin: /Users/nileshkrishnamurthy/Documents/Projects/submission/ansible/playbooks/verify_full.yml:7:7
+Origin: /Users/nileshkrishnamurthy/Documents/Projects/submission/ansible/playbooks/verify_full.yml:8:7
 
-5   gather_facts: no
-6   tasks:
-7     - name: Run full Redis Cluster verification
+6
+7   tasks:
+8     - name: Run full Redis Cluster verification dynamically
         ^ column 7
 
-fatal: [redis-node-1]: FAILED! => {"changed": false, "changed_when_result": false, "cmd": "PASS_COUNT=0\nFAIL_COUNT=0\nprint_pass() {\n  echo \"[PASS] $1\"\n  PASS_COUNT=$((PASS_COUNT + 1))\n}\nprint_fail() {\n  echo \"[FAIL] $1\"\n  FAIL_COUNT=$((FAIL_COUNT + 1))\n}\necho \"===== Full Redis Cluster Verification =====\"\necho \"\"\n# -------------------------------------------------\n# 1. Cluster State Check\n# -------------------------------------------------\ncluster_info=$(redis-cli -h 10.10.0.11 -p 6379 cluster info)\ncluster_state=$(echo \"$cluster_info\" | grep \"^cluster_state:\" | cut -d: -f2 | tr -d '\\r')\nif [ \"$cluster_state\" = \"ok\" ]; then\n  print_pass \"Cluster state is ok\"\nelse\n  print_fail \"Cluster state is not ok\"\nfi\n# -------------------------------------------------\n# 2. Hash Slot Coverage Check\n# -------------------------------------------------\nslots_assigned=$(echo \"$cluster_info\" | grep \"^cluster_slots_assigned:\" | cut -d: -f2 | tr -d '\\r')\nslots_ok=$(echo \"$cluster_info\" | grep \"^cluster_slots_ok:\" | cut -d: -f2 | tr -d '\\r')\nif [ \"$slots_assigned\" = \"16384\" ] && [ \"$slots_ok\" = \"16384\" ]; then\n  print_pass \"All 16384 hash slots are covered\"\nelse\n  print_fail \"Hash slots are not fully covered\"\nfi\n# -------------------------------------------------\n# 3. Version Consistency Check\n# -------------------------------------------------\nversions=\"\"\nfor ip in 10.10.0.11 10.10.0.12 10.10.0.13 10.10.0.14 10.10.0.15 10.10.0.16; do\n  version=$(redis-cli -h \"$ip\" -p 6379 info server | grep \"^redis_version:\" | cut -d: -f2 | tr -d '\\r')\n  versions=\"$versions $version\"\ndone\nunique_versions=$(echo \"$versions\" | tr ' ' '\\n' | grep -v '^$' | sort -u | wc -l | tr -d ' ')\nif [ \"$unique_versions\" = \"1\" ]; then\n  final_version=$(echo \"$versions\" | awk '{print $1}')\n  print_pass \"All nodes are running the same Redis version: $final_version\"\nelse\n  print_fail \"Redis versions are not same across all nodes: $versions\"\nfi\n# -------------------------------------------------\n# 4. Topology Health Check\n# Every master should have at least one replica\n# -------------------------------------------------\ncluster_nodes=$(redis-cli -h 10.10.0.11 -p 6379 cluster nodes)\nfailed_master_replica_check=0\nmaster_ids=$(echo \"$cluster_nodes\" | awk '$3 ~ /master/ && $3 !~ /fail/ {print $1}')\nfor master_id in $master_ids; do\n  replica_count=$(echo \"$cluster_nodes\" | awk -v mid=\"$master_id\" '$3 ~ /slave/ && $4 == mid {count++} END {print count+0}')\n  if [ \"$replica_count\" -lt 1 ]; then\n    failed_master_replica_check=1\n  fi\ndone\nif [ \"$failed_master_replica_check\" = \"0\" ]; then\n  print_pass \"Every master has at least one replica\"\nelse\n  print_fail \"One or more masters do not have replicas\"\nfi\n# -------------------------------------------------\n# 5. Replication Link Status Check\n# All replicas should have master_link_status:up\n# -------------------------------------------------\nfailed_replication_check=0\nfor ip in 10.10.0.11 10.10.0.12 10.10.0.13 10.10.0.14 10.10.0.15 10.10.0.16; do\n  replication_info=$(redis-cli -h \"$ip\" -p 6379 info replication)\n  role=$(echo \"$replication_info\" | grep \"^role:\" | cut -d: -f2 | tr -d '\\r')\n  if [ \"$role\" = \"slave\" ]; then\n    link_status=$(echo \"$replication_info\" | grep \"^master_link_status:\" | cut -d: -f2 | tr -d '\\r')\n    if [ \"$link_status\" != \"up\" ]; then\n      failed_replication_check=1\n    fi\n  fi\ndone\nif [ \"$failed_replication_check\" = \"0\" ]; then\n  print_pass \"All replicas have master_link_status:up\"\nelse\n  print_fail \"One or more replicas have replication link down\"\nfi\n# -------------------------------------------------\n# 6. Data Integrity Check\n# Verify 1000 seeded keys\n# -------------------------------------------------\nfailed_keys=0\nfor i in $(seq 1 1000); do\n  value=$(redis-cli -c -h 10.10.0.11 -p 6379 GET \"user:$i\")\n  if [ \"$value\" != \"value-$i\" ]; then\n    failed_keys=$((failed_keys + 1))\n  fi\ndone\nif [ \"$failed_keys\" = \"0\" ]; then\n  print_pass \"Data integrity verified: all 1000 keys matched\"\nelse\n  print_fail \"Data integrity failed: $failed_keys keys mismatched\"\nfi\necho \"\"\necho \"===== Verification Summary =====\"\necho \"Passed checks: $PASS_COUNT\"\necho \"Failed checks: $FAIL_COUNT\"\nif [ \"$FAIL_COUNT\" = \"0\" ]; then\n  echo \"FULL VERIFICATION RESULT: PASS\"\n  exit 0\nelse\n  echo \"FULL VERIFICATION RESULT: FAIL\"\n  exit 1\nfi\n", "delta": "0:00:00.429489", "end": "2026-06-13 17:16:36.484056", "msg": "The command exited with a non-zero return code.", "rc": 1, "start": "2026-06-13 17:16:36.054567", "stderr": "", "stderr_lines": [], "stdout": "===== Full Redis Cluster Verification =====\n\n[PASS] Cluster state is ok\n[PASS] All 16384 hash slots are covered\n[PASS] All nodes are running the same Redis version: 7.0.15\n[PASS] Every master has at least one replica\n[PASS] All replicas have master_link_status:up\n[FAIL] Data integrity failed: 1000 keys mismatched\n\n===== Verification Summary =====\nPassed checks: 5\nFailed checks: 1\nFULL VERIFICATION RESULT: FAIL", "stdout_lines": ["===== Full Redis Cluster Verification =====", "", "[PASS] Cluster state is ok", "[PASS] All 16384 hash slots are covered", "[PASS] All nodes are running the same Redis version: 7.0.15", "[PASS] Every master has at least one replica", "[PASS] All replicas have master_link_status:up", "[FAIL] Data integrity failed: 1000 keys mismatched", "", "===== Verification Summary =====", "Passed checks: 5", "Failed checks: 1", "FULL VERIFICATION RESULT: FAIL"]}
+fatal: [redis-node-1]: FAILED! => {"changed": false, "changed_when_result": false, "cmd": "PASS_COUNT=0\nFAIL_COUNT=0\n\nprint_pass() {\n  echo \"[PASS] $1\"\n  PASS_COUNT=$((PASS_COUNT + 1))\n}\n\nprint_fail() {\n  echo \"[FAIL] $1\"\n  FAIL_COUNT=$((FAIL_COUNT + 1))\n}\n\necho \"===== Full Redis Cluster Verification =====\"\necho \"\"\n\ncluster_info=$(redis-cli -h 10.10.0.11 -p 6379 cluster info)\ncluster_nodes=$(redis-cli -h 10.10.0.11 -p 6379 cluster nodes)\nnode_ips=$(echo \"$cluster_nodes\" | awk '$3 !~ /fail/ {split($2,a,\":\"); print a[1]}')\n\n# 1. Cluster state\ncluster_state=$(echo \"$cluster_info\" | grep \"^cluster_state:\" | cut -d: -f2 | tr -d '\\r')\n\nif [ \"$cluster_state\" = \"ok\" ]; then\n  print_pass \"Cluster state is ok\"\nelse\n  print_fail \"Cluster state is not ok\"\nfi\n\n# 2. Hash slot coverage\nslots_assigned=$(echo \"$cluster_info\" | grep \"^cluster_slots_assigned:\" | cut -d: -f2 | tr -d '\\r')\nslots_ok=$(echo \"$cluster_info\" | grep \"^cluster_slots_ok:\" | cut -d: -f2 | tr -d '\\r')\n\nif [ \"$slots_assigned\" = \"16384\" ] && [ \"$slots_ok\" = \"16384\" ]; then\n  print_pass \"All 16384 hash slots are covered\"\nelse\n  print_fail \"Hash slots are not fully covered\"\nfi\n\n# 3. Version consistency across all cluster nodes\nversions=\"\"\n\nfor ip in $node_ips; do\n  version=$(redis-cli -h \"$ip\" -p 6379 info server | grep \"^redis_version:\" | cut -d: -f2 | tr -d '\\r')\n  versions=\"$versions $version\"\ndone\n\nunique_versions=$(echo \"$versions\" | tr ' ' '\\n' | grep -v '^$' | sort -u | wc -l | tr -d ' ')\n\nif [ \"$unique_versions\" = \"1\" ]; then\n  final_version=$(echo \"$versions\" | awk '{print $1}')\n  print_pass \"All nodes are running the same Redis version: $final_version\"\nelse\n  print_fail \"Redis versions are not same across all nodes: $versions\"\nfi\n\n# 4. Every master should have at least one replica\nfailed_master_replica_check=0\nmaster_ids=$(echo \"$cluster_nodes\" | awk '$3 ~ /master/ && $3 !~ /fail/ {print $1}')\n\nfor master_id in $master_ids; do\n  replica_count=$(echo \"$cluster_nodes\" | awk -v mid=\"$master_id\" '$3 ~ /slave/ && $4 == mid {count++} END {print count+0}')\n\n  if [ \"$replica_count\" -lt 1 ]; then\n    failed_master_replica_check=1\n  fi\ndone\n\nif [ \"$failed_master_replica_check\" = \"0\" ]; then\n  print_pass \"Every master has at least one replica\"\nelse\n  print_fail \"One or more masters do not have replicas\"\nfi\n\n# 5. Replica link status across all replicas\nfailed_replication_check=0\n\nfor ip in $node_ips; do\n  replication_info=$(redis-cli -h \"$ip\" -p 6379 info replication)\n  role=$(echo \"$replication_info\" | grep \"^role:\" | cut -d: -f2 | tr -d '\\r')\n\n  if [ \"$role\" = \"slave\" ]; then\n    link_status=$(echo \"$replication_info\" | grep \"^master_link_status:\" | cut -d: -f2 | tr -d '\\r')\n\n    if [ \"$link_status\" != \"up\" ]; then\n      failed_replication_check=1\n    fi\n  fi\ndone\n\nif [ \"$failed_replication_check\" = \"0\" ]; then\n  print_pass \"All replicas have master_link_status:up\"\nelse\n  print_fail \"One or more replicas have replication link down\"\nfi\n\n# 6. Data integrity\nfailed_keys=0\n\nfor i in $(seq 1 1000); do\n  value=$(redis-cli -c -h 10.10.0.11 -p 6379 GET \"user:$i\")\n\n  if [ \"$value\" != \"value-$i\" ]; then\n    failed_keys=$((failed_keys + 1))\n  fi\ndone\n\nif [ \"$failed_keys\" = \"0\" ]; then\n  print_pass \"Data integrity verified: all 1000 keys matched\"\nelse\n  print_fail \"Data integrity failed: $failed_keys keys mismatched\"\nfi\n\necho \"\"\necho \"===== Verification Summary =====\"\necho \"Passed checks: $PASS_COUNT\"\necho \"Failed checks: $FAIL_COUNT\"\n\nif [ \"$FAIL_COUNT\" = \"0\" ]; then\n  echo \"FULL VERIFICATION RESULT: PASS\"\n  exit 0\nelse\n  echo \"FULL VERIFICATION RESULT: FAIL\"\n  exit 1\nfi\n", "delta": "0:00:00.463381", "end": "2026-06-13 19:05:32.381162", "msg": "The command exited with a non-zero return code.", "rc": 1, "start": "2026-06-13 19:05:31.917781", "stderr": "", "stderr_lines": [], "stdout": "===== Full Redis Cluster Verification =====\n\n[PASS] Cluster state is ok\n[PASS] All 16384 hash slots are covered\n[PASS] All nodes are running the same Redis version: 7.0.15\n[PASS] Every master has at least one replica\n[FAIL] One or more replicas have replication link down\n[FAIL] Data integrity failed: 1000 keys mismatched\n\n===== Verification Summary =====\nPassed checks: 4\nFailed checks: 2\nFULL VERIFICATION RESULT: FAIL", "stdout_lines": ["===== Full Redis Cluster Verification =====", "", "[PASS] Cluster state is ok", "[PASS] All 16384 hash slots are covered", "[PASS] All nodes are running the same Redis version: 7.0.15", "[PASS] Every master has at least one replica", "[FAIL] One or more replicas have replication link down", "[FAIL] Data integrity failed: 1000 keys mismatched", "", "===== Verification Summary =====", "Passed checks: 4", "Failed checks: 2", "FULL VERIFICATION RESULT: FAIL"]}
 
 PLAY RECAP *********************************************************************
 redis-node-1               : ok=0    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
