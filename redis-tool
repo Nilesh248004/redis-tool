@@ -1,30 +1,24 @@
 #!/bin/bash
-
 set -e
-
 # -----------------------------
 # Common paths
 # -----------------------------
 INVENTORY="ansible/inventory/hosts.ini"
 OUTPUT_DIR="output"
-
 PROVISION_OUTPUT="$OUTPUT_DIR/provision_output.txt"
 DATA_SEED_OUTPUT="$OUTPUT_DIR/data_seed_output.txt"
 STATUS_OUTPUT="$OUTPUT_DIR/status_output.txt"
 VERIFY_OUTPUT="$OUTPUT_DIR/verify_output.txt"
 UPGRADE_OUTPUT="$OUTPUT_DIR/upgrade_output.txt"
-
+FULL_VERIFY_OUTPUT="$OUTPUT_DIR/full_verify_output.txt"
 mkdir -p "$OUTPUT_DIR"
-
 # -----------------------------
 # Prerequisite check
 # This runs before every command.
 # -----------------------------
 check_prerequisites() {
   echo "Checking prerequisites..."
-
   MISSING=0
-
   # Prefer Podman if available, otherwise use Docker.
   if command -v podman >/dev/null 2>&1; then
     RUNTIME="podman"
@@ -40,15 +34,12 @@ check_prerequisites() {
     echo "Install Docker: https://docs.docker.com/engine/install/"
     MISSING=1
   fi
-
   # Check Ansible availability and version.
   if command -v ansible-playbook >/dev/null 2>&1; then
     ANSIBLE_VERSION=$(ansible-playbook --version | head -n 1 | awk '{print $3}' | tr -d '[]')
     echo "[OK] Ansible $ANSIBLE_VERSION found"
-
     ANSIBLE_MAJOR=$(echo "$ANSIBLE_VERSION" | cut -d. -f1)
     ANSIBLE_MINOR=$(echo "$ANSIBLE_VERSION" | cut -d. -f2)
-
     if [ "$ANSIBLE_MAJOR" -gt 2 ] || { [ "$ANSIBLE_MAJOR" -eq 2 ] && [ "$ANSIBLE_MINOR" -ge 14 ]; }; then
       :
     else
@@ -62,15 +53,12 @@ check_prerequisites() {
     echo "Or use your OS package manager."
     MISSING=1
   fi
-
   if [ "$MISSING" -ne 0 ]; then
     echo "Please install the missing dependencies and retry."
     exit 1
   fi
-
   echo "Proceeding..."
 }
-
 # -----------------------------
 # Phase 1: Provision Redis Cluster
 # -----------------------------
@@ -78,7 +66,6 @@ provision() {
   VERSION="7.0.15"
   MASTERS="3"
   REPLICAS_PER_MASTER="1"
-
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --version)
@@ -99,54 +86,43 @@ provision() {
         ;;
     esac
   done
-
   echo "Provisioning Redis Cluster..."
   echo "Version: $VERSION"
   echo "Masters: $MASTERS"
   echo "Replicas per master: $REPLICAS_PER_MASTER"
-
   {
     echo "===== Redis Cluster Provision Started ====="
     date
     echo "Redis version: $VERSION"
     echo "Masters: $MASTERS"
     echo "Replicas per master: $REPLICAS_PER_MASTER"
-
     echo ""
     echo "===== Installing Redis ====="
     ansible-playbook -i "$INVENTORY" ansible/playbooks/install_redis.yml -e redis_version="$VERSION"
-
     echo ""
     echo "===== Configuring Redis Cluster Mode ====="
     ansible-playbook -i "$INVENTORY" ansible/playbooks/configure_redis.yml
-
     echo ""
     echo "===== Creating Redis Cluster ====="
     ansible-playbook -i "$INVENTORY" ansible/playbooks/create_cluster.yml
-
     echo ""
     echo "===== Final Cluster Info ====="
     ansible -i "$INVENTORY" redis-node-1 -m shell -a "redis-cli -h 10.10.0.11 -p 6379 cluster info"
-
     echo ""
     echo "===== Final Cluster Nodes ====="
     ansible -i "$INVENTORY" redis-node-1 -m shell -a "redis-cli -h 10.10.0.11 -p 6379 cluster nodes"
-
     echo ""
     echo "===== Redis Cluster Provision Completed ====="
     date
   } | tee "$PROVISION_OUTPUT"
 }
-
 # -----------------------------
 # Phase 2: Data seed and verify
 # -----------------------------
 data_command() {
   ACTION="$1"
-  shift
-
+  shift || true
   KEYS="1000"
-
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --keys)
@@ -159,38 +135,29 @@ data_command() {
         ;;
     esac
   done
-
   case "$ACTION" in
     seed)
       echo "Seeding $KEYS keys into Redis Cluster..."
-
       {
         echo "===== Redis Data Seed Started ====="
         date
         echo "Keys: $KEYS"
-
         ansible-playbook -i "$INVENTORY" ansible/playbooks/data_seed.yml -e keys="$KEYS"
-
         echo "===== Redis Data Seed Completed ====="
         date
       } | tee "$DATA_SEED_OUTPUT"
       ;;
-
     verify)
       echo "Verifying Redis Cluster data..."
-
       {
         echo "===== Redis Data Verify Started ====="
         date
         echo "Keys: $KEYS"
-
         ansible-playbook -i "$INVENTORY" ansible/playbooks/data_verify.yml -e keys="$KEYS"
-
         echo "===== Redis Data Verify Completed ====="
         date
       } | tee "$VERIFY_OUTPUT"
       ;;
-
     *)
       echo "Usage:"
       echo "  ./redis-tool data seed --keys 1000"
@@ -199,31 +166,25 @@ data_command() {
       ;;
   esac
 }
-
 # -----------------------------
 # Phase 3: Status command
 # -----------------------------
 status_command() {
   echo "Checking Redis Cluster status..."
-
   {
     echo "===== Redis Cluster Status Started ====="
     date
-
     ansible-playbook -i "$INVENTORY" ansible/playbooks/status.yml
-
     echo "===== Redis Cluster Status Completed ====="
     date
   } | tee "$STATUS_OUTPUT"
 }
-
 # -----------------------------
 # Phase 4: Rolling upgrade command
 # -----------------------------
 upgrade_command() {
   TARGET_VERSION="7.2.6"
   STRATEGY="rolling"
-
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --target-version)
@@ -240,56 +201,63 @@ upgrade_command() {
         ;;
     esac
   done
-
   if [ "$STRATEGY" != "rolling" ]; then
     echo "[ERROR] Only rolling upgrade strategy is supported."
     exit 1
   fi
-
   echo "Starting Redis rolling upgrade..."
   echo "Target version: $TARGET_VERSION"
   echo "Strategy: $STRATEGY"
-
   {
     echo "===== Redis Rolling Upgrade Started ====="
     date
     echo "Target version: $TARGET_VERSION"
     echo "Strategy: $STRATEGY"
-
     echo ""
     echo "===== Pre-upgrade Cluster Info ====="
     ansible -i "$INVENTORY" redis-node-1 -m shell -a "redis-cli -h 10.10.0.11 -p 6379 cluster info"
-
     echo ""
     echo "===== Pre-upgrade Data Verification ====="
     ansible-playbook -i "$INVENTORY" ansible/playbooks/data_verify.yml -e keys=1000
-
     echo ""
     echo "===== Rolling Upgrade Playbook ====="
     ansible-playbook -i "$INVENTORY" ansible/playbooks/upgrade.yml -e target_version="$TARGET_VERSION"
-
     echo ""
     echo "===== Post-upgrade Cluster Info ====="
     ansible -i "$INVENTORY" redis-node-1 -m shell -a "redis-cli -h 10.10.0.11 -p 6379 cluster info"
-
     echo ""
     echo "===== Post-upgrade Cluster Nodes ====="
     ansible -i "$INVENTORY" redis-node-1 -m shell -a "redis-cli -h 10.10.0.11 -p 6379 cluster nodes"
-
     echo ""
     echo "===== Post-upgrade Redis Versions ====="
     ansible -i "$INVENTORY" redis_nodes -m shell -a "redis-server --version"
-
     echo ""
     echo "===== Post-upgrade Data Verification ====="
     ansible-playbook -i "$INVENTORY" ansible/playbooks/data_verify.yml -e keys=1000
-
     echo ""
     echo "===== Redis Rolling Upgrade Completed ====="
     date
   } | tee "$UPGRADE_OUTPUT"
 }
-
+# -----------------------------
+# Phase 5: Full verification command
+# -----------------------------
+verify_command() {
+  OPTION="$1"
+  if [ "$OPTION" != "--full" ]; then
+    echo "Usage:"
+    echo "  ./redis-tool verify --full"
+    exit 1
+  fi
+  echo "Running full Redis Cluster verification..."
+  {
+    echo "===== Redis Full Verification Started ====="
+    date
+    ansible-playbook -i "$INVENTORY" ansible/playbooks/verify_full.yml
+    echo "===== Redis Full Verification Completed ====="
+    date
+  } | tee "$FULL_VERIFY_OUTPUT"
+}
 # -----------------------------
 # Main command router
 # -----------------------------
@@ -299,25 +267,26 @@ case "$1" in
     check_prerequisites
     provision "$@"
     ;;
-
   data)
     shift
     check_prerequisites
     data_command "$@"
     ;;
-
   status)
     shift
     check_prerequisites
     status_command "$@"
     ;;
-
   upgrade)
     shift
     check_prerequisites
     upgrade_command "$@"
     ;;
-
+  verify)
+    shift
+    check_prerequisites
+    verify_command "$@"
+    ;;
   *)
     echo "Usage:"
     echo "  ./redis-tool provision --version 7.0.15 --masters 3 --replicas-per-master 1"
@@ -325,6 +294,7 @@ case "$1" in
     echo "  ./redis-tool data verify"
     echo "  ./redis-tool status"
     echo "  ./redis-tool upgrade --target-version 7.2.6 --strategy rolling"
+    echo "  ./redis-tool verify --full"
     exit 1
     ;;
 esac

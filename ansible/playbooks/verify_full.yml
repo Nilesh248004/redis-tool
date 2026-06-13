@@ -1,0 +1,125 @@
+---
+- name: Full Redis Cluster verification
+  hosts: redis-node-1
+  become: no
+  gather_facts: no
+  tasks:
+    - name: Run full Redis Cluster verification
+      shell: |
+        PASS_COUNT=0
+        FAIL_COUNT=0
+        print_pass() {
+          echo "[PASS] $1"
+          PASS_COUNT=$((PASS_COUNT + 1))
+        }
+        print_fail() {
+          echo "[FAIL] $1"
+          FAIL_COUNT=$((FAIL_COUNT + 1))
+        }
+        echo "===== Full Redis Cluster Verification ====="
+        echo ""
+        # -------------------------------------------------
+        # 1. Cluster State Check
+        # -------------------------------------------------
+        cluster_info=$(redis-cli -h 10.10.0.11 -p 6379 cluster info)
+        cluster_state=$(echo "$cluster_info" | grep "^cluster_state:" | cut -d: -f2 | tr -d '\r')
+        if [ "$cluster_state" = "ok" ]; then
+          print_pass "Cluster state is ok"
+        else
+          print_fail "Cluster state is not ok"
+        fi
+        # -------------------------------------------------
+        # 2. Hash Slot Coverage Check
+        # -------------------------------------------------
+        slots_assigned=$(echo "$cluster_info" | grep "^cluster_slots_assigned:" | cut -d: -f2 | tr -d '\r')
+        slots_ok=$(echo "$cluster_info" | grep "^cluster_slots_ok:" | cut -d: -f2 | tr -d '\r')
+        if [ "$slots_assigned" = "16384" ] && [ "$slots_ok" = "16384" ]; then
+          print_pass "All 16384 hash slots are covered"
+        else
+          print_fail "Hash slots are not fully covered"
+        fi
+        # -------------------------------------------------
+        # 3. Version Consistency Check
+        # -------------------------------------------------
+        versions=""
+        for ip in 10.10.0.11 10.10.0.12 10.10.0.13 10.10.0.14 10.10.0.15 10.10.0.16; do
+          version=$(redis-cli -h "$ip" -p 6379 info server | grep "^redis_version:" | cut -d: -f2 | tr -d '\r')
+          versions="$versions $version"
+        done
+        unique_versions=$(echo "$versions" | tr ' ' '\n' | grep -v '^$' | sort -u | wc -l | tr -d ' ')
+        if [ "$unique_versions" = "1" ]; then
+          final_version=$(echo "$versions" | awk '{print $1}')
+          print_pass "All nodes are running the same Redis version: $final_version"
+        else
+          print_fail "Redis versions are not same across all nodes: $versions"
+        fi
+        # -------------------------------------------------
+        # 4. Topology Health Check
+        # Every master should have at least one replica
+        # -------------------------------------------------
+        cluster_nodes=$(redis-cli -h 10.10.0.11 -p 6379 cluster nodes)
+        failed_master_replica_check=0
+        master_ids=$(echo "$cluster_nodes" | awk '$3 ~ /master/ && $3 !~ /fail/ {print $1}')
+        for master_id in $master_ids; do
+          replica_count=$(echo "$cluster_nodes" | awk -v mid="$master_id" '$3 ~ /slave/ && $4 == mid {count++} END {print count+0}')
+          if [ "$replica_count" -lt 1 ]; then
+            failed_master_replica_check=1
+          fi
+        done
+        if [ "$failed_master_replica_check" = "0" ]; then
+          print_pass "Every master has at least one replica"
+        else
+          print_fail "One or more masters do not have replicas"
+        fi
+        # -------------------------------------------------
+        # 5. Replication Link Status Check
+        # All replicas should have master_link_status:up
+        # -------------------------------------------------
+        failed_replication_check=0
+        for ip in 10.10.0.11 10.10.0.12 10.10.0.13 10.10.0.14 10.10.0.15 10.10.0.16; do
+          replication_info=$(redis-cli -h "$ip" -p 6379 info replication)
+          role=$(echo "$replication_info" | grep "^role:" | cut -d: -f2 | tr -d '\r')
+          if [ "$role" = "slave" ]; then
+            link_status=$(echo "$replication_info" | grep "^master_link_status:" | cut -d: -f2 | tr -d '\r')
+            if [ "$link_status" != "up" ]; then
+              failed_replication_check=1
+            fi
+          fi
+        done
+        if [ "$failed_replication_check" = "0" ]; then
+          print_pass "All replicas have master_link_status:up"
+        else
+          print_fail "One or more replicas have replication link down"
+        fi
+        # -------------------------------------------------
+        # 6. Data Integrity Check
+        # Verify 1000 seeded keys
+        # -------------------------------------------------
+        failed_keys=0
+        for i in $(seq 1 1000); do
+          value=$(redis-cli -c -h 10.10.0.11 -p 6379 GET "user:$i")
+          if [ "$value" != "value-$i" ]; then
+            failed_keys=$((failed_keys + 1))
+          fi
+        done
+        if [ "$failed_keys" = "0" ]; then
+          print_pass "Data integrity verified: all 1000 keys matched"
+        else
+          print_fail "Data integrity failed: $failed_keys keys mismatched"
+        fi
+        echo ""
+        echo "===== Verification Summary ====="
+        echo "Passed checks: $PASS_COUNT"
+        echo "Failed checks: $FAIL_COUNT"
+        if [ "$FAIL_COUNT" = "0" ]; then
+          echo "FULL VERIFICATION RESULT: PASS"
+          exit 0
+        else
+          echo "FULL VERIFICATION RESULT: FAIL"
+          exit 1
+        fi
+      register: full_verify_output
+      changed_when: false
+    - name: Show full verification result
+      debug:
+        msg: "{{ full_verify_output.stdout_lines }}"
