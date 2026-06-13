@@ -200,3 +200,53 @@ upgrade_output.txt    -> Rolling upgrade output
 The project currently includes Redis Cluster provisioning, data seeding, data verification, status checking, and rolling upgrade automation.
 
 Further verification and final improvements can be added in the next phase.
+
+---
+
+## Phase 5: Full Verification
+
+In Phase 5, I added a full verification command to check the Redis Cluster after the rolling upgrade.
+
+The command is:
+
+```bash
+./redis-tool verify --full
+```
+
+This command performs a complete health check of the cluster.
+
+It checks:
+
+```text
+Data integrity
+Redis version consistency
+Cluster state
+Hash slot coverage
+Master and replica topology
+Replica connection status
+```
+
+The full verification confirmed:
+
+```text
+Cluster state is ok
+All 16384 hash slots are covered
+All nodes are running Redis 7.2.6
+Every master has at least one replica
+All replicas have master_link_status:up
+All 1000 keys matched successfully
+```
+
+Final result:
+
+```text
+FULL VERIFICATION RESULT: PASS
+```
+
+The output is saved in:
+
+```text
+output/full_verify_output.txt
+```
+
+---
