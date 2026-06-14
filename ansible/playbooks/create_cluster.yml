@@ -56,9 +56,28 @@
         msg: "Redis cluster already exists. Skipping cluster creation."
       when: "'cluster_known_nodes:6' in cluster_info.stdout or cluster_nodes.stdout_lines | length > 1"
 
-    - name: Verify final cluster state
-      command: redis-cli -h 10.10.0.11 -p 6379 cluster info
+    - name: Wait for final cluster state and topology to become healthy
+      shell: |
+        cluster_info=$(redis-cli -h 10.10.0.11 -p 6379 cluster info)
+        cluster_nodes=$(redis-cli -h 10.10.0.11 -p 6379 cluster nodes)
+        master_count=$(echo "$cluster_nodes" | awk '$3 ~ /master/ && $3 !~ /fail/ {count++} END {print count+0}')
+        replica_count=$(echo "$cluster_nodes" | awk '$3 ~ /slave/ && $3 !~ /fail/ {count++} END {print count+0}')
+
+        echo "$cluster_info"
+        echo "topology_masters:$master_count"
+        echo "topology_replicas:$replica_count"
+
+        if echo "$cluster_info" | grep -q '^cluster_state:ok' &&
+           [ "$master_count" -eq 3 ] &&
+           [ "$replica_count" -eq 3 ]; then
+          exit 0
+        fi
+
+        exit 1
       register: final_cluster_info
+      retries: 30
+      delay: 2
+      until: final_cluster_info.rc == 0
       changed_when: false
 
     - name: Fail if cluster state is not ok

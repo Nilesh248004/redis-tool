@@ -5,12 +5,21 @@
   gather_facts: yes
 
   vars:
-    redis_version: "7.2.6"
+    redis_version: "{{ cluster_version.stdout }}"
     redis_tarball: "redis-{{ redis_version }}.tar.gz"
-    redis_url: "http://download.redis.io/releases/{{ redis_tarball }}"
+    redis_url: "https://download.redis.io/releases/{{ redis_tarball }}"
     redis_src_dir: "/tmp/redis-{{ redis_version }}"
 
   tasks:
+    - name: Detect the current cluster Redis version
+      shell: |
+        redis-cli -h 10.10.0.11 -p 6379 info server |
+          awk -F: '/^redis_version:/ {gsub("\r", "", $2); print $2}'
+      delegate_to: redis-node-1
+      become: no
+      register: cluster_version
+      changed_when: false
+
     - name: Check if this node is already part of Redis Cluster
       shell: redis-cli -h 10.10.0.11 -p 6379 cluster nodes | grep -q "{{ internal_ip }}:6379"
       delegate_to: redis-node-1
@@ -22,6 +31,11 @@
     - name: Show node cluster membership status
       debug:
         msg: "{{ inventory_hostname }} is already in cluster: {{ node_already_in_cluster.rc == 0 }}"
+
+    - name: Stop any existing Redis process on a new node
+      shell: pkill redis-server || true
+      changed_when: false
+      when: node_already_in_cluster.rc != 0
 
     - name: Install build dependencies
       apt:
@@ -87,6 +101,14 @@
         - /etc/redis
         - /var/lib/redis
         - /var/log/redis
+        - /var/run/redis
+      when: node_already_in_cluster.rc != 0
+
+    - name: Clear stale Redis state before first cluster join
+      shell: |
+        rm -rf /var/lib/redis/*
+        rm -f /var/log/redis/redis-server.log
+      changed_when: true
       when: node_already_in_cluster.rc != 0
 
     - name: Create Redis cluster configuration
@@ -101,6 +123,7 @@
           port 6379
           daemonize yes
           supervised no
+          pidfile /var/run/redis/redis-server.pid
           dir /var/lib/redis
           logfile /var/log/redis/redis-server.log
           appendonly yes
@@ -112,11 +135,6 @@
           cluster-announce-ip {{ internal_ip }}
           cluster-announce-port 6379
           cluster-announce-bus-port 16379
-      when: node_already_in_cluster.rc != 0
-
-    - name: Stop Redis if already running before first cluster join
-      shell: redis-cli -h "{{ internal_ip }}" -p 6379 shutdown nosave
-      ignore_errors: yes
       when: node_already_in_cluster.rc != 0
 
     - name: Start Redis with cluster config
@@ -167,8 +185,24 @@
       changed_when: "'New node added correctly' in add_master_output.stdout"
 
     - name: Get redis-node-7 node id
-      shell: redis-cli -h 10.10.0.11 -p 6379 cluster nodes | grep "10.10.0.17:6379" | awk '{print $1}'
+      command: redis-cli -h 10.10.0.17 -p 6379 cluster myid
       register: node7_id
+      retries: 20
+      delay: 2
+      until: node7_id.stdout | length > 0
+      changed_when: false
+
+    - name: Wait until the seed recognizes redis-node-7 stable node id
+      shell: |
+        redis-cli -h 10.10.0.11 -p 6379 cluster nodes |
+          awk -v node_id="{{ node7_id.stdout }}" '
+            $1 == node_id && $2 ~ /^10.10.0.17:6379@/ { found=1 }
+            END { exit(found ? 0 : 1) }
+          '
+      register: node7_seed_view
+      retries: 30
+      delay: 2
+      until: node7_seed_view.rc == 0
       changed_when: false
 
     - name: Add redis-node-8 as replica of redis-node-7 if not already added
@@ -179,19 +213,109 @@
           redis-cli --cluster add-node 10.10.0.18:6379 10.10.0.11:6379 --cluster-slave --cluster-master-id {{ node7_id.stdout }} --cluster-yes
         fi
       register: add_replica_output
+      retries: 20
+      delay: 2
+      until: add_replica_output.rc == 0
       changed_when: "'New node added correctly' in add_replica_output.stdout"
+
+    - name: Get redis-node-8 node id
+      command: redis-cli -h 10.10.0.18 -p 6379 cluster myid
+      register: node8_id
+      retries: 20
+      delay: 2
+      until: node8_id.stdout | length > 0
+      changed_when: false
+
+    - name: Wait until every master knows both new nodes
+      shell: |
+        set -eu
+
+        master_ips=$(
+          redis-cli -h 10.10.0.11 -p 6379 cluster nodes |
+            awk '$3 ~ /master/ && $3 !~ /fail/ {
+              split($2, address, "@")
+              split(address[1], endpoint, ":")
+              print endpoint[1]
+            }'
+        )
+
+        for master_ip in $master_ips; do
+          cluster_nodes=$(redis-cli -h "$master_ip" -p 6379 cluster nodes)
+          echo "$cluster_nodes" | grep -q "^{{ node7_id.stdout }} "
+          echo "$cluster_nodes" | grep -q "^{{ node8_id.stdout }} "
+        done
+      register: cluster_convergence
+      retries: 30
+      delay: 2
+      until: cluster_convergence.rc == 0
+      changed_when: false
+
+    - name: Repair any slot state left by an interrupted rebalance
+      shell: |
+        cluster_check=$(redis-cli --cluster check 10.10.0.11:6379 2>&1 || true)
+
+        if echo "$cluster_check" | grep -q "following slots are open"; then
+          redis-cli --cluster fix 10.10.0.11:6379 --cluster-yes
+        else
+          echo "No open slots require repair"
+        fi
+      register: slot_repair
+      changed_when: "'Fixing open slot' in slot_repair.stdout"
+
+    - name: Confirm all slots are stable before rebalancing
+      shell: redis-cli --cluster check 10.10.0.11:6379 2>&1
+      register: stable_slots
+      retries: 10
+      delay: 2
+      until:
+        - stable_slots.rc == 0
+        - "'following slots are open' not in stable_slots.stdout"
+      changed_when: false
 
     - name: Rebalance hash slots across all masters
       shell: redis-cli --cluster rebalance 10.10.0.11:6379 --cluster-use-empty-masters --cluster-yes
       register: rebalance_output
-      changed_when: true
+      retries: 10
+      delay: 2
+      until: rebalance_output.rc == 0
+      changed_when: "'Moving' in rebalance_output.stdout"
 
     - name: Show rebalance output
       debug:
         msg: "{{ rebalance_output.stdout_lines }}"
 
+    - name: Wait for final 4-master and 4-replica topology
+      shell: |
+        cluster_info=$(redis-cli -h 10.10.0.11 -p 6379 cluster info)
+        cluster_nodes=$(redis-cli -h 10.10.0.11 -p 6379 cluster nodes)
+        master_count=$(echo "$cluster_nodes" | awk '$3 ~ /master/ && $3 !~ /fail/ {count++} END {print count+0}')
+        replica_count=$(echo "$cluster_nodes" | awk '$3 ~ /slave/ && $3 !~ /fail/ {count++} END {print count+0}')
+        node7_id=$(echo "$cluster_nodes" | awk '$2 ~ /^10.10.0.17:6379@/ {print $1}')
+        node7_slots=$(echo "$cluster_nodes" | awk '$2 ~ /^10.10.0.17:6379@/ {for (i=9; i<=NF; i++) print $i}')
+        node8_master=$(echo "$cluster_nodes" | awk '$2 ~ /^10.10.0.18:6379@/ {print $4}')
+
+        echo "$cluster_info"
+        echo "topology_masters:$master_count"
+        echo "topology_replicas:$replica_count"
+        echo "redis_node_7_slots:$node7_slots"
+
+        if echo "$cluster_info" | grep -q '^cluster_state:ok' &&
+           [ "$master_count" -eq 4 ] &&
+           [ "$replica_count" -eq 4 ] &&
+           [ -n "$node7_slots" ] &&
+           [ "$node8_master" = "$node7_id" ]; then
+          exit 0
+        fi
+
+        exit 1
+      register: scaled_topology
+      retries: 30
+      delay: 2
+      until: scaled_topology.rc == 0
+      changed_when: false
+
     - name: Show final cluster nodes after scale out
-      shell: redis-cli -h 10.10.0.11 -p 6379 cluster nodes
+      command: redis-cli -h 10.10.0.11 -p 6379 cluster nodes
       register: cluster_nodes_after
       changed_when: false
 
@@ -199,12 +323,9 @@
       debug:
         msg: "{{ cluster_nodes_after.stdout_lines }}"
 
-    - name: Verify cluster health after scale out
-      shell: redis-cli -h 10.10.0.11 -p 6379 cluster info | grep cluster_state
-      register: cluster_state_after
-      changed_when: false
-
-    - name: Fail if cluster is not healthy after scale out
-      fail:
-        msg: "Cluster is not healthy after scale out: {{ cluster_state_after.stdout }}"
-      when: "'cluster_state:ok' not in cluster_state_after.stdout"
+    - name: Print scale-out completion summary
+      debug:
+        msg:
+          - "SCALE OUT COMPLETE - cluster has 4 masters and 4 replicas"
+          - "redis-node-7 is a master with rebalanced hash slots"
+          - "redis-node-8 is the replica of redis-node-7"

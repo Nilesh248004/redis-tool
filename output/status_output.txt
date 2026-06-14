@@ -1,5 +1,5 @@
 ===== Redis Cluster Status Started =====
-Sun Jun 14 00:24:40 IST 2026
+Mon Jun 15 00:33:13 IST 2026
 
 PLAY [Show dynamic Redis Cluster status] ***************************************
 
@@ -14,16 +14,14 @@ ok: [redis-node-1] => {
         "Cluster State: ok",
         "",
         "MASTERS",
-        "10.10.0.15:6379 [master] v7.2.6 slots: 1365-5460  keys: 248 mem: 1.82M",
-        "10.10.0.14:6379 [master] v7.2.6 slots: 12288-16383  keys: 250 mem: 1.82M",
-        "10.10.0.16:6379 [master] v7.2.6 slots: 6827-10922  keys: 252 mem: 1.82M",
-        "10.10.0.17:6379 [master] v7.2.6 slots: 0-1364 5461-6826 10923-12287  keys: 250 mem: 1.82M",
+        "10.10.0.12:6379 [master] v7.0.15 slots: 5461-10922  keys: 337 mem: 1.96M",
+        "10.10.0.11:6379 [master] v7.0.15 slots: 0-5460  keys: 332 mem: 1.93M",
+        "10.10.0.13:6379 [master] v7.0.15 slots: 10923-16383  keys: 331 mem: 1.96M",
         "",
         "REPLICAS",
-        "10.10.0.13:6379 [replica] v7.2.6 replicating: 10.10.0.14:6379 keys: 250 mem: 1.73M",
-        "10.10.0.12:6379 [replica] v7.2.6 replicating: 10.10.0.16:6379 keys: 252 mem: 1.73M",
-        "10.10.0.18:6379 [replica] v7.2.6 replicating: 10.10.0.17:6379 keys: 250 mem: 1.73M",
-        "10.10.0.11:6379 [replica] v7.2.6 replicating: 10.10.0.15:6379 keys: 248 mem: 1.77M"
+        "10.10.0.16:6379 [replica] v7.0.15 replicating: 10.10.0.12:6379 keys: 337 mem: 1.90M",
+        "10.10.0.14:6379 [replica] v7.0.15 replicating: 10.10.0.13:6379 keys: 331 mem: 1.89M",
+        "10.10.0.15:6379 [replica] v7.0.15 replicating: 10.10.0.11:6379 keys: 332 mem: 1.90M"
     ]
 }
 
@@ -31,4 +29,4 @@ PLAY RECAP *********************************************************************
 redis-node-1               : ok=2    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 
 ===== Redis Cluster Status Completed =====
-Sun Jun 14 00:24:41 IST 2026
+Mon Jun 15 00:33:14 IST 2026

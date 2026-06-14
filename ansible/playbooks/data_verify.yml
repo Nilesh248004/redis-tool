@@ -10,24 +10,31 @@
   tasks:
     - name: Verify all seeded keys
       shell: |
-        failed=0
+        verified=0
+        missing=0
+        mismatched=0
 
         for i in $(seq 1 {{ key_count }}); do
           value=$(redis-cli -c -h 10.10.0.11 -p 6379 GET "user:$i")
 
-          if [ "$value" != "value-$i" ]; then
+          if [ -z "$value" ]; then
+            echo "MISSING: user:$i"
+            missing=$((missing + 1))
+          elif [ "$value" != "value-$i" ]; then
             echo "FAILED: user:$i expected value-$i but got $value"
-            failed=$((failed + 1))
+            mismatched=$((mismatched + 1))
+          else
+            verified=$((verified + 1))
           fi
         done
 
-        if [ "$failed" -eq 0 ]; then
-          echo "Verification successful: all {{ key_count }} keys matched"
+        if [ "$missing" -eq 0 ] && [ "$mismatched" -eq 0 ]; then
+          echo "PASS - $verified/{{ key_count }} keys verified"
           exit 0
-        else
-          echo "Verification failed: $failed keys mismatched"
-          exit 1
         fi
+
+        echo "FAIL - $missing keys missing, $mismatched values mismatched"
+        exit 1
       register: verify_output
       changed_when: false
 

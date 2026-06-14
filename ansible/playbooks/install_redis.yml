@@ -28,11 +28,9 @@
           - ca-certificates
         state: present
 
-    - name: Stop existing Redis service if present
-      service:
-        name: redis-server
-        state: stopped
-      ignore_errors: yes
+    - name: Stop any existing Redis process
+      shell: pkill redis-server || true
+      changed_when: false
 
     - name: Remove Ubuntu repository Redis packages if installed
       apt:

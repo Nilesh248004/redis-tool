@@ -1,0 +1,231 @@
+---
+- name: Read current Redis version for {{ rollback_mode }} pass
+  shell: |
+    redis-cli -h "{{ internal_ip }}" -p 6379 info server |
+      awk -F: '/^redis_version:/ {gsub("\r", "", $2); print $2}'
+  register: current_version
+  changed_when: false
+
+- name: Read current Redis role for {{ rollback_mode }} pass
+  shell: |
+    redis-cli -h "{{ internal_ip }}" -p 6379 info replication |
+      awk -F: '/^role:/ {gsub("\r", "", $2); print $2}'
+  register: current_role
+  changed_when: false
+
+- name: Set {{ rollback_mode }} rollback decision
+  set_fact:
+    rollback_required: >-
+      {{
+        current_version.stdout != target_redis_version and
+        current_role.stdout == rollback_mode
+      }}
+  changed_when: false
+
+- name: Show {{ rollback_mode }} rollback decision
+  debug:
+    msg: >-
+      {{ inventory_hostname }} role={{ current_role.stdout }}
+      current={{ current_version.stdout }}
+      target={{ target_redis_version }}
+      pass={{ rollback_mode }}
+      action={{ 'rollback' if rollback_required else 'skip' }}
+
+- name: Install rollback build dependencies
+  apt:
+    name:
+      - build-essential
+      - tcl
+      - wget
+      - tar
+      - make
+      - gcc
+      - ca-certificates
+    state: present
+    update_cache: yes
+  when: rollback_required
+
+- name: Remove previous rollback source directory
+  file:
+    path: "{{ redis_src_dir }}"
+    state: absent
+  when: rollback_required
+
+- name: Download rollback Redis source
+  get_url:
+    url: "{{ redis_url }}"
+    dest: "/tmp/{{ redis_tarball }}"
+    mode: "0644"
+  when: rollback_required
+
+- name: Extract rollback Redis source
+  unarchive:
+    src: "/tmp/{{ redis_tarball }}"
+    dest: /tmp
+    remote_src: yes
+  when: rollback_required
+
+- name: Build rollback Redis version while the node remains online
+  command: make -j2
+  args:
+    chdir: "{{ redis_src_dir }}"
+  when: rollback_required
+
+- name: Find the current master's node id
+  shell: |
+    redis-cli -h 10.10.0.11 -p 6379 cluster nodes |
+      awk '$2 ~ /^{{ internal_ip }}:6379@/ {print $1}'
+  delegate_to: redis-node-1
+  become: no
+  register: rollback_master_id
+  changed_when: false
+  when:
+    - rollback_required
+    - rollback_mode == "master"
+
+- name: Find a healthy replica for master failover
+  shell: |
+    redis-cli -h 10.10.0.11 -p 6379 cluster nodes |
+      awk -v master_id="{{ rollback_master_id.stdout }}" \
+        '$3 ~ /slave/ && $3 !~ /fail/ && $4 == master_id {
+          split($2,address,"@")
+          split(address[1],endpoint,":")
+          print endpoint[1]
+          exit
+        }'
+  delegate_to: redis-node-1
+  become: no
+  register: rollback_replica_ip
+  changed_when: false
+  when:
+    - rollback_required
+    - rollback_mode == "master"
+
+- name: Fail if a master has no healthy replica
+  fail:
+    msg: "Cannot safely roll back master {{ inventory_hostname }} because no healthy replica is available."
+  when:
+    - rollback_required
+    - rollback_mode == "master"
+    - rollback_replica_ip.stdout | default('') | length == 0
+
+- name: Wait until the failover replica is synchronized
+  shell: |
+    role=$(redis-cli -h "{{ rollback_replica_ip.stdout }}" -p 6379 info replication |
+      awk -F: '/^role:/ {gsub("\r", "", $2); print $2}')
+    link=$(redis-cli -h "{{ rollback_replica_ip.stdout }}" -p 6379 info replication |
+      awk -F: '/^master_link_status:/ {gsub("\r", "", $2); print $2}')
+    test "$role" = "slave" && test "$link" = "up"
+  delegate_to: redis-node-1
+  become: no
+  register: failover_replica_ready
+  retries: 20
+  delay: 3
+  until: failover_replica_ready.rc == 0
+  changed_when: false
+  when:
+    - rollback_required
+    - rollback_mode == "master"
+
+- name: Fail over before rolling back a master
+  command: redis-cli -h "{{ rollback_replica_ip.stdout }}" -p 6379 cluster failover
+  delegate_to: redis-node-1
+  become: no
+  when:
+    - rollback_required
+    - rollback_mode == "master"
+
+- name: Wait until the former master becomes a replica
+  shell: |
+    redis-cli -h "{{ internal_ip }}" -p 6379 info replication |
+      awk -F: '/^role:/ {gsub("\r", "", $2); print $2}'
+  register: role_after_failover
+  retries: 20
+  delay: 3
+  until: role_after_failover.stdout == "slave"
+  changed_when: false
+  when:
+    - rollback_required
+    - rollback_mode == "master"
+
+- name: Stop Redis on the node being rolled back
+  command: redis-cli -h "{{ internal_ip }}" -p 6379 shutdown nosave
+  when: rollback_required
+
+- name: Wait for the Redis port to stop
+  wait_for:
+    host: "{{ internal_ip }}"
+    port: 6379
+    state: stopped
+    timeout: 30
+  when: rollback_required
+
+- name: Install rollback Redis binaries
+  command: make install
+  args:
+    chdir: "{{ redis_src_dir }}"
+  when: rollback_required
+
+- name: Remove only local persistence that may be incompatible
+  shell: |
+    rm -rf /var/lib/redis/appendonlydir
+    rm -f /var/lib/redis/appendonly*.aof /var/lib/redis/*.rdb
+  when: rollback_required
+
+- name: Remove unsupported cluster address metadata before rollback restart
+  replace:
+    path: /var/lib/redis/nodes.conf
+    regexp: '@([0-9]+),[^ ]*'
+    replace: '@\1'
+  when: rollback_required
+
+- name: Start Redis with the existing cluster configuration
+  command: redis-server /etc/redis/redis.conf
+  when: rollback_required
+
+- name: Wait for the Redis port to start
+  wait_for:
+    host: "{{ internal_ip }}"
+    port: 6379
+    state: started
+    timeout: 60
+  when: rollback_required
+
+- name: Wait for the rolled back node to synchronize as a replica
+  shell: |
+    role=$(redis-cli -h "{{ internal_ip }}" -p 6379 info replication |
+      awk -F: '/^role:/ {gsub("\r", "", $2); print $2}')
+    link=$(redis-cli -h "{{ internal_ip }}" -p 6379 info replication |
+      awk -F: '/^master_link_status:/ {gsub("\r", "", $2); print $2}')
+    version=$(redis-cli -h "{{ internal_ip }}" -p 6379 info server |
+      awk -F: '/^redis_version:/ {gsub("\r", "", $2); print $2}')
+
+    test "$role" = "slave"
+    test "$link" = "up"
+    test "$version" = "{{ target_redis_version }}"
+  register: rollback_sync
+  retries: 30
+  delay: 2
+  until: rollback_sync.rc == 0
+  changed_when: false
+  when: rollback_required
+
+- name: Verify cluster health after this node rollback
+  shell: |
+    redis-cli -h 10.10.0.11 -p 6379 cluster info |
+      grep '^cluster_state:ok'
+  delegate_to: redis-node-1
+  become: no
+  register: rollback_cluster_health
+  retries: 20
+  delay: 2
+  until: rollback_cluster_health.rc == 0
+  changed_when: false
+  when: rollback_required
+
+- name: Print rollback result for this node
+  debug:
+    msg: >-
+      {{ inventory_hostname }} rollback complete:
+      Redis {{ target_redis_version }}, synchronized replica, cluster_state:ok
+  when: rollback_required

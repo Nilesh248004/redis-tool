@@ -110,10 +110,17 @@ Command used:
 Result:
 
 ```text
-Verification successful: all 1000 keys matched
+Key distribution across masters:
+10.10.0.11:6379 -> 332 keys
+10.10.0.12:6379 -> 337 keys
+10.10.0.13:6379 -> 331 keys
+
+PASS - 1000/1000 keys inserted; failures: 0
+PASS - 1000/1000 keys verified
 ```
 
-This confirmed that the cluster was storing and returning data correctly.
+If verification fails, the command reports missing keys and mismatched values
+separately and exits with a non-zero status.
 
 ---
 
@@ -175,9 +182,15 @@ Result:
 ```text
 All 6 nodes upgraded to Redis 7.2.6
 Cluster state: ok
-All 1000 keys verified successfully
-No data loss
+All 16384 hash slots covered
+Availability probes: 531
+Client-visible read outages: 0
+PASS - 1000/1000 keys verified
+UPGRADE COMPLETE - all nodes on v7.2.6, data integrity verified
 ```
+
+The promoted replicas become the new masters, while the former masters rejoin
+as replicas after their upgrade. This role swap is expected.
 
 ---
 
@@ -231,15 +244,19 @@ The full verification confirmed:
 ```text
 Cluster state is ok
 All 16384 hash slots are covered
-All nodes are running Redis 7.2.6
+All 6 cluster nodes are present and reachable
+All 6 nodes are running Redis 7.2.6
+Topology has 3 masters and 3 replicas
 Every master has at least one replica
-All replicas have master_link_status:up
-All 1000 keys matched successfully
+All 3 replicas have master_link_status:up
+Data integrity verified: 1000/1000 keys matched
 ```
 
 Final result:
 
 ```text
+Passed checks: 7
+Failed checks: 0
 FULL VERIFICATION RESULT: PASS
 ```
 
@@ -251,38 +268,62 @@ output/full_verify_output.txt
 
 Stretch Goal S1: Scale Out
 
-I implemented scale out to add two more Redis nodes to the existing Redis Cluster.
+The default Docker Compose file and Ansible inventory define only:
+
+```text
+redis-node-1 through redis-node-6
+```
+
+The scale-out command dynamically creates two additional containers by using
+the same image and Docker network as the existing cluster. It also generates a
+temporary Ansible inventory for the new nodes, installs the Redis version
+currently running in the cluster, and configures their cluster announce
+addresses.
 
 Command used:
 
+```bash
 ./redis-tool scale --add-nodes 2
+```
 
 Before scale out:
 
+```text
 3 masters + 3 replicas = 6 nodes
+```
 
 After scale out:
 
+```text
 4 masters + 4 replicas = 8 nodes
+```
 
 New nodes added:
 
+```text
 redis-node-7 -> 10.10.0.17 -> master
 redis-node-8 -> 10.10.0.18 -> replica of redis-node-7
+```
 
-The scale out command adds the new nodes, rebalances hash slots, and verifies the cluster.
+The playbook adds `redis-node-7` as a master, adds `redis-node-8` as its
+replica, rebalances hash slots across all four masters, waits for the expected
+topology, and runs full cluster verification.
 
 Final result:
 
+```text
 Cluster state: ok
 All 16384 slots covered
 Every master has a replica
 1000 keys verified
 FULL VERIFICATION RESULT: PASS
+```
 
 Output file:
 
+```text
 output/scale_out_output.txt
+```
 
 ⸻
 
@@ -324,12 +365,77 @@ output/rollback_output.txt
 
 ⸻
 
+Stretch Goal S4: Idempotency
+
+Provisioning is safe to run against an existing healthy cluster:
+
+```bash
+./redis-tool provision --version 7.0.15 --masters 3 --replicas-per-master 1
+```
+
+The command detects all six healthy cluster nodes and exits without
+reinstalling Redis, restarting nodes, clearing persistence files, or recreating
+the cluster:
+
+```text
+PROVISION NO-OP - existing healthy cluster was left unchanged
+```
+
+The provision playbook has the same protection when executed directly. A
+second run completed with `changed=0` on every node.
+
+Upgrade also checks every live cluster node before starting the rolling
+workflow:
+
+```bash
+./redis-tool upgrade --target-version 7.0.15 --strategy rolling
+```
+
+When every node is already at the target version, it exits successfully before
+starting the availability monitor or running upgrade tasks:
+
+```text
+All cluster nodes are already running Redis 7.0.15.
+No upgrade is required; exiting cleanly without restarting any node.
+UPGRADE NO-OP - all nodes already at target version
+```
+
+After the provision no-op, full verification confirmed:
+
+```text
+Data integrity verified: 1000/1000 keys matched
+FULL VERIFICATION RESULT: PASS
+```
+
+Stretch Goal S5: Structured Logging
+
+Every `redis-tool` invocation creates a unique operation log in `logs/`:
+
+```text
+logs/YYYYMMDDTHHMMSSZ_<command>_<process-id>.log
+```
+
+Logs contain UTC timestamps, command names, node names, actions, outcomes,
+details, the complete operation output, and the final exit code. Structured
+records use this format:
+
+```text
+timestamp=2026-06-14T18:18:24Z level=INFO command=provision node=all action=provision outcome=skipped details="healthy cluster already exists; requested_version=7.0.15; data_preserved=true"
+```
+
+Successful, skipped, and failed commands are all recorded with the appropriate
+final outcome.
+
+⸻
+
 Stretch Goal Summary
 
 S1 Scale Out completed
 S3 Rollback completed
+S4 Idempotency completed
+S5 Structured Logging completed
 
-Both are available through the CLI:
+The stretch goals are available through the CLI:
 
 ./redis-tool scale --add-nodes 2
 ./redis-tool rollback --target-version 7.0.15

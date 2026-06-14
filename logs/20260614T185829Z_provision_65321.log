@@ -1,3 +1,79 @@
+timestamp=2026-06-14T18:58:29Z level=INFO command=provision node=all action=operation outcome=started details="arguments=provision --version 7.0.15 --masters 3 --replicas-per-master 1"
+Operation log: logs/20260614T185829Z_provision_65321.log
+timestamp=2026-06-14T18:58:29Z level=INFO command=provision node=redis-node-1 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-14T18:58:29Z level=INFO command=provision node=redis-node-2 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-14T18:58:29Z level=INFO command=provision node=redis-node-3 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-14T18:58:29Z level=INFO command=provision node=redis-node-4 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-14T18:58:29Z level=INFO command=provision node=redis-node-5 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-14T18:58:29Z level=INFO command=provision node=redis-node-6 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-14T18:58:29Z level=INFO command=provision node=all action=prerequisite_check outcome=success details="runtime=Docker version 29.4.3, build 055a478 ansible=2.21.0"
+Checking Redis container infrastructure...
+[WARN] redis-node-1 is not running
+[WARN] redis-node-2 is not running
+[WARN] redis-node-3 is not running
+[WARN] redis-node-4 is not running
+[WARN] redis-node-5 is not running
+[WARN] redis-node-6 is not running
+Starting Redis containers...
+ Network infra_redis-cluster-net Creating 
+ Network infra_redis-cluster-net Created 
+ Container redis-node-5 Creating 
+ Container redis-node-1 Creating 
+ Container redis-node-3 Creating 
+ Container redis-node-2 Creating 
+ Container redis-node-4 Creating 
+ Container redis-node-6 Creating 
+ Container redis-node-5 Created 
+ Container redis-node-1 Created 
+ Container redis-node-3 Created 
+ Container redis-node-4 Created 
+ Container redis-node-6 Created 
+ Container redis-node-2 Created 
+ Container redis-node-1 Starting 
+ Container redis-node-3 Starting 
+ Container redis-node-2 Starting 
+ Container redis-node-4 Starting 
+ Container redis-node-6 Starting 
+ Container redis-node-5 Starting 
+ Container redis-node-2 Started 
+ Container redis-node-4 Started 
+ Container redis-node-5 Started 
+ Container redis-node-1 Started 
+ Container redis-node-3 Started 
+ Container redis-node-6 Started 
+Waiting for containers to initialize...
+Patching SSH public key into Redis containers...
+Checking SSH key setup...
+[OK] SSH key already exists: /Users/nileshkrishnamurthy/.ssh/redis_cluster_key
+Patching SSH key into redis-node-1...
+[OK] SSH key patched into redis-node-1
+Patching SSH key into redis-node-2...
+[OK] SSH key patched into redis-node-2
+Patching SSH key into redis-node-3...
+[OK] SSH key patched into redis-node-3
+Patching SSH key into redis-node-4...
+[OK] SSH key patched into redis-node-4
+Patching SSH key into redis-node-5...
+[OK] SSH key patched into redis-node-5
+Patching SSH key into redis-node-6...
+[OK] SSH key patched into redis-node-6
+Waiting for SSH access on Redis nodes...
+Checking SSH on localhost:2211...
+[OK] SSH ready on port 2211
+Checking SSH on localhost:2212...
+[OK] SSH ready on port 2212
+Checking SSH on localhost:2213...
+[OK] SSH ready on port 2213
+Checking SSH on localhost:2214...
+[OK] SSH ready on port 2214
+Checking SSH on localhost:2215...
+[OK] SSH ready on port 2215
+Checking SSH on localhost:2216...
+[OK] SSH ready on port 2216
+Provisioning Redis Cluster...
+Version: 7.0.15
+Masters: 3
+Replicas per master: 1
 ===== Redis Cluster Provision Started =====
 Mon Jun 15 00:28:37 IST 2026
 Redis version: 7.0.15
@@ -489,3 +565,5 @@ f292ac885bd6cbc341f836032d126774563883df 10.10.0.12:6379@16379 master - 0 178146
 
 ===== Redis Cluster Provision Completed =====
 Mon Jun 15 00:30:12 IST 2026
+timestamp=2026-06-14T19:00:12Z level=INFO command=provision node=all action=operation outcome=success details="exit_code=0"
+Structured operation log: logs/20260614T185829Z_provision_65321.log

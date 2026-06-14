@@ -1,0 +1,45 @@
+timestamp=2026-06-14T18:37:55Z level=INFO command=data-seed node=all action=operation outcome=started details="arguments=data seed --keys 1000"
+Operation log: logs/20260614T183755Z_data-seed_58856.log
+timestamp=2026-06-14T18:37:55Z level=INFO command=data-seed node=redis-node-1 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-14T18:37:55Z level=INFO command=data-seed node=redis-node-2 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-14T18:37:55Z level=INFO command=data-seed node=redis-node-3 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-14T18:37:55Z level=INFO command=data-seed node=redis-node-4 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-14T18:37:55Z level=INFO command=data-seed node=redis-node-5 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-14T18:37:55Z level=INFO command=data-seed node=redis-node-6 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-14T18:37:55Z level=INFO command=data-seed node=all action=prerequisite_check outcome=success details="runtime=Docker version 29.4.3, build 055a478 ansible=2.21.0"
+timestamp=2026-06-14T18:37:55Z level=INFO command=data-seed node=redis-node-1 action=cluster_discovery outcome=reachable details="address=10.10.0.11:6379"
+timestamp=2026-06-14T18:37:55Z level=INFO command=data-seed node=redis-node-2 action=cluster_discovery outcome=reachable details="address=10.10.0.12:6379"
+timestamp=2026-06-14T18:37:55Z level=INFO command=data-seed node=redis-node-3 action=cluster_discovery outcome=reachable details="address=10.10.0.13:6379"
+timestamp=2026-06-14T18:37:55Z level=INFO command=data-seed node=redis-node-4 action=cluster_discovery outcome=reachable details="address=10.10.0.14:6379"
+timestamp=2026-06-14T18:37:55Z level=INFO command=data-seed node=redis-node-5 action=cluster_discovery outcome=reachable details="address=10.10.0.15:6379"
+timestamp=2026-06-14T18:37:55Z level=INFO command=data-seed node=redis-node-6 action=cluster_discovery outcome=reachable details="address=10.10.0.16:6379"
+Seeding 1000 keys into Redis Cluster...
+===== Redis Data Seed Started =====
+Mon Jun 15 00:07:55 IST 2026
+Keys: 1000
+
+PLAY [Seed deterministic data into Redis Cluster] ******************************
+
+TASK [Seed deterministic key-value pairs] **************************************
+changed: [redis-node-1]
+
+TASK [Show seed summary] *******************************************************
+ok: [redis-node-1] => {
+    "msg": [
+        "",
+        "Key distribution across masters:",
+        "10.10.0.12:6379 -> 337 keys",
+        "10.10.0.13:6379 -> 331 keys",
+        "10.10.0.11:6379 -> 332 keys",
+        "",
+        "PASS - 1000/1000 keys inserted; failures: 0"
+    ]
+}
+
+PLAY RECAP *********************************************************************
+redis-node-1               : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+===== Redis Data Seed Completed =====
+Mon Jun 15 00:07:56 IST 2026
+timestamp=2026-06-14T18:37:56Z level=INFO command=data-seed node=all action=operation outcome=success details="exit_code=0"
+Structured operation log: logs/20260614T183755Z_data-seed_58856.log

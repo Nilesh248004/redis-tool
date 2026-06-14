@@ -22,6 +22,13 @@
         - /var/log/redis
         - /var/run/redis
 
+    - name: Remove old Redis data and cluster state
+      shell: |
+        pkill redis-server || true
+        rm -rf /var/lib/redis/*
+        rm -f /var/log/redis/redis-server.log
+      changed_when: true
+
     - name: Write Redis cluster configuration
       copy:
         dest: /etc/redis/redis.conf
@@ -48,6 +55,9 @@
           cluster-enabled yes
           cluster-config-file nodes.conf
           cluster-node-timeout 5000
+          cluster-announce-ip {{ internal_ip }}
+          cluster-announce-port 6379
+          cluster-announce-bus-port 16379
 
           tcp-backlog 511
           timeout 0
@@ -59,12 +69,12 @@
 
     - name: Wait for Redis port 6379
       wait_for:
-        host: "{{ internal_ip }}"
+        host: "127.0.0.1"
         port: 6379
-        timeout: 20
+        timeout: 60
 
     - name: Check Redis ping
-      command: redis-cli -h "{{ internal_ip }}" -p 6379 ping
+      command: redis-cli -h 127.0.0.1 -p 6379 ping
       register: redis_ping
       changed_when: false
 

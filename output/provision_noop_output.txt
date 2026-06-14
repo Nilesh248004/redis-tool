@@ -1,0 +1,20 @@
+===== Redis Cluster Provision Started =====
+Mon Jun 15 00:30:29 IST 2026
+Redis version requested: 7.0.15
+Masters: 3
+Replicas per master: 1
+
+Redis Cluster is already provisioned and healthy.
+Provision is a no-op to preserve the existing cluster and data.
+
+redis-node-1 10.10.0.11 Redis 7.0.15
+redis-node-2 10.10.0.12 Redis 7.0.15
+redis-node-3 10.10.0.13 Redis 7.0.15
+redis-node-4 10.10.0.14 Redis 7.0.15
+redis-node-5 10.10.0.15 Redis 7.0.15
+redis-node-6 10.10.0.16 Redis 7.0.15
+
+Use './redis-tool upgrade --target-version 7.0.15 --strategy rolling' to change versions safely.
+PROVISION NO-OP - existing healthy cluster was left unchanged
+===== Redis Cluster Provision Completed =====
+Mon Jun 15 00:30:29 IST 2026

@@ -1,0 +1,46 @@
+---
+- name: Detect an existing healthy Redis Cluster
+  hosts: redis-node-1
+  become: no
+  gather_facts: no
+
+  tasks:
+    - name: Read existing cluster state without changing it
+      shell: |
+        cluster_info=$(redis-cli -h 10.10.0.11 -p 6379 cluster info 2>/dev/null || true)
+        cluster_nodes=$(redis-cli -h 10.10.0.11 -p 6379 cluster nodes 2>/dev/null || true)
+
+        required_nodes=0
+        for ip in 10.10.0.11 10.10.0.12 10.10.0.13 10.10.0.14 10.10.0.15 10.10.0.16; do
+          if echo "$cluster_nodes" | grep -q "[[:space:]]$ip:6379@"; then
+            required_nodes=$((required_nodes + 1))
+          fi
+        done
+
+        if echo "$cluster_info" | grep -q '^cluster_state:ok' &&
+           [ "$required_nodes" -eq 6 ]; then
+          echo "true"
+        else
+          echo "false"
+        fi
+      register: existing_cluster_check
+      changed_when: false
+
+    - name: Store provision idempotency decision
+      set_fact:
+        cluster_already_provisioned: "{{ existing_cluster_check.stdout == 'true' }}"
+      changed_when: false
+
+    - name: Report provision no-op for an existing cluster
+      debug:
+        msg: "Redis Cluster is already provisioned and healthy; skipping installation, configuration, and cluster creation to preserve data."
+      when: cluster_already_provisioned
+
+- import_playbook: install_redis.yml
+  when: not (hostvars['redis-node-1'].cluster_already_provisioned | default(false) | bool)
+
+- import_playbook: configure_redis.yml
+  when: not (hostvars['redis-node-1'].cluster_already_provisioned | default(false) | bool)
+
+- import_playbook: create_cluster.yml
+  when: not (hostvars['redis-node-1'].cluster_already_provisioned | default(false) | bool)

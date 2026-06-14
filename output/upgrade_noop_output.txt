@@ -1,0 +1,17 @@
+===== Redis Rolling Upgrade Started =====
+Mon Jun 15 00:43:43 IST 2026
+Target version: 7.2.6
+Strategy: rolling
+
+redis-node-1 10.10.0.11 Redis 7.2.6
+redis-node-2 10.10.0.12 Redis 7.2.6
+redis-node-3 10.10.0.13 Redis 7.2.6
+redis-node-4 10.10.0.14 Redis 7.2.6
+redis-node-5 10.10.0.15 Redis 7.2.6
+redis-node-6 10.10.0.16 Redis 7.2.6
+
+All cluster nodes are already running Redis 7.2.6.
+No upgrade is required; exiting cleanly without restarting any node.
+UPGRADE NO-OP - all nodes already at target version
+===== Redis Rolling Upgrade Completed =====
+Mon Jun 15 00:43:43 IST 2026

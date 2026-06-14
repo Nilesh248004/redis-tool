@@ -1,122 +1,252 @@
 ---
-- name: Rollback Redis version on all cluster nodes
-  hosts: redis_nodes
-  become: yes
-  gather_facts: yes
-  serial: 1
-
-  vars:
-    redis_version: "{{ target_version | default('7.0.15') }}"
-    redis_tarball: "redis-{{ redis_version }}.tar.gz"
-    redis_url: "http://download.redis.io/releases/{{ redis_tarball }}"
-    redis_src_dir: "/tmp/redis-{{ redis_version }}"
-
-  tasks:
-    - name: Show rollback node
-      debug:
-        msg: "Rolling back {{ inventory_hostname }} to Redis {{ redis_version }}"
-
-    - name: Install build dependencies
-      apt:
-        name:
-          - build-essential
-          - tcl
-          - wget
-          - tar
-          - make
-          - gcc
-        state: present
-        update_cache: yes
-
-    - name: Remove old Redis rollback source directory
-      file:
-        path: "{{ redis_src_dir }}"
-        state: absent
-
-    - name: Download target Redis version
-      get_url:
-        url: "{{ redis_url }}"
-        dest: "/tmp/{{ redis_tarball }}"
-        mode: "0644"
-
-    - name: Extract target Redis source
-      unarchive:
-        src: "/tmp/{{ redis_tarball }}"
-        dest: /tmp
-        remote_src: yes
-
-    - name: Build target Redis version
-      command: make -j2
-      args:
-        chdir: "{{ redis_src_dir }}"
-
-    - name: Install target Redis binaries
-      command: make install
-      args:
-        chdir: "{{ redis_src_dir }}"
-
-    - name: Shutdown Redis before restart
-      shell: redis-cli -h "{{ internal_ip }}" -p 6379 shutdown nosave
-      ignore_errors: yes
-
-    - name: Remove incompatible Redis persistence files before rollback start
-      shell: rm -rf /var/lib/redis/appendonlydir /var/lib/redis/appendonly*.aof /var/lib/redis/*.rdb
-
-    - name: Start Redis with existing cluster config
-      command: redis-server /etc/redis/redis.conf
-
-    - name: Wait for Redis port
-      wait_for:
-        host: "{{ internal_ip }}"
-        port: 6379
-        state: started
-        timeout: 60
-
-    - name: Check Redis version after rollback
-      shell: redis-cli -h "{{ internal_ip }}" -p 6379 info server | grep redis_version
-      register: rollback_version
-      changed_when: false
-
-    - name: Show Redis version after rollback
-      debug:
-        msg: "{{ inventory_hostname }} -> {{ rollback_version.stdout }}"
-
-    - name: Check cluster state after this node rollback
-      shell: redis-cli -h 10.10.0.11 -p 6379 cluster info | grep cluster_state
-      delegate_to: redis-node-1
-      become: no
-      register: cluster_state
-      changed_when: false
-
-    - name: Fail if cluster is not healthy after this rollback
-      fail:
-        msg: "Cluster is not healthy after rolling back {{ inventory_hostname }}: {{ cluster_state.stdout }}"
-      when: "'cluster_state:ok' not in cluster_state.stdout"
-
-
-- name: Final rollback verification
+- name: Validate cluster before selective rollback
   hosts: redis-node-1
   become: no
   gather_facts: no
 
+  vars:
+    target_redis_version: "{{ target_version | default('7.0.15') }}"
+
   tasks:
-    - name: Show final Redis versions
+    - name: Verify cluster health, reachability, and replica coverage
       shell: |
-        for ip in 10.10.0.11 10.10.0.12 10.10.0.13 10.10.0.14 10.10.0.15 10.10.0.16 10.10.0.17 10.10.0.18; do
-          echo "$ip -> $(redis-cli -h $ip -p 6379 info server | grep redis_version | cut -d: -f2 | tr -d '\r')"
+        set -eu
+
+        cluster_info=$(redis-cli -h 10.10.0.11 -p 6379 cluster info)
+        cluster_nodes=$(redis-cli -h 10.10.0.11 -p 6379 cluster nodes)
+        node_ips=$(echo "$cluster_nodes" | awk '$3 !~ /fail/ {split($2,address,"@"); split(address[1],endpoint,":"); print endpoint[1]}')
+
+        echo "$cluster_info" | grep -q '^cluster_state:ok'
+
+        for ip in $node_ips; do
+          test "$(redis-cli -h "$ip" -p 6379 ping)" = "PONG"
         done
-      register: final_versions
+
+        for master_id in $(echo "$cluster_nodes" | awk '$3 ~ /master/ && $3 !~ /fail/ {print $1}'); do
+          replica_count=$(
+            echo "$cluster_nodes" |
+              awk -v master_id="$master_id" \
+                '$3 ~ /slave/ && $3 !~ /fail/ && $4 == master_id {count++} END {print count+0}'
+          )
+          test "$replica_count" -ge 1
+        done
+      changed_when: false
+
+    - name: Validate that every rollback has a target-version shard anchor
+      shell: |
+        set -eu
+
+        target="{{ target_redis_version }}"
+        cluster_nodes=$(redis-cli -h 10.10.0.11 -p 6379 cluster nodes)
+        unsafe=0
+
+        version_for_ip() {
+          redis-cli -h "$1" -p 6379 info server |
+            awk -F: '/^redis_version:/ {gsub("\r", "", $2); print $2}'
+        }
+
+        replica_link_for_ip() {
+          redis-cli -h "$1" -p 6379 info replication |
+            awk -F: '/^master_link_status:/ {gsub("\r", "", $2); print $2}'
+        }
+
+        for master_id in $(echo "$cluster_nodes" |
+          awk '$3 ~ /master/ && $3 !~ /fail/ {print $1}'); do
+          master_ip=$(
+            echo "$cluster_nodes" |
+              awk -v master_id="$master_id" '$1 == master_id {
+                split($2,address,"@")
+                split(address[1],endpoint,":")
+                print endpoint[1]
+              }'
+          )
+          master_version=$(version_for_ip "$master_ip")
+          replica_ips=$(
+            echo "$cluster_nodes" |
+              awk -v master_id="$master_id" \
+                '$3 ~ /slave/ && $3 !~ /fail/ && $4 == master_id {
+                  split($2,address,"@")
+                  split(address[1],endpoint,":")
+                  print endpoint[1]
+                }'
+          )
+
+          if [ "$master_version" != "$target" ]; then
+            safe_replica=""
+            for replica_ip in $replica_ips; do
+              replica_version=$(version_for_ip "$replica_ip")
+              replica_link=$(replica_link_for_ip "$replica_ip")
+
+              if [ "$replica_version" = "$target" ] && [ "$replica_link" = "up" ]; then
+                safe_replica="$replica_ip"
+                break
+              fi
+            done
+
+            if [ -z "$safe_replica" ]; then
+              echo "UNSAFE: master $master_ip is Redis $master_version and has no synchronized Redis $target replica."
+              unsafe=1
+            else
+              echo "SAFE: master $master_ip can fail over to target-version replica $safe_replica."
+            fi
+          fi
+
+          for replica_ip in $replica_ips; do
+            replica_version=$(version_for_ip "$replica_ip")
+
+            if [ "$replica_version" != "$target" ]; then
+              replica_link=$(replica_link_for_ip "$replica_ip")
+
+              if [ "$master_version" != "$target" ]; then
+                echo "UNSAFE: shard $master_ip/$replica_ip has no Redis $target node."
+                unsafe=1
+              elif [ "$replica_link" != "up" ]; then
+                echo "UNSAFE: replica $replica_ip is not synchronized with target-version master $master_ip."
+                unsafe=1
+              else
+                echo "SAFE: replica $replica_ip can roll back against target-version master $master_ip."
+              fi
+            fi
+          done
+        done
+
+        if [ "$unsafe" -ne 0 ]; then
+          echo "Rollback stopped before changes: each affected shard needs a synchronized Redis $target node."
+          exit 1
+        fi
+      register: rollback_safety
+      changed_when: false
+      failed_when: false
+
+    - name: Print rollback safety plan
+      debug:
+        msg: "{{ rollback_safety.stdout_lines }}"
+
+    - name: Stop before an unsafe rollback
+      fail:
+        msg: "{{ rollback_safety.stdout_lines | join('\n') }}"
+      when: rollback_safety.rc != 0
+
+    - name: Report versions before rollback
+      shell: |
+        cluster_nodes=$(redis-cli -h 10.10.0.11 -p 6379 cluster nodes)
+        node_ips=$(echo "$cluster_nodes" | awk '$3 !~ /fail/ {split($2,address,"@"); split(address[1],endpoint,":"); print endpoint[1]}')
+
+        for ip in $node_ips; do
+          version=$(redis-cli -h "$ip" -p 6379 info server | awk -F: '/^redis_version:/ {gsub("\r", "", $2); print $2}')
+
+          if [ "$version" = "{{ target_redis_version }}" ]; then
+            outcome="already target; skip"
+          else
+            outcome="rollback required"
+          fi
+
+          echo "$ip:6379 Redis $version -> $outcome"
+        done
+      register: pre_rollback_versions
+      changed_when: false
+
+    - name: Print selective rollback plan
+      debug:
+        msg: "{{ pre_rollback_versions.stdout_lines }}"
+
+
+- name: Roll back upgraded replicas first
+  hosts: redis_nodes
+  become: yes
+  gather_facts: no
+  serial: 1
+
+  vars:
+    rollback_mode: "slave"
+    target_redis_version: "{{ target_version | default('7.0.15') }}"
+    redis_tarball: "redis-{{ target_redis_version }}.tar.gz"
+    redis_url: "https://download.redis.io/releases/{{ redis_tarball }}"
+    redis_src_dir: "/tmp/redis-{{ target_redis_version }}"
+
+  tasks:
+    - name: Process replica rollback decision
+      include_tasks: tasks/rollback_node.yml
+
+
+- name: Roll back upgraded masters using failover
+  hosts: redis_nodes
+  become: yes
+  gather_facts: no
+  serial: 1
+
+  vars:
+    rollback_mode: "master"
+    target_redis_version: "{{ target_version | default('7.0.15') }}"
+    redis_tarball: "redis-{{ target_redis_version }}.tar.gz"
+    redis_url: "https://download.redis.io/releases/{{ redis_tarball }}"
+    redis_src_dir: "/tmp/redis-{{ target_redis_version }}"
+
+  tasks:
+    - name: Process master rollback decision
+      include_tasks: tasks/rollback_node.yml
+
+
+- name: Verify final rollback state
+  hosts: redis-node-1
+  become: no
+  gather_facts: no
+
+  vars:
+    target_redis_version: "{{ target_version | default('7.0.15') }}"
+
+  tasks:
+    - name: Verify every live cluster node uses the rollback target
+      shell: |
+        set -eu
+
+        cluster_nodes=$(redis-cli -h 10.10.0.11 -p 6379 cluster nodes)
+        node_ips=$(echo "$cluster_nodes" | awk '$3 !~ /fail/ {split($2,address,"@"); split(address[1],endpoint,":"); print endpoint[1]}')
+
+        for ip in $node_ips; do
+          version=$(redis-cli -h "$ip" -p 6379 info server |
+            awk -F: '/^redis_version:/ {gsub("\r", "", $2); print $2}')
+          echo "$ip:6379 -> Redis $version"
+          test "$version" = "{{ target_redis_version }}"
+        done
+      register: final_rollback_versions
       changed_when: false
 
     - name: Print final Redis versions
       debug:
-        msg: "{{ final_versions.stdout_lines }}"
+        msg: "{{ final_rollback_versions.stdout_lines }}"
 
-    - name: Show cluster state
-      shell: redis-cli -h 10.10.0.11 -p 6379 cluster info | grep cluster_state
-      register: final_cluster_state
+    - name: Verify final cluster health and replica links
+      shell: |
+        set -eu
+
+        cluster_info=$(redis-cli -h 10.10.0.11 -p 6379 cluster info)
+        cluster_nodes=$(redis-cli -h 10.10.0.11 -p 6379 cluster nodes)
+        node_ips=$(echo "$cluster_nodes" | awk '$3 !~ /fail/ {split($2,address,"@"); split(address[1],endpoint,":"); print endpoint[1]}')
+
+        echo "$cluster_info" | grep -q '^cluster_state:ok'
+        echo "$cluster_info" | grep -q '^cluster_slots_ok:16384'
+
+        for ip in $node_ips; do
+          role=$(redis-cli -h "$ip" -p 6379 info replication |
+            awk -F: '/^role:/ {gsub("\r", "", $2); print $2}')
+
+          if [ "$role" = "slave" ]; then
+            link=$(redis-cli -h "$ip" -p 6379 info replication |
+              awk -F: '/^master_link_status:/ {gsub("\r", "", $2); print $2}')
+            test "$link" = "up"
+          fi
+        done
+
+        echo "cluster_state:ok"
+        echo "cluster_slots_ok:16384"
+        echo "all replica links:up"
+      register: final_rollback_health
+      retries: 20
+      delay: 2
+      until: final_rollback_health.rc == 0
       changed_when: false
 
-    - name: Print cluster state
+    - name: Print final rollback health
       debug:
-        msg: "{{ final_cluster_state.stdout }}"
+        msg: "{{ final_rollback_health.stdout_lines }}"

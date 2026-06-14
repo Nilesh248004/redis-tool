@@ -1,5 +1,5 @@
 ===== Redis Data Verify Started =====
-Sat Jun 13 13:32:13 IST 2026
+Mon Jun 15 00:31:40 IST 2026
 Keys: 1000
 
 PLAY [Verify deterministic data in Redis Cluster] ******************************
@@ -10,7 +10,7 @@ ok: [redis-node-1]
 TASK [Show verification result] ************************************************
 ok: [redis-node-1] => {
     "msg": [
-        "Verification successful: all 1000 keys matched"
+        "PASS - 1000/1000 keys verified"
     ]
 }
 
@@ -18,4 +18,4 @@ PLAY RECAP *********************************************************************
 redis-node-1               : ok=2    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 
 ===== Redis Data Verify Completed =====
-Sat Jun 13 13:32:14 IST 2026
+Mon Jun 15 00:31:41 IST 2026

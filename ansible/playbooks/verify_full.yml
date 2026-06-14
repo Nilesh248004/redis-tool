@@ -25,7 +25,7 @@
 
         cluster_info=$(redis-cli -h 10.10.0.11 -p 6379 cluster info)
         cluster_nodes=$(redis-cli -h 10.10.0.11 -p 6379 cluster nodes)
-        node_ips=$(echo "$cluster_nodes" | awk '$3 !~ /fail/ {split($2,a,":"); print a[1]}')
+        node_ips=$(echo "$cluster_nodes" | awk '{split($2,a,":"); print a[1]}')
 
         # 1. Cluster state
         cluster_state=$(echo "$cluster_info" | grep "^cluster_state:" | cut -d: -f2 | tr -d '\r')
@@ -46,49 +46,81 @@
           print_fail "Hash slots are not fully covered"
         fi
 
-        # 3. Version consistency across all cluster nodes
+        # 3. Node membership and reachability
+        known_nodes=$(echo "$cluster_info" | grep "^cluster_known_nodes:" | cut -d: -f2 | tr -d '\r')
+        discovered_nodes=$(echo "$node_ips" | grep -vc '^$')
+        failed_nodes=$(echo "$cluster_nodes" | awk '$3 ~ /fail/ {count++} END {print count+0}')
+        reachable_nodes=0
+
+        for ip in $node_ips; do
+          if [ "$(redis-cli -h "$ip" -p 6379 ping 2>/dev/null)" = "PONG" ]; then
+            reachable_nodes=$((reachable_nodes + 1))
+          fi
+        done
+
+        if [ "$known_nodes" -gt 0 ] &&
+           [ "$discovered_nodes" -eq "$known_nodes" ] &&
+           [ "$reachable_nodes" -eq "$known_nodes" ] &&
+           [ "$failed_nodes" -eq 0 ]; then
+          print_pass "All $known_nodes cluster nodes are present and reachable"
+        else
+          print_fail "Node health mismatch: known=$known_nodes discovered=$discovered_nodes reachable=$reachable_nodes failed=$failed_nodes"
+        fi
+
+        # 4. Version consistency across all cluster nodes
         versions=""
+        version_count=0
 
         for ip in $node_ips; do
           version=$(redis-cli -h "$ip" -p 6379 info server | grep "^redis_version:" | cut -d: -f2 | tr -d '\r')
-          versions="$versions $version"
+
+          if [ -n "$version" ]; then
+            versions="$versions $version"
+            version_count=$((version_count + 1))
+          fi
         done
 
         unique_versions=$(echo "$versions" | tr ' ' '\n' | grep -v '^$' | sort -u | wc -l | tr -d ' ')
 
-        if [ "$unique_versions" = "1" ]; then
+        if [ "$version_count" -eq "$known_nodes" ] && [ "$unique_versions" = "1" ]; then
           final_version=$(echo "$versions" | awk '{print $1}')
-          print_pass "All nodes are running the same Redis version: $final_version"
+          print_pass "All $known_nodes nodes are running the same Redis version: $final_version"
         else
-          print_fail "Redis versions are not same across all nodes: $versions"
+          print_fail "Redis version mismatch or missing response: $versions"
         fi
 
-        # 4. Every master should have at least one replica
+        # 5. Every master should have at least one replica
         failed_master_replica_check=0
         master_ids=$(echo "$cluster_nodes" | awk '$3 ~ /master/ && $3 !~ /fail/ {print $1}')
+        master_count=$(echo "$master_ids" | grep -vc '^$')
+        replica_count=$(echo "$cluster_nodes" | awk '$3 ~ /slave/ && $3 !~ /fail/ {count++} END {print count+0}')
 
         for master_id in $master_ids; do
-          replica_count=$(echo "$cluster_nodes" | awk -v mid="$master_id" '$3 ~ /slave/ && $4 == mid {count++} END {print count+0}')
+          replicas_for_master=$(echo "$cluster_nodes" | awk -v mid="$master_id" '$3 ~ /slave/ && $3 !~ /fail/ && $4 == mid {count++} END {print count+0}')
 
-          if [ "$replica_count" -lt 1 ]; then
+          if [ "$replicas_for_master" -lt 1 ]; then
             failed_master_replica_check=1
           fi
         done
 
-        if [ "$failed_master_replica_check" = "0" ]; then
-          print_pass "Every master has at least one replica"
+        if [ "$master_count" -gt 0 ] &&
+           [ "$replica_count" -gt 0 ] &&
+           [ "$failed_master_replica_check" = "0" ]; then
+          print_pass "Topology has $master_count masters and $replica_count replicas; every master has a replica"
         else
-          print_fail "One or more masters do not have replicas"
+          print_fail "Invalid topology or one or more masters do not have replicas"
         fi
 
-        # 5. Replica link status across all replicas
+        # 6. Replica link status across all replicas
         failed_replication_check=0
+        checked_replicas=0
 
         for ip in $node_ips; do
           replication_info=$(redis-cli -h "$ip" -p 6379 info replication)
           role=$(echo "$replication_info" | grep "^role:" | cut -d: -f2 | tr -d '\r')
 
           if [ "$role" = "slave" ]; then
+            checked_replicas=$((checked_replicas + 1))
             link_status=$(echo "$replication_info" | grep "^master_link_status:" | cut -d: -f2 | tr -d '\r')
 
             if [ "$link_status" != "up" ]; then
@@ -97,27 +129,35 @@
           fi
         done
 
-        if [ "$failed_replication_check" = "0" ]; then
-          print_pass "All replicas have master_link_status:up"
+        if [ "$checked_replicas" -eq "$replica_count" ] &&
+           [ "$checked_replicas" -gt 0 ] &&
+           [ "$failed_replication_check" = "0" ]; then
+          print_pass "All $checked_replicas replicas have master_link_status:up"
         else
-          print_fail "One or more replicas have replication link down"
+          print_fail "Replica count mismatch or one or more replication links are down"
         fi
 
-        # 6. Data integrity
-        failed_keys=0
+        # 7. Data integrity
+        verified_keys=0
+        missing_keys=0
+        mismatched_keys=0
 
         for i in $(seq 1 1000); do
           value=$(redis-cli -c -h 10.10.0.11 -p 6379 GET "user:$i")
 
-          if [ "$value" != "value-$i" ]; then
-            failed_keys=$((failed_keys + 1))
+          if [ -z "$value" ]; then
+            missing_keys=$((missing_keys + 1))
+          elif [ "$value" != "value-$i" ]; then
+            mismatched_keys=$((mismatched_keys + 1))
+          else
+            verified_keys=$((verified_keys + 1))
           fi
         done
 
-        if [ "$failed_keys" = "0" ]; then
-          print_pass "Data integrity verified: all 1000 keys matched"
+        if [ "$missing_keys" -eq 0 ] && [ "$mismatched_keys" -eq 0 ]; then
+          print_pass "Data integrity verified: $verified_keys/1000 keys matched"
         else
-          print_fail "Data integrity failed: $failed_keys keys mismatched"
+          print_fail "Data integrity failed: $missing_keys keys missing, $mismatched_keys values mismatched"
         fi
 
         echo ""

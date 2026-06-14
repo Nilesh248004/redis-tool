@@ -1,0 +1,39 @@
+timestamp=2026-06-14T19:01:40Z level=INFO command=data-verify node=all action=operation outcome=started details="arguments=data verify"
+Operation log: logs/20260614T190140Z_data-verify_67697.log
+timestamp=2026-06-14T19:01:40Z level=INFO command=data-verify node=redis-node-1 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-14T19:01:40Z level=INFO command=data-verify node=redis-node-2 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-14T19:01:40Z level=INFO command=data-verify node=redis-node-3 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-14T19:01:40Z level=INFO command=data-verify node=redis-node-4 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-14T19:01:40Z level=INFO command=data-verify node=redis-node-5 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-14T19:01:40Z level=INFO command=data-verify node=redis-node-6 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-14T19:01:40Z level=INFO command=data-verify node=all action=prerequisite_check outcome=success details="runtime=Docker version 29.4.3, build 055a478 ansible=2.21.0"
+timestamp=2026-06-14T19:01:40Z level=INFO command=data-verify node=redis-node-1 action=cluster_discovery outcome=reachable details="address=10.10.0.11:6379"
+timestamp=2026-06-14T19:01:40Z level=INFO command=data-verify node=redis-node-2 action=cluster_discovery outcome=reachable details="address=10.10.0.12:6379"
+timestamp=2026-06-14T19:01:40Z level=INFO command=data-verify node=redis-node-3 action=cluster_discovery outcome=reachable details="address=10.10.0.13:6379"
+timestamp=2026-06-14T19:01:40Z level=INFO command=data-verify node=redis-node-4 action=cluster_discovery outcome=reachable details="address=10.10.0.14:6379"
+timestamp=2026-06-14T19:01:40Z level=INFO command=data-verify node=redis-node-5 action=cluster_discovery outcome=reachable details="address=10.10.0.15:6379"
+timestamp=2026-06-14T19:01:40Z level=INFO command=data-verify node=redis-node-6 action=cluster_discovery outcome=reachable details="address=10.10.0.16:6379"
+Verifying Redis Cluster data...
+===== Redis Data Verify Started =====
+Mon Jun 15 00:31:40 IST 2026
+Keys: 1000
+
+PLAY [Verify deterministic data in Redis Cluster] ******************************
+
+TASK [Verify all seeded keys] **************************************************
+ok: [redis-node-1]
+
+TASK [Show verification result] ************************************************
+ok: [redis-node-1] => {
+    "msg": [
+        "PASS - 1000/1000 keys verified"
+    ]
+}
+
+PLAY RECAP *********************************************************************
+redis-node-1               : ok=2    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+===== Redis Data Verify Completed =====
+Mon Jun 15 00:31:41 IST 2026
+timestamp=2026-06-14T19:01:41Z level=INFO command=data-verify node=all action=operation outcome=success details="exit_code=0"
+Structured operation log: logs/20260614T190140Z_data-verify_67697.log

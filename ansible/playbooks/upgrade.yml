@@ -4,6 +4,9 @@
   become: no
   gather_facts: no
 
+  vars:
+    target_redis_version: "{{ target_version | default('7.2.6') }}"
+
   tasks:
     - name: Check cluster state before upgrade
       shell: |
@@ -16,6 +19,41 @@
         msg: "Cluster is not healthy before upgrade: {{ pre_cluster_state.stdout }}"
       when: "'cluster_state:ok' not in pre_cluster_state.stdout"
 
+    - name: Verify every cluster node is reachable
+      shell: |
+        failed=0
+        node_ips=$(redis-cli -h 10.10.0.11 -p 6379 cluster nodes | awk '$3 !~ /fail/ {split($2,a,":"); print a[1]}')
+
+        for ip in $node_ips; do
+          if [ "$(redis-cli -h "$ip" -p 6379 ping)" != "PONG" ]; then
+            echo "Unreachable Redis node: $ip:6379"
+            failed=1
+          fi
+        done
+
+        exit "$failed"
+      changed_when: false
+
+    - name: Report nodes that require the target version
+      shell: |
+        node_ips=$(redis-cli -h 10.10.0.11 -p 6379 cluster nodes | awk '$3 !~ /fail/ {split($2,a,":"); print a[1]}')
+        versions=""
+
+        for ip in $node_ips; do
+          version=$(redis-cli -h "$ip" -p 6379 info server | awk -F: '/^redis_version:/ {gsub("\r", "", $2); print $2}')
+          versions="$versions $version"
+        done
+
+        non_target=$(echo "$versions" | tr ' ' '\n' | grep -v '^$' | grep -vc "^{{ target_redis_version }}$" || true)
+        echo "Current versions:$versions"
+
+        if [ "$non_target" -eq 0 ]; then
+          echo "All nodes are already running Redis {{ target_redis_version }}; no upgrade is required."
+        else
+          echo "$non_target node(s) require an upgrade to Redis {{ target_redis_version }}."
+        fi
+      changed_when: false
+
 
 - name: Upgrade Redis replicas first
   hosts: redis_nodes
@@ -26,7 +64,7 @@
   vars:
     target_redis_version: "{{ target_version | default('7.2.6') }}"
     redis_tarball: "redis-{{ target_redis_version }}.tar.gz"
-    redis_url: "http://download.redis.io/releases/{{ redis_tarball }}"
+    redis_url: "https://download.redis.io/releases/{{ redis_tarball }}"
     redis_src_dir: "/tmp/redis-{{ target_redis_version }}"
 
   tasks:
@@ -121,6 +159,15 @@
         - redis_role.stdout == "slave"
         - current_version.stdout != target_redis_version
 
+    - name: Normalize legacy cluster address metadata before replica restart
+      replace:
+        path: /var/lib/redis/nodes.conf
+        regexp: '@([0-9]+),[^ ]*'
+        replace: '@\1'
+      when:
+        - redis_role.stdout == "slave"
+        - current_version.stdout != target_redis_version
+
     - name: Start Redis replica
       command: redis-server /etc/redis/redis.conf
       when:
@@ -146,9 +193,26 @@
         - redis_role.stdout == "slave"
         - current_version.stdout != target_redis_version
 
+    - name: Wait for upgraded replica to reconnect and finish synchronization
+      shell: |
+        role=$(redis-cli -h "{{ internal_ip }}" -p 6379 info replication | awk -F: '/^role:/ {gsub("\r", "", $2); print $2}')
+        link=$(redis-cli -h "{{ internal_ip }}" -p 6379 info replication | awk -F: '/^master_link_status:/ {gsub("\r", "", $2); print $2}')
+        test "$role" = "slave" && test "$link" = "up"
+      register: replica_sync
+      retries: 20
+      delay: 3
+      until: replica_sync.rc == 0
+      changed_when: false
+      when:
+        - redis_role.stdout == "slave"
+        - current_version.stdout != target_redis_version
+
     - name: Show replica upgrade result
       debug:
-        msg: "{{ inventory_hostname }} upgraded replica -> {{ replica_upgraded_version.stdout | default('already target version or not replica') }}"
+        msg: "{{ inventory_hostname }} upgraded replica -> {{ replica_upgraded_version.stdout }}"
+      when:
+        - redis_role.stdout == "slave"
+        - current_version.stdout != target_redis_version
 
     - name: Verify cluster state after replica upgrade
       shell: |
@@ -164,6 +228,13 @@
         - redis_role.stdout == "slave"
         - current_version.stdout != target_redis_version
 
+    - name: Print replica upgrade progress
+      debug:
+        msg: "Upgraded replica {{ inventory_hostname }} ({{ internal_ip }}) - cluster: ok"
+      when:
+        - redis_role.stdout == "slave"
+        - current_version.stdout != target_redis_version
+
 
 - name: Upgrade Redis masters using failover
   hosts: redis_nodes
@@ -174,7 +245,7 @@
   vars:
     target_redis_version: "{{ target_version | default('7.2.6') }}"
     redis_tarball: "redis-{{ target_redis_version }}.tar.gz"
-    redis_url: "http://download.redis.io/releases/{{ redis_tarball }}"
+    redis_url: "https://download.redis.io/releases/{{ redis_tarball }}"
     redis_src_dir: "/tmp/redis-{{ target_redis_version }}"
 
   tasks:
@@ -320,6 +391,15 @@
         - redis_role.stdout == "master"
         - current_version.stdout != target_redis_version
 
+    - name: Normalize legacy cluster address metadata before former master restart
+      replace:
+        path: /var/lib/redis/nodes.conf
+        regexp: '@([0-9]+),[^ ]*'
+        replace: '@\1'
+      when:
+        - redis_role.stdout == "master"
+        - current_version.stdout != target_redis_version
+
     - name: Start old master as replica
       command: redis-server /etc/redis/redis.conf
       when:
@@ -345,9 +425,26 @@
         - redis_role.stdout == "master"
         - current_version.stdout != target_redis_version
 
+    - name: Wait for upgraded old master to rejoin as a synchronized replica
+      shell: |
+        role=$(redis-cli -h "{{ internal_ip }}" -p 6379 info replication | awk -F: '/^role:/ {gsub("\r", "", $2); print $2}')
+        link=$(redis-cli -h "{{ internal_ip }}" -p 6379 info replication | awk -F: '/^master_link_status:/ {gsub("\r", "", $2); print $2}')
+        test "$role" = "slave" && test "$link" = "up"
+      register: old_master_sync
+      retries: 20
+      delay: 3
+      until: old_master_sync.rc == 0
+      changed_when: false
+      when:
+        - redis_role.stdout == "master"
+        - current_version.stdout != target_redis_version
+
     - name: Show master upgrade result
       debug:
-        msg: "{{ inventory_hostname }} upgraded after failover -> {{ master_upgraded_version.stdout | default('already target version or not master') }}"
+        msg: "{{ inventory_hostname }} upgraded after failover -> {{ master_upgraded_version.stdout }}"
+      when:
+        - redis_role.stdout == "master"
+        - current_version.stdout != target_redis_version
 
     - name: Verify cluster state after master upgrade
       shell: |
@@ -363,6 +460,13 @@
         - redis_role.stdout == "master"
         - current_version.stdout != target_redis_version
 
+    - name: Print former master upgrade progress
+      debug:
+        msg: "Upgraded former master {{ inventory_hostname }} ({{ internal_ip }}) as replica - cluster: ok"
+      when:
+        - redis_role.stdout == "master"
+        - current_version.stdout != target_redis_version
+
 
 - name: Post-upgrade summary
   hosts: redis-node-1
@@ -370,6 +474,28 @@
   gather_facts: no
 
   tasks:
+    - name: Verify all running nodes use the target Redis version
+      shell: |
+        failed=0
+        node_ips=$(redis-cli -h 10.10.0.11 -p 6379 cluster nodes | awk '{split($2,a,":"); print a[1]}')
+
+        for ip in $node_ips; do
+          version=$(redis-cli -h "$ip" -p 6379 info server | awk -F: '/^redis_version:/ {gsub("\r", "", $2); print $2}')
+          echo "$ip:6379 -> Redis $version"
+
+          if [ "$version" != "{{ target_version }}" ]; then
+            failed=1
+          fi
+        done
+
+        exit "$failed"
+      register: final_versions
+      changed_when: false
+
+    - name: Print final Redis versions
+      debug:
+        msg: "{{ final_versions.stdout_lines }}"
+
     - name: Show final cluster info
       shell: |
         redis-cli -h 10.10.0.11 -p 6379 cluster info
