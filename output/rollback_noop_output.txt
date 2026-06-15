@@ -1,7 +1,6 @@
-===== Redis Rolling Upgrade Started =====
-Mon Jun 15 10:34:37 IST 2026
+===== Redis Rollback Started =====
+Mon Jun 15 10:35:41 IST 2026
 Target version: 7.0.15
-Strategy: rolling
 
 redis-node-1 10.10.0.11 Redis 7.0.15
 redis-node-2 10.10.0.12 Redis 7.0.15
@@ -13,7 +12,7 @@ redis-node-7 10.10.0.17 Redis 7.0.15
 redis-node-8 10.10.0.18 Redis 7.0.15
 
 All cluster nodes are already running Redis 7.0.15.
-No upgrade is required; exiting cleanly without restarting any node.
-UPGRADE NO-OP - all nodes already at target version
-===== Redis Rolling Upgrade Completed =====
-Mon Jun 15 10:34:37 IST 2026
+No rollback is required; exiting cleanly without restarting any node.
+ROLLBACK NO-OP - all nodes already at target version
+===== Redis Rollback Completed =====
+Mon Jun 15 10:35:41 IST 2026

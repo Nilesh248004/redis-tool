@@ -1,0 +1,216 @@
+timestamp=2026-06-15T04:23:35Z level=INFO command=scale node=all action=operation outcome=started details="arguments=scale --add-nodes 2"
+Operation log: logs/20260615T042335Z_scale_14154.log
+timestamp=2026-06-15T04:23:35Z level=INFO command=scale node=redis-node-1 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-15T04:23:35Z level=INFO command=scale node=redis-node-2 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-15T04:23:35Z level=INFO command=scale node=redis-node-3 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-15T04:23:35Z level=INFO command=scale node=redis-node-4 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-15T04:23:35Z level=INFO command=scale node=redis-node-5 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-15T04:23:35Z level=INFO command=scale node=redis-node-6 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-15T04:23:35Z level=INFO command=scale node=all action=prerequisite_check outcome=success details="runtime=Docker version 29.4.3, build 055a478 ansible=2.21.0"
+timestamp=2026-06-15T04:23:36Z level=INFO command=scale node=redis-node-1 action=cluster_discovery outcome=reachable details="address=10.10.0.11:6379"
+timestamp=2026-06-15T04:23:36Z level=INFO command=scale node=redis-node-2 action=cluster_discovery outcome=reachable details="address=10.10.0.12:6379"
+timestamp=2026-06-15T04:23:36Z level=INFO command=scale node=redis-node-3 action=cluster_discovery outcome=reachable details="address=10.10.0.13:6379"
+timestamp=2026-06-15T04:23:36Z level=INFO command=scale node=redis-node-4 action=cluster_discovery outcome=reachable details="address=10.10.0.14:6379"
+timestamp=2026-06-15T04:23:36Z level=INFO command=scale node=redis-node-5 action=cluster_discovery outcome=reachable details="address=10.10.0.15:6379"
+timestamp=2026-06-15T04:23:36Z level=INFO command=scale node=redis-node-6 action=cluster_discovery outcome=reachable details="address=10.10.0.16:6379"
+timestamp=2026-06-15T04:23:36Z level=INFO command=scale node=redis-node-7 action=cluster_discovery outcome=reachable details="address=10.10.0.17:6379"
+timestamp=2026-06-15T04:23:36Z level=INFO command=scale node=redis-node-8 action=cluster_discovery outcome=reachable details="address=10.10.0.18:6379"
+Starting Redis Cluster scale out...
+Adding 2 nodes: 1 master and 1 replica
+===== Redis Scale Out Started =====
+Mon Jun 15 09:53:36 IST 2026
+
+===== Creating Dynamic Scale-Out Infrastructure =====
+Creating Redis scale-out container infrastructure dynamically...
+Base image: infra-redis-node-1
+Cluster network: infra_redis-cluster-net
+[OK] redis-node-7 already exists in the Redis cluster
+timestamp=2026-06-15T04:23:36Z level=INFO command=scale node=redis-node-7 action=scale_out_container outcome=already_present details="address=10.10.0.17 ssh_port=2217"
+[OK] redis-node-8 already exists in the Redis cluster
+timestamp=2026-06-15T04:23:36Z level=INFO command=scale node=redis-node-8 action=scale_out_container outcome=already_present details="address=10.10.0.18 ssh_port=2218"
+Patching SSH public key into Redis containers...
+Checking SSH key setup...
+[OK] SSH key already exists: /Users/nileshkrishnamurthy/.ssh/redis_cluster_key
+Patching SSH key into redis-node-7...
+[OK] SSH key patched into redis-node-7
+Patching SSH key into redis-node-8...
+[OK] SSH key patched into redis-node-8
+Waiting for SSH access on Redis nodes...
+Checking SSH on localhost:2217...
+[OK] SSH ready on port 2217
+Checking SSH on localhost:2218...
+[OK] SSH ready on port 2218
+
+===== Running Scale Out Playbook =====
+
+PLAY [Prepare new Redis scale-out nodes only if they are not already in cluster] ***
+
+TASK [Gathering Facts] *********************************************************
+ok: [redis-node-7]
+ok: [redis-node-8]
+
+TASK [Detect the current cluster Redis version] ********************************
+ok: [redis-node-7 -> redis-node-1(localhost)]
+ok: [redis-node-8 -> redis-node-1(localhost)]
+
+TASK [Check if this node is already part of Redis Cluster] *********************
+ok: [redis-node-7 -> redis-node-1(localhost)]
+ok: [redis-node-8 -> redis-node-1(localhost)]
+
+TASK [Show node cluster membership status] *************************************
+ok: [redis-node-7] => {
+    "msg": "redis-node-7 is already in cluster: True"
+}
+ok: [redis-node-8] => {
+    "msg": "redis-node-8 is already in cluster: True"
+}
+
+TASK [Stop any existing Redis process on a new node] ***************************
+skipping: [redis-node-7]
+skipping: [redis-node-8]
+
+TASK [Install build dependencies] **********************************************
+skipping: [redis-node-7]
+skipping: [redis-node-8]
+
+TASK [Remove old Redis source directory] ***************************************
+skipping: [redis-node-7]
+skipping: [redis-node-8]
+
+TASK [Download Redis source] ***************************************************
+skipping: [redis-node-7]
+skipping: [redis-node-8]
+
+TASK [Extract Redis source] ****************************************************
+skipping: [redis-node-7]
+skipping: [redis-node-8]
+
+TASK [Build Redis from source] *************************************************
+skipping: [redis-node-7]
+skipping: [redis-node-8]
+
+TASK [Install Redis binaries] **************************************************
+skipping: [redis-node-7]
+skipping: [redis-node-8]
+
+TASK [Create redis user] *******************************************************
+skipping: [redis-node-7]
+skipping: [redis-node-8]
+
+TASK [Create Redis directories] ************************************************
+skipping: [redis-node-7] => (item=/etc/redis) 
+skipping: [redis-node-7] => (item=/var/lib/redis) 
+skipping: [redis-node-7] => (item=/var/log/redis) 
+skipping: [redis-node-7] => (item=/var/run/redis) 
+skipping: [redis-node-8] => (item=/etc/redis) 
+skipping: [redis-node-7]
+skipping: [redis-node-8] => (item=/var/lib/redis) 
+skipping: [redis-node-8] => (item=/var/log/redis) 
+skipping: [redis-node-8] => (item=/var/run/redis) 
+skipping: [redis-node-8]
+
+TASK [Clear stale Redis state before first cluster join] ***********************
+skipping: [redis-node-7]
+skipping: [redis-node-8]
+
+TASK [Create Redis cluster configuration] **************************************
+skipping: [redis-node-7]
+skipping: [redis-node-8]
+
+TASK [Start Redis with cluster config] *****************************************
+skipping: [redis-node-7]
+skipping: [redis-node-8]
+
+TASK [Wait for Redis port] *****************************************************
+ok: [redis-node-7]
+ok: [redis-node-8]
+
+TASK [Check Redis ping] ********************************************************
+ok: [redis-node-8]
+ok: [redis-node-7]
+
+TASK [Show Redis ping result] **************************************************
+ok: [redis-node-7] => {
+    "msg": "redis-node-7 ping result: PONG"
+}
+ok: [redis-node-8] => {
+    "msg": "redis-node-8 ping result: PONG"
+}
+
+PLAY [Add new master and replica to existing Redis Cluster] ********************
+
+TASK [Check current cluster health before scale out] ***************************
+ok: [redis-node-1]
+
+TASK [Fail if cluster is not healthy before scale out] *************************
+skipping: [redis-node-1]
+
+TASK [Add redis-node-7 as new master if not already added] *********************
+ok: [redis-node-1]
+
+TASK [Get redis-node-7 node id] ************************************************
+ok: [redis-node-1]
+
+TASK [Wait until the seed recognizes redis-node-7 stable node id] **************
+ok: [redis-node-1]
+
+TASK [Add redis-node-8 to the cluster if not already added] ********************
+ok: [redis-node-1]
+
+TASK [Get redis-node-8 node id] ************************************************
+ok: [redis-node-1]
+
+TASK [Wait until every master knows both new nodes] ****************************
+ok: [redis-node-1]
+
+TASK [Drain slots from redis-node-8 before assigning its replica role] *********
+changed: [redis-node-1]
+
+TASK [Assign redis-node-8 as replica of redis-node-7] **************************
+FAILED - RETRYING: [redis-node-1]: Assign redis-node-8 as replica of redis-node-7 (29 retries left).
+FAILED - RETRYING: [redis-node-1]: Assign redis-node-8 as replica of redis-node-7 (28 retries left).
+FAILED - RETRYING: [redis-node-1]: Assign redis-node-8 as replica of redis-node-7 (27 retries left).
+FAILED - RETRYING: [redis-node-1]: Assign redis-node-8 as replica of redis-node-7 (26 retries left).
+FAILED - RETRYING: [redis-node-1]: Assign redis-node-8 as replica of redis-node-7 (25 retries left).
+FAILED - RETRYING: [redis-node-1]: Assign redis-node-8 as replica of redis-node-7 (24 retries left).
+FAILED - RETRYING: [redis-node-1]: Assign redis-node-8 as replica of redis-node-7 (23 retries left).
+FAILED - RETRYING: [redis-node-1]: Assign redis-node-8 as replica of redis-node-7 (22 retries left).
+FAILED - RETRYING: [redis-node-1]: Assign redis-node-8 as replica of redis-node-7 (21 retries left).
+FAILED - RETRYING: [redis-node-1]: Assign redis-node-8 as replica of redis-node-7 (20 retries left).
+FAILED - RETRYING: [redis-node-1]: Assign redis-node-8 as replica of redis-node-7 (19 retries left).
+FAILED - RETRYING: [redis-node-1]: Assign redis-node-8 as replica of redis-node-7 (18 retries left).
+FAILED - RETRYING: [redis-node-1]: Assign redis-node-8 as replica of redis-node-7 (17 retries left).
+FAILED - RETRYING: [redis-node-1]: Assign redis-node-8 as replica of redis-node-7 (16 retries left).
+FAILED - RETRYING: [redis-node-1]: Assign redis-node-8 as replica of redis-node-7 (15 retries left).
+FAILED - RETRYING: [redis-node-1]: Assign redis-node-8 as replica of redis-node-7 (14 retries left).
+FAILED - RETRYING: [redis-node-1]: Assign redis-node-8 as replica of redis-node-7 (13 retries left).
+FAILED - RETRYING: [redis-node-1]: Assign redis-node-8 as replica of redis-node-7 (12 retries left).
+FAILED - RETRYING: [redis-node-1]: Assign redis-node-8 as replica of redis-node-7 (11 retries left).
+FAILED - RETRYING: [redis-node-1]: Assign redis-node-8 as replica of redis-node-7 (10 retries left).
+FAILED - RETRYING: [redis-node-1]: Assign redis-node-8 as replica of redis-node-7 (9 retries left).
+FAILED - RETRYING: [redis-node-1]: Assign redis-node-8 as replica of redis-node-7 (8 retries left).
+FAILED - RETRYING: [redis-node-1]: Assign redis-node-8 as replica of redis-node-7 (7 retries left).
+FAILED - RETRYING: [redis-node-1]: Assign redis-node-8 as replica of redis-node-7 (6 retries left).
+FAILED - RETRYING: [redis-node-1]: Assign redis-node-8 as replica of redis-node-7 (5 retries left).
+FAILED - RETRYING: [redis-node-1]: Assign redis-node-8 as replica of redis-node-7 (4 retries left).
+FAILED - RETRYING: [redis-node-1]: Assign redis-node-8 as replica of redis-node-7 (3 retries left).
+FAILED - RETRYING: [redis-node-1]: Assign redis-node-8 as replica of redis-node-7 (2 retries left).
+FAILED - RETRYING: [redis-node-1]: Assign redis-node-8 as replica of redis-node-7 (1 retries left).
+FAILED - RETRYING: [redis-node-1]: Assign redis-node-8 as replica of redis-node-7 (0 retries left).
+[ERROR]: Task failed: Module failed: The command exited with a non-zero return code.
+Origin: /Users/nileshkrishnamurthy/Documents/Projects/submission/ansible/playbooks/scale_out.yml:282:7
+
+280       changed_when: "'Moving' in drain_node8_slots.stdout"
+281
+282     - name: Assign redis-node-8 as replica of redis-node-7
+          ^ column 7
+
+fatal: [redis-node-1]: FAILED! => {"attempts": 30, "changed": false, "changed_when_result": false, "cmd": "set -eu\n\nnode8_line=$(\n  redis-cli -h 10.10.0.11 -p 6379 cluster nodes |\n    awk -v node_id=\"345ddbe5a8e22f423d9870907b2eec8057a95baa\" '$1 == node_id'\n)\nnode8_role=$(echo \"$node8_line\" | awk '{print $3}')\nnode8_master=$(echo \"$node8_line\" | awk '{print $4}')\n\nif echo \"$node8_role\" | grep -q \"slave\" &&\n   [ \"$node8_master\" = \"6b3e9e3e4be528182ee0876cb063211815b988ce\" ]; then\n  echo \"redis-node-8 is already the replica of redis-node-7\"\n  exit 0\nfi\n\nredis-cli -h 10.10.0.18 -p 6379 cluster replicate \"6b3e9e3e4be528182ee0876cb063211815b988ce\"\n\nredis-cli -h 10.10.0.11 -p 6379 cluster nodes |\n  awk -v node_id=\"345ddbe5a8e22f423d9870907b2eec8057a95baa\"      -v master_id=\"6b3e9e3e4be528182ee0876cb063211815b988ce\" '\n    $1 == node_id && $3 ~ /slave/ && $4 == master_id { found=1 }\n    END { exit(found ? 0 : 1) }\n  '\n", "delta": "0:00:00.003486", "end": "2026-06-15 04:24:54.942115", "msg": "The command exited with a non-zero return code.", "rc": 1, "start": "2026-06-15 04:24:54.938629", "stderr": "", "stderr_lines": [], "stdout": "ERR I can only replicate a master, not a replica.", "stdout_lines": ["ERR I can only replicate a master, not a replica."]}
+
+PLAY RECAP *********************************************************************
+redis-node-1               : ok=8    changed=1    unreachable=0    failed=1    skipped=1    rescued=0    ignored=0   
+redis-node-7               : ok=7    changed=0    unreachable=0    failed=0    skipped=12   rescued=0    ignored=0   
+redis-node-8               : ok=7    changed=0    unreachable=0    failed=0    skipped=12   rescued=0    ignored=0   
+
+timestamp=2026-06-15T04:24:55Z level=ERROR command=scale node=all action=operation outcome=failed details="exit_code=2"
+Structured operation log: logs/20260615T042335Z_scale_14154.log

@@ -1,5 +1,32 @@
+timestamp=2026-06-15T04:50:54Z level=INFO command=rollback node=all action=operation outcome=started details="arguments=rollback --target-version 7.0.15"
+Operation log: logs/20260615T045054Z_rollback_25436.log
+timestamp=2026-06-15T04:50:54Z level=INFO command=rollback node=redis-node-1 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-15T04:50:54Z level=INFO command=rollback node=redis-node-2 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-15T04:50:54Z level=INFO command=rollback node=redis-node-3 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-15T04:50:54Z level=INFO command=rollback node=redis-node-4 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-15T04:50:54Z level=INFO command=rollback node=redis-node-5 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-15T04:50:54Z level=INFO command=rollback node=redis-node-6 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-15T04:50:54Z level=INFO command=rollback node=all action=prerequisite_check outcome=success details="runtime=Docker version 29.4.3, build 055a478 ansible=2.21.0"
+timestamp=2026-06-15T04:50:54Z level=INFO command=rollback node=redis-node-1 action=cluster_discovery outcome=reachable details="address=10.10.0.11:6379"
+timestamp=2026-06-15T04:50:54Z level=INFO command=rollback node=redis-node-2 action=cluster_discovery outcome=reachable details="address=10.10.0.12:6379"
+timestamp=2026-06-15T04:50:54Z level=INFO command=rollback node=redis-node-3 action=cluster_discovery outcome=reachable details="address=10.10.0.13:6379"
+timestamp=2026-06-15T04:50:54Z level=INFO command=rollback node=redis-node-4 action=cluster_discovery outcome=reachable details="address=10.10.0.14:6379"
+timestamp=2026-06-15T04:50:54Z level=INFO command=rollback node=redis-node-5 action=cluster_discovery outcome=reachable details="address=10.10.0.15:6379"
+timestamp=2026-06-15T04:50:54Z level=INFO command=rollback node=redis-node-6 action=cluster_discovery outcome=reachable details="address=10.10.0.16:6379"
+timestamp=2026-06-15T04:50:54Z level=INFO command=rollback node=redis-node-7 action=cluster_discovery outcome=reachable details="address=10.10.0.17:6379"
+timestamp=2026-06-15T04:50:54Z level=INFO command=rollback node=redis-node-8 action=cluster_discovery outcome=reachable details="address=10.10.0.18:6379"
+timestamp=2026-06-15T04:50:54Z level=INFO command=rollback node=redis-node-1 action=version_check outcome=target_change_required details="current=7.2.6 target=7.0.15"
+timestamp=2026-06-15T04:50:55Z level=INFO command=rollback node=redis-node-2 action=version_check outcome=target_change_required details="current=7.2.6 target=7.0.15"
+timestamp=2026-06-15T04:50:55Z level=INFO command=rollback node=redis-node-3 action=version_check outcome=target_change_required details="current=7.2.6 target=7.0.15"
+timestamp=2026-06-15T04:50:55Z level=INFO command=rollback node=redis-node-4 action=version_check outcome=target_change_required details="current=7.2.6 target=7.0.15"
+timestamp=2026-06-15T04:50:55Z level=INFO command=rollback node=redis-node-5 action=version_check outcome=target_change_required details="current=7.2.6 target=7.0.15"
+timestamp=2026-06-15T04:50:55Z level=INFO command=rollback node=redis-node-6 action=version_check outcome=target_change_required details="current=7.2.6 target=7.0.15"
+timestamp=2026-06-15T04:50:55Z level=INFO command=rollback node=redis-node-7 action=version_check outcome=target_change_required details="current=7.2.6 target=7.0.15"
+timestamp=2026-06-15T04:50:55Z level=INFO command=rollback node=redis-node-8 action=version_check outcome=target_change_required details="current=7.2.6 target=7.0.15"
+Starting Redis rollback...
+Target version: 7.0.15
 ===== Redis Rollback Started =====
-Mon Jun 15 12:58:02 IST 2026
+Mon Jun 15 10:20:55 IST 2026
 Target version: 7.0.15
 
 ===== Pre-rollback Cluster Info =====
@@ -11,17 +38,14 @@ cluster_slots_pfail:0
 cluster_slots_fail:0
 cluster_known_nodes:8
 cluster_size:4
-cluster_current_epoch:37
-cluster_my_epoch:35
-cluster_stats_messages_ping_sent:774
-cluster_stats_messages_pong_sent:761
-cluster_stats_messages_update_sent:1
-cluster_stats_messages_sent:1536
-cluster_stats_messages_ping_received:759
-cluster_stats_messages_pong_received:8967
-cluster_stats_messages_meet_received:2
-cluster_stats_messages_auth-req_received:2
-cluster_stats_messages_received:9730
+cluster_current_epoch:21
+cluster_my_epoch:17
+cluster_stats_messages_ping_sent:948
+cluster_stats_messages_pong_sent:923
+cluster_stats_messages_sent:1871
+cluster_stats_messages_ping_received:923
+cluster_stats_messages_pong_received:945
+cluster_stats_messages_received:1868
 total_cluster_links_buffer_limit_exceeded:0
 
 ===== Pre-rollback Data Verification =====
@@ -55,36 +79,36 @@ ok: [redis-node-1]
 TASK [Print selective rollback plan] *******************************************
 ok: [redis-node-1] => {
     "msg": [
-        "10.10.0.14:6379 Redis 7.2.6 -> rollback required",
+        "10.10.0.13:6379 Redis 7.2.6 -> rollback required",
+        "10.10.0.15:6379 Redis 7.2.6 -> rollback required",
+        "10.10.0.16:6379 Redis 7.2.6 -> rollback required",
         "10.10.0.12:6379 Redis 7.2.6 -> rollback required",
         "10.10.0.18:6379 Redis 7.2.6 -> rollback required",
-        "10.10.0.15:6379 Redis 7.2.6 -> rollback required",
-        "10.10.0.17:6379 Redis 7.2.6 -> rollback required",
-        "10.10.0.13:6379 Redis 7.2.6 -> rollback required",
+        "10.10.0.14:6379 Redis 7.2.6 -> rollback required",
         "10.10.0.11:6379 Redis 7.2.6 -> rollback required",
-        "10.10.0.16:6379 Redis 7.2.6 -> rollback required"
+        "10.10.0.17:6379 Redis 7.2.6 -> rollback required"
     ]
 }
 
 PLAY [Capture replica roles before rollback changes topology] ******************
 
 TASK [Read initial Redis role] *************************************************
+ok: [redis-node-7]
 ok: [redis-node-1]
 ok: [redis-node-8]
-ok: [redis-node-7]
-ok: [redis-node-2]
 ok: [redis-node-3]
+ok: [redis-node-2]
 ok: [redis-node-4]
-ok: [redis-node-6]
 ok: [redis-node-5]
+ok: [redis-node-6]
 
 TASK [Group nodes by their initial Redis role] *********************************
-ok: [redis-node-8]
 ok: [redis-node-7]
-ok: [redis-node-2]
+ok: [redis-node-8]
 ok: [redis-node-1]
-ok: [redis-node-3]
+ok: [redis-node-2]
 ok: [redis-node-4]
+ok: [redis-node-3]
 ok: [redis-node-5]
 ok: [redis-node-6]
 
@@ -1033,7 +1057,7 @@ TASK [Install rollback build dependencies] *************************************
 ok: [redis-node-5]
 
 TASK [Remove previous rollback source directory] *******************************
-changed: [redis-node-5]
+ok: [redis-node-5]
 
 TASK [Download rollback Redis source] ******************************************
 ok: [redis-node-5]
@@ -1126,7 +1150,7 @@ TASK [Install rollback build dependencies] *************************************
 ok: [redis-node-6]
 
 TASK [Remove previous rollback source directory] *******************************
-changed: [redis-node-6]
+ok: [redis-node-6]
 
 TASK [Download rollback Redis source] ******************************************
 ok: [redis-node-6]
@@ -1204,21 +1228,20 @@ ok: [redis-node-1]
 TASK [Print final Redis versions] **********************************************
 ok: [redis-node-1] => {
     "msg": [
-        "10.10.0.16:6379 -> Redis 7.0.15",
-        "10.10.0.12:6379 -> Redis 7.0.15",
-        "10.10.0.18:6379 -> Redis 7.0.15",
         "10.10.0.17:6379 -> Redis 7.0.15",
+        "10.10.0.18:6379 -> Redis 7.0.15",
+        "10.10.0.16:6379 -> Redis 7.0.15",
         "10.10.0.15:6379 -> Redis 7.0.15",
-        "10.10.0.14:6379 -> Redis 7.0.15",
+        "10.10.0.11:6379 -> Redis 7.0.15",
         "10.10.0.13:6379 -> Redis 7.0.15",
-        "10.10.0.11:6379 -> Redis 7.0.15"
+        "10.10.0.14:6379 -> Redis 7.0.15",
+        "10.10.0.12:6379 -> Redis 7.0.15"
     ]
 }
 
 TASK [Verify final cluster health and replica links] ***************************
 FAILED - RETRYING: [redis-node-1]: Verify final cluster health and replica links (19 retries left).
 FAILED - RETRYING: [redis-node-1]: Verify final cluster health and replica links (18 retries left).
-FAILED - RETRYING: [redis-node-1]: Verify final cluster health and replica links (17 retries left).
 ok: [redis-node-1]
 
 TASK [Print final rollback health] *********************************************
@@ -1235,8 +1258,8 @@ redis-node-1               : ok=36   changed=9    unreachable=0    failed=0    s
 redis-node-2               : ok=29   changed=9    unreachable=0    failed=0    skipped=31   rescued=0    ignored=0   
 redis-node-3               : ok=29   changed=9    unreachable=0    failed=0    skipped=31   rescued=0    ignored=0   
 redis-node-4               : ok=22   changed=8    unreachable=0    failed=0    skipped=9    rescued=0    ignored=0   
-redis-node-5               : ok=22   changed=8    unreachable=0    failed=0    skipped=9    rescued=0    ignored=0   
-redis-node-6               : ok=22   changed=8    unreachable=0    failed=0    skipped=9    rescued=0    ignored=0   
+redis-node-5               : ok=22   changed=7    unreachable=0    failed=0    skipped=9    rescued=0    ignored=0   
+redis-node-6               : ok=22   changed=7    unreachable=0    failed=0    skipped=9    rescued=0    ignored=0   
 redis-node-7               : ok=22   changed=8    unreachable=0    failed=0    skipped=9    rescued=0    ignored=0   
 redis-node-8               : ok=29   changed=9    unreachable=0    failed=0    skipped=31   rescued=0    ignored=0   
 
@@ -1253,10 +1276,10 @@ ok: [redis-node-1] => {
     "msg": [
         "",
         "Key distribution across masters:",
-        "10.10.0.12:6379 -> 248 keys",
         "10.10.0.18:6379 -> 251 keys",
-        "10.10.0.13:6379 -> 251 keys",
         "10.10.0.11:6379 -> 250 keys",
+        "10.10.0.13:6379 -> 251 keys",
+        "10.10.0.12:6379 -> 248 keys",
         "",
         "PASS - 1000/1000 keys inserted; failures: 0"
     ]
@@ -1299,4 +1322,6 @@ redis-node-1               : ok=2    changed=0    unreachable=0    failed=0    s
 
 ROLLBACK COMPLETE - changed nodes restored to v7.0.15, data integrity verified
 ===== Redis Rollback Completed =====
-Mon Jun 15 13:03:31 IST 2026
+Mon Jun 15 10:24:33 IST 2026
+timestamp=2026-06-15T04:54:33Z level=INFO command=rollback node=all action=operation outcome=success details="exit_code=0"
+Structured operation log: logs/20260615T045054Z_rollback_25436.log

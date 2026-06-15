@@ -37,6 +37,68 @@ Bash    -> To create the redis-tool CLI
 
 ---
 
+## CLI Code Layout
+
+`redis-tool` is the public entry point and command router. Its implementation is
+split into clearly named Bash modules:
+
+```text
+redis_tool_modules/configuration.sh
+  Common paths, output filenames, SSH settings, and node lists
+
+redis_tool_modules/logging.sh
+  Terminal and file logging for every command
+
+redis_tool_modules/prerequisites.sh
+  Checks Docker/Podman, Ansible, netcat, and SSH tools
+
+redis_tool_modules/container_runtime.sh
+  Reusable Docker and Podman commands
+
+redis_tool_modules/cluster_health.sh
+  Redis node discovery, health, membership, and version checks
+
+redis_tool_modules/container_setup.sh
+  Container startup, SSH setup, and new-node preparation
+
+redis_tool_modules/ansible_inventory.sh
+  Temporary Ansible inventories for dynamic nodes
+
+redis_tool_modules/availability_monitor.sh
+  Data-availability checks during a rolling upgrade
+
+redis_tool_modules/commands/provision_cluster.sh
+  Phase 1 cluster provisioning command
+
+redis_tool_modules/commands/data_seed_and_verify.sh
+  Phase 2 data seed and verification commands
+
+redis_tool_modules/commands/status_check.sh
+  Phase 3 cluster status command
+
+redis_tool_modules/commands/rolling_upgrade.sh
+  Phase 4 rolling upgrade command
+
+redis_tool_modules/commands/full_verification.sh
+  Phase 5 full verification command
+
+redis_tool_modules/commands/scale_out.sh
+  Scale-out stretch goal
+
+redis_tool_modules/commands/rollback.sh
+  Rollback stretch goal
+```
+
+All commands are still run through `./redis-tool`.
+
+`redis-tool` calculates `BASE_DIR`, the directory where the script itself is
+stored, and sources modules using absolute paths from that directory. This is
+necessary because Bash `source` normally resolves relative paths from the
+user's current directory. Using `BASE_DIR` allows the CLI to work consistently
+whether it is launched from the project root or another directory.
+
+---
+
 ## Redis Cluster Setup
 
 The cluster contains 6 Redis nodes.
@@ -341,7 +403,10 @@ Redis 7.2.6 -> Redis 7.0.15
 
 The rollback command downgrades Redis one node at a time and checks cluster health after each node.
 
-During rollback, Redis 7.0.15 could not read some Redis 7.2.6 persistence files, so the playbook removes incompatible AOF/RDB files before restarting Redis.
+During rollback, Redis 7.0.15 cannot read Redis 7.2.6 RDB format 11. The
+workflow performs a controlled shard takeover, removes incompatible local
+persistence, and automatically restores the verified deterministic dataset
+before final verification.
 
 Final rollback result:
 
@@ -350,11 +415,13 @@ Cluster state: ok
 All 16384 slots covered
 Every master has a replica
 
-After rollback, data was reseeded:
+After rollback, data is reseeded automatically by the rollback command:
 
-./redis-tool data seed --keys 1000
+```bash
+./redis-tool rollback --target-version 7.0.15
+```
 
-Then full verification passed:
+Then full verification runs automatically:
 
 Data integrity verified: all 1000 keys matched
 FULL VERIFICATION RESULT: PASS

@@ -1,0 +1,53 @@
+timestamp=2026-06-15T04:22:49Z level=INFO command=verify node=all action=operation outcome=started details="arguments=verify --full"
+Operation log: logs/20260615T042249Z_verify_13437.log
+timestamp=2026-06-15T04:22:49Z level=INFO command=verify node=redis-node-1 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-15T04:22:49Z level=INFO command=verify node=redis-node-2 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-15T04:22:49Z level=INFO command=verify node=redis-node-3 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-15T04:22:49Z level=INFO command=verify node=redis-node-4 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-15T04:22:49Z level=INFO command=verify node=redis-node-5 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-15T04:22:49Z level=INFO command=verify node=redis-node-6 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-15T04:22:49Z level=INFO command=verify node=all action=prerequisite_check outcome=success details="runtime=Docker version 29.4.3, build 055a478 ansible=2.21.0"
+timestamp=2026-06-15T04:22:49Z level=INFO command=verify node=redis-node-1 action=cluster_discovery outcome=reachable details="address=10.10.0.11:6379"
+timestamp=2026-06-15T04:22:49Z level=INFO command=verify node=redis-node-2 action=cluster_discovery outcome=reachable details="address=10.10.0.12:6379"
+timestamp=2026-06-15T04:22:49Z level=INFO command=verify node=redis-node-3 action=cluster_discovery outcome=reachable details="address=10.10.0.13:6379"
+timestamp=2026-06-15T04:22:49Z level=INFO command=verify node=redis-node-4 action=cluster_discovery outcome=reachable details="address=10.10.0.14:6379"
+timestamp=2026-06-15T04:22:49Z level=INFO command=verify node=redis-node-5 action=cluster_discovery outcome=reachable details="address=10.10.0.15:6379"
+timestamp=2026-06-15T04:22:49Z level=INFO command=verify node=redis-node-6 action=cluster_discovery outcome=reachable details="address=10.10.0.16:6379"
+timestamp=2026-06-15T04:22:49Z level=INFO command=verify node=redis-node-7 action=cluster_discovery outcome=reachable details="address=10.10.0.17:6379"
+timestamp=2026-06-15T04:22:49Z level=INFO command=verify node=redis-node-8 action=cluster_discovery outcome=reachable details="address=10.10.0.18:6379"
+Running full Redis Cluster verification...
+===== Redis Full Verification Started =====
+Mon Jun 15 09:52:49 IST 2026
+
+PLAY [Full Redis Cluster verification] *****************************************
+
+TASK [Run full Redis Cluster verification dynamically] *************************
+ok: [redis-node-1]
+
+TASK [Show full verification result] *******************************************
+ok: [redis-node-1] => {
+    "msg": [
+        "===== Full Redis Cluster Verification =====",
+        "",
+        "[PASS] Cluster state is ok",
+        "[PASS] All 16384 hash slots are covered",
+        "[PASS] All 8 cluster nodes are present and reachable",
+        "[PASS] All 8 nodes are running the same Redis version: 7.2.6",
+        "[PASS] Topology has 4 masters and 4 replicas; every master has a replica",
+        "[PASS] All 4 replicas have master_link_status:up",
+        "[PASS] Data integrity verified: 1000/1000 keys matched",
+        "",
+        "===== Verification Summary =====",
+        "Passed checks: 7",
+        "Failed checks: 0",
+        "FULL VERIFICATION RESULT: PASS"
+    ]
+}
+
+PLAY RECAP *********************************************************************
+redis-node-1               : ok=2    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+===== Redis Full Verification Completed =====
+Mon Jun 15 09:52:50 IST 2026
+timestamp=2026-06-15T04:22:50Z level=INFO command=verify node=all action=operation outcome=success details="exit_code=0"
+Structured operation log: logs/20260615T042249Z_verify_13437.log

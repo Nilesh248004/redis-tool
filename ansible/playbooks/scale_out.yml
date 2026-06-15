@@ -205,18 +205,18 @@
       until: node7_seed_view.rc == 0
       changed_when: false
 
-    - name: Add redis-node-8 as replica of redis-node-7 if not already added
+    - name: Add redis-node-8 to the cluster if not already added
       shell: |
         if redis-cli -h 10.10.0.11 -p 6379 cluster nodes | grep -q "10.10.0.18:6379"; then
           echo "redis-node-8 already exists in cluster"
         else
-          redis-cli --cluster add-node 10.10.0.18:6379 10.10.0.11:6379 --cluster-slave --cluster-master-id {{ node7_id.stdout }} --cluster-yes
+          redis-cli --cluster add-node 10.10.0.18:6379 10.10.0.11:6379 --cluster-yes
         fi
-      register: add_replica_output
+      register: add_node8_output
       retries: 20
       delay: 2
-      until: add_replica_output.rc == 0
-      changed_when: "'New node added correctly' in add_replica_output.stdout"
+      until: add_node8_output.rc == 0
+      changed_when: "'New node added correctly' in add_node8_output.stdout"
 
     - name: Get redis-node-8 node id
       command: redis-cli -h 10.10.0.18 -p 6379 cluster myid
@@ -248,6 +248,195 @@
       retries: 30
       delay: 2
       until: cluster_convergence.rc == 0
+      changed_when: false
+
+    - name: Normalize unexpected redis-node-7 and redis-node-8 roles
+      shell: |
+        set -eu
+
+        seed="10.10.0.11:6379"
+        node7_ip="10.10.0.17"
+        node8_ip="10.10.0.18"
+        cluster_nodes=$(redis-cli -h 10.10.0.11 -p 6379 cluster nodes)
+        node7_line=$(echo "$cluster_nodes" | awk '$2 ~ /^10.10.0.17:6379@/')
+        node8_line=$(echo "$cluster_nodes" | awk '$2 ~ /^10.10.0.18:6379@/')
+        node7_role=$(echo "$node7_line" | awk '{print $3}')
+        node8_role=$(echo "$node8_line" | awk '{print $3}')
+        node8_master=$(echo "$node8_line" | awk '{print $4}')
+
+        if echo "$node7_role" | grep -q "master" &&
+           echo "$node8_role" | grep -q "slave" &&
+           [ "$node8_master" = "{{ node7_id.stdout | trim }}" ]; then
+          echo "Scale-out roles are already correct"
+          exit 0
+        fi
+
+        node8_id=$(echo "$node8_line" | awk '{print $1}')
+        node8_slots=$(echo "$node8_line" | awk '{
+          for (i=9; i<=NF; i++) {
+            if ($i !~ /^\[/) {
+              print $i
+            }
+          }
+        }')
+
+        if echo "$node8_role" | grep -q "master" && [ -n "$node8_slots" ]; then
+          redis-cli --cluster rebalance "$seed" \
+            --cluster-weight "$node8_id=0" \
+            --cluster-use-empty-masters \
+            --cluster-yes
+        fi
+
+        if [ -n "$node8_id" ]; then
+          redis-cli --cluster del-node "$seed" "$node8_id"
+        fi
+
+        cluster_nodes=$(redis-cli -h 10.10.0.11 -p 6379 cluster nodes)
+        node7_line=$(echo "$cluster_nodes" | awk '$2 ~ /^10.10.0.17:6379@/')
+        node7_id=$(echo "$node7_line" | awk '{print $1}')
+        node7_role=$(echo "$node7_line" | awk '{print $3}')
+        node7_slots=$(echo "$node7_line" | awk '{
+          for (i=9; i<=NF; i++) {
+            if ($i !~ /^\[/) {
+              print $i
+            }
+          }
+        }')
+
+        if [ -n "$node7_id" ] && ! echo "$node7_role" | grep -q "master"; then
+          if [ -n "$node7_slots" ]; then
+            echo "Refusing to remove redis-node-7 because it still owns slots: $node7_slots"
+            exit 1
+          fi
+
+          redis-cli --cluster del-node "$seed" "$node7_id"
+        fi
+
+        if ! redis-cli -h 10.10.0.11 -p 6379 cluster nodes |
+             grep -q "${node7_ip}:6379"; then
+          redis-cli -h "$node7_ip" -p 6379 cluster reset hard
+          redis-cli --cluster add-node "${node7_ip}:6379" "$seed" --cluster-yes
+        fi
+
+        for attempt in $(seq 1 30); do
+          node7_line=$(
+            redis-cli -h 10.10.0.11 -p 6379 cluster nodes |
+              awk '$2 ~ /^10.10.0.17:6379@/'
+          )
+
+          if echo "$node7_line" | awk '$3 ~ /master/ && $3 !~ /fail/ {found=1} END {exit(found ? 0 : 1)}'; then
+            break
+          fi
+
+          if [ "$attempt" -eq 30 ]; then
+            echo "redis-node-7 did not rejoin as a master"
+            exit 1
+          fi
+
+          sleep 2
+        done
+
+        if ! redis-cli -h 10.10.0.11 -p 6379 cluster nodes |
+             grep -q "${node8_ip}:6379"; then
+          redis-cli -h "$node8_ip" -p 6379 cluster reset hard
+          redis-cli --cluster add-node "${node8_ip}:6379" "$seed" --cluster-yes
+        fi
+      register: normalize_scale_out_roles
+      retries: 3
+      delay: 2
+      until: normalize_scale_out_roles.rc == 0
+      changed_when: "'Scale-out roles are already correct' not in normalize_scale_out_roles.stdout"
+
+    - name: Refresh redis-node-7 node id after role normalization
+      command: redis-cli -h 10.10.0.17 -p 6379 cluster myid
+      register: normalized_node7_id
+      retries: 20
+      delay: 2
+      until: normalized_node7_id.stdout | length > 0
+      changed_when: false
+
+    - name: Refresh redis-node-8 node id after role normalization
+      command: redis-cli -h 10.10.0.18 -p 6379 cluster myid
+      register: normalized_node8_id
+      retries: 20
+      delay: 2
+      until: normalized_node8_id.stdout | length > 0
+      changed_when: false
+
+    - name: Drain slots from redis-node-8 before assigning its replica role
+      shell: |
+        node8_slots=$(
+          redis-cli -h 10.10.0.11 -p 6379 cluster nodes |
+            awk -v node_id="{{ normalized_node8_id.stdout | trim }}" '
+              $1 == node_id {
+                for (i=9; i<=NF; i++) {
+                  if ($i !~ /^\[/) {
+                    print $i
+                  }
+                }
+              }
+            '
+        )
+
+        if [ -z "$node8_slots" ]; then
+          echo "redis-node-8 owns no slots"
+        else
+          redis-cli --cluster rebalance 10.10.0.11:6379 \
+            --cluster-weight "{{ normalized_node8_id.stdout | trim }}=0" \
+            --cluster-use-empty-masters \
+            --cluster-yes
+        fi
+      register: drain_node8_slots
+      retries: 10
+      delay: 2
+      until: drain_node8_slots.rc == 0
+      changed_when: "'Moving' in drain_node8_slots.stdout"
+
+    - name: Assign redis-node-8 as replica of redis-node-7
+      shell: |
+        set -eu
+
+        node8_line=$(
+          redis-cli -h 10.10.0.11 -p 6379 cluster nodes |
+            awk -v node_id="{{ normalized_node8_id.stdout | trim }}" '$1 == node_id'
+        )
+        node8_role=$(echo "$node8_line" | awk '{print $3}')
+        node8_master=$(echo "$node8_line" | awk '{print $4}')
+
+        if echo "$node8_role" | grep -q "slave" &&
+           [ "$node8_master" = "{{ normalized_node7_id.stdout | trim }}" ]; then
+          echo "redis-node-8 is already the replica of redis-node-7"
+          exit 0
+        fi
+
+        redis-cli -h 10.10.0.18 -p 6379 cluster replicate "{{ normalized_node7_id.stdout | trim }}"
+
+        redis-cli -h 10.10.0.11 -p 6379 cluster nodes |
+          awk -v node_id="{{ normalized_node8_id.stdout | trim }}" \
+              -v master_id="{{ normalized_node7_id.stdout | trim }}" '
+            $1 == node_id && $3 ~ /slave/ && $4 == master_id { found=1 }
+            END { exit(found ? 0 : 1) }
+          '
+      register: assign_node8_replica
+      retries: 30
+      delay: 2
+      until: assign_node8_replica.rc == 0
+      changed_when: "'OK' in assign_node8_replica.stdout"
+
+    - name: Wait for redis-node-8 replication link
+      shell: |
+        replication_info=$(redis-cli -h 10.10.0.18 -p 6379 info replication)
+        role=$(echo "$replication_info" | awk -F: '/^role:/ {gsub("\r", "", $2); print $2}')
+        link_status=$(echo "$replication_info" | awk -F: '/^master_link_status:/ {gsub("\r", "", $2); print $2}')
+
+        echo "role:$role"
+        echo "master_link_status:$link_status"
+
+        [ "$role" = "slave" ] && [ "$link_status" = "up" ]
+      register: node8_replication_ready
+      retries: 30
+      delay: 2
+      until: node8_replication_ready.rc == 0
       changed_when: false
 
     - name: Repair any slot state left by an interrupted rebalance

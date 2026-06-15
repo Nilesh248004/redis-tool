@@ -1,0 +1,46 @@
+timestamp=2026-06-15T04:55:35Z level=INFO command=rollback node=all action=operation outcome=started details="arguments=rollback --target-version 7.0.15"
+Operation log: logs/20260615T045535Z_rollback_27998.log
+timestamp=2026-06-15T04:55:35Z level=INFO command=rollback node=redis-node-1 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-15T04:55:35Z level=INFO command=rollback node=redis-node-2 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-15T04:55:35Z level=INFO command=rollback node=redis-node-3 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-15T04:55:35Z level=INFO command=rollback node=redis-node-4 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-15T04:55:35Z level=INFO command=rollback node=redis-node-5 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-15T04:55:35Z level=INFO command=rollback node=redis-node-6 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-15T04:55:35Z level=INFO command=rollback node=all action=prerequisite_check outcome=success details="runtime=Docker version 29.4.3, build 055a478 ansible=2.21.0"
+timestamp=2026-06-15T04:55:35Z level=INFO command=rollback node=redis-node-1 action=cluster_discovery outcome=reachable details="address=10.10.0.11:6379"
+timestamp=2026-06-15T04:55:35Z level=INFO command=rollback node=redis-node-2 action=cluster_discovery outcome=reachable details="address=10.10.0.12:6379"
+timestamp=2026-06-15T04:55:35Z level=INFO command=rollback node=redis-node-3 action=cluster_discovery outcome=reachable details="address=10.10.0.13:6379"
+timestamp=2026-06-15T04:55:35Z level=INFO command=rollback node=redis-node-4 action=cluster_discovery outcome=reachable details="address=10.10.0.14:6379"
+timestamp=2026-06-15T04:55:35Z level=INFO command=rollback node=redis-node-5 action=cluster_discovery outcome=reachable details="address=10.10.0.15:6379"
+timestamp=2026-06-15T04:55:35Z level=INFO command=rollback node=redis-node-6 action=cluster_discovery outcome=reachable details="address=10.10.0.16:6379"
+timestamp=2026-06-15T04:55:35Z level=INFO command=rollback node=redis-node-7 action=cluster_discovery outcome=reachable details="address=10.10.0.17:6379"
+timestamp=2026-06-15T04:55:35Z level=INFO command=rollback node=redis-node-8 action=cluster_discovery outcome=reachable details="address=10.10.0.18:6379"
+timestamp=2026-06-15T04:55:36Z level=INFO command=rollback node=redis-node-1 action=version_check outcome=already_target details="current=7.0.15 target=7.0.15"
+timestamp=2026-06-15T04:55:36Z level=INFO command=rollback node=redis-node-2 action=version_check outcome=already_target details="current=7.0.15 target=7.0.15"
+timestamp=2026-06-15T04:55:36Z level=INFO command=rollback node=redis-node-3 action=version_check outcome=already_target details="current=7.0.15 target=7.0.15"
+timestamp=2026-06-15T04:55:36Z level=INFO command=rollback node=redis-node-4 action=version_check outcome=already_target details="current=7.0.15 target=7.0.15"
+timestamp=2026-06-15T04:55:36Z level=INFO command=rollback node=redis-node-5 action=version_check outcome=already_target details="current=7.0.15 target=7.0.15"
+timestamp=2026-06-15T04:55:36Z level=INFO command=rollback node=redis-node-6 action=version_check outcome=already_target details="current=7.0.15 target=7.0.15"
+timestamp=2026-06-15T04:55:36Z level=INFO command=rollback node=redis-node-7 action=version_check outcome=already_target details="current=7.0.15 target=7.0.15"
+timestamp=2026-06-15T04:55:36Z level=INFO command=rollback node=redis-node-8 action=version_check outcome=already_target details="current=7.0.15 target=7.0.15"
+===== Redis Rollback Started =====
+Mon Jun 15 10:25:36 IST 2026
+Target version: 7.0.15
+
+redis-node-1 10.10.0.11 Redis 7.0.15
+redis-node-2 10.10.0.12 Redis 7.0.15
+redis-node-3 10.10.0.13 Redis 7.0.15
+redis-node-4 10.10.0.14 Redis 7.0.15
+redis-node-5 10.10.0.15 Redis 7.0.15
+redis-node-6 10.10.0.16 Redis 7.0.15
+redis-node-7 10.10.0.17 Redis 7.0.15
+redis-node-8 10.10.0.18 Redis 7.0.15
+
+All cluster nodes are already running Redis 7.0.15.
+No rollback is required; exiting cleanly without restarting any node.
+ROLLBACK NO-OP - all nodes already at target version
+===== Redis Rollback Completed =====
+Mon Jun 15 10:25:36 IST 2026
+timestamp=2026-06-15T04:55:36Z level=INFO command=rollback node=all action=rollback outcome=skipped details="all nodes already at target_version=7.0.15"
+timestamp=2026-06-15T04:55:36Z level=INFO command=rollback node=all action=operation outcome=success details="exit_code=0"
+Structured operation log: logs/20260615T045535Z_rollback_27998.log

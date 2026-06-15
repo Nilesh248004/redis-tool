@@ -1,5 +1,33 @@
+timestamp=2026-06-15T04:49:34Z level=INFO command=upgrade node=all action=operation outcome=started details="arguments=upgrade --target-version 7.2.6 --strategy rolling"
+Operation log: logs/20260615T044934Z_upgrade_23866.log
+timestamp=2026-06-15T04:49:34Z level=INFO command=upgrade node=redis-node-1 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-15T04:49:34Z level=INFO command=upgrade node=redis-node-2 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-15T04:49:34Z level=INFO command=upgrade node=redis-node-3 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-15T04:49:34Z level=INFO command=upgrade node=redis-node-4 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-15T04:49:34Z level=INFO command=upgrade node=redis-node-5 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-15T04:49:34Z level=INFO command=upgrade node=redis-node-6 action=command_target outcome=included details="inventory=ansible/inventory/hosts.ini"
+timestamp=2026-06-15T04:49:34Z level=INFO command=upgrade node=all action=prerequisite_check outcome=success details="runtime=Docker version 29.4.3, build 055a478 ansible=2.21.0"
+timestamp=2026-06-15T04:49:34Z level=INFO command=upgrade node=redis-node-1 action=cluster_discovery outcome=reachable details="address=10.10.0.11:6379"
+timestamp=2026-06-15T04:49:34Z level=INFO command=upgrade node=redis-node-2 action=cluster_discovery outcome=reachable details="address=10.10.0.12:6379"
+timestamp=2026-06-15T04:49:34Z level=INFO command=upgrade node=redis-node-3 action=cluster_discovery outcome=reachable details="address=10.10.0.13:6379"
+timestamp=2026-06-15T04:49:34Z level=INFO command=upgrade node=redis-node-4 action=cluster_discovery outcome=reachable details="address=10.10.0.14:6379"
+timestamp=2026-06-15T04:49:34Z level=INFO command=upgrade node=redis-node-5 action=cluster_discovery outcome=reachable details="address=10.10.0.15:6379"
+timestamp=2026-06-15T04:49:34Z level=INFO command=upgrade node=redis-node-6 action=cluster_discovery outcome=reachable details="address=10.10.0.16:6379"
+timestamp=2026-06-15T04:49:34Z level=INFO command=upgrade node=redis-node-7 action=cluster_discovery outcome=reachable details="address=10.10.0.17:6379"
+timestamp=2026-06-15T04:49:34Z level=INFO command=upgrade node=redis-node-8 action=cluster_discovery outcome=reachable details="address=10.10.0.18:6379"
+timestamp=2026-06-15T04:49:34Z level=INFO command=upgrade node=redis-node-1 action=version_check outcome=already_target details="current=7.2.6 target=7.2.6"
+timestamp=2026-06-15T04:49:35Z level=INFO command=upgrade node=redis-node-2 action=version_check outcome=already_target details="current=7.2.6 target=7.2.6"
+timestamp=2026-06-15T04:49:35Z level=INFO command=upgrade node=redis-node-3 action=version_check outcome=already_target details="current=7.2.6 target=7.2.6"
+timestamp=2026-06-15T04:49:35Z level=INFO command=upgrade node=redis-node-4 action=version_check outcome=already_target details="current=7.2.6 target=7.2.6"
+timestamp=2026-06-15T04:49:35Z level=INFO command=upgrade node=redis-node-5 action=version_check outcome=already_target details="current=7.2.6 target=7.2.6"
+timestamp=2026-06-15T04:49:35Z level=INFO command=upgrade node=redis-node-6 action=version_check outcome=already_target details="current=7.2.6 target=7.2.6"
+timestamp=2026-06-15T04:49:35Z level=INFO command=upgrade node=redis-node-7 action=version_check outcome=already_target details="current=7.2.6 target=7.2.6"
+timestamp=2026-06-15T04:49:35Z level=INFO command=upgrade node=redis-node-8 action=version_check outcome=target_change_required details="current=7.0.15 target=7.2.6"
+Starting Redis rolling upgrade...
+Target version: 7.2.6
+Strategy: rolling
 ===== Redis Rolling Upgrade Started =====
-Mon Jun 15 12:48:00 IST 2026
+Mon Jun 15 10:19:35 IST 2026
 Target version: 7.2.6
 Strategy: rolling
 
@@ -12,16 +40,14 @@ cluster_slots_pfail:0
 cluster_slots_fail:0
 cluster_known_nodes:8
 cluster_size:4
-cluster_current_epoch:30
-cluster_my_epoch:26
-cluster_stats_messages_ping_sent:13094
-cluster_stats_messages_pong_sent:22663
-cluster_stats_messages_update_sent:1
-cluster_stats_messages_sent:35758
-cluster_stats_messages_ping_received:13092
-cluster_stats_messages_pong_received:19918
-cluster_stats_messages_meet_received:2
-cluster_stats_messages_received:33012
+cluster_current_epoch:21
+cluster_my_epoch:17
+cluster_stats_messages_ping_sent:757
+cluster_stats_messages_pong_sent:746
+cluster_stats_messages_sent:1503
+cluster_stats_messages_ping_received:746
+cluster_stats_messages_pong_received:755
+cluster_stats_messages_received:1501
 total_cluster_links_buffer_limit_exceeded:0
 
 ===== Pre-upgrade Data Verification =====
@@ -72,7 +98,7 @@ ok: [redis-node-7]
 
 TASK [Show replica upgrade decision] *******************************************
 ok: [redis-node-7] => {
-    "msg": "redis-node-7 role=master version=7.0.15 target=7.2.6"
+    "msg": "redis-node-7 role=master version=7.2.6 target=7.2.6"
 }
 
 TASK [Install build dependencies] **********************************************
@@ -206,7 +232,7 @@ ok: [redis-node-1]
 
 TASK [Show replica upgrade decision] *******************************************
 ok: [redis-node-1] => {
-    "msg": "redis-node-1 role=master version=7.0.15 target=7.2.6"
+    "msg": "redis-node-1 role=slave version=7.2.6 target=7.2.6"
 }
 
 TASK [Install build dependencies] **********************************************
@@ -270,7 +296,7 @@ ok: [redis-node-2]
 
 TASK [Show replica upgrade decision] *******************************************
 ok: [redis-node-2] => {
-    "msg": "redis-node-2 role=master version=7.0.15 target=7.2.6"
+    "msg": "redis-node-2 role=slave version=7.2.6 target=7.2.6"
 }
 
 TASK [Install build dependencies] **********************************************
@@ -334,7 +360,7 @@ ok: [redis-node-3]
 
 TASK [Show replica upgrade decision] *******************************************
 ok: [redis-node-3] => {
-    "msg": "redis-node-3 role=master version=7.0.15 target=7.2.6"
+    "msg": "redis-node-3 role=slave version=7.2.6 target=7.2.6"
 }
 
 TASK [Install build dependencies] **********************************************
@@ -398,62 +424,56 @@ ok: [redis-node-4]
 
 TASK [Show replica upgrade decision] *******************************************
 ok: [redis-node-4] => {
-    "msg": "redis-node-4 role=slave version=7.0.15 target=7.2.6"
+    "msg": "redis-node-4 role=master version=7.2.6 target=7.2.6"
 }
 
 TASK [Install build dependencies] **********************************************
-ok: [redis-node-4]
+skipping: [redis-node-4]
 
 TASK [Remove old source directory] *********************************************
-changed: [redis-node-4]
+skipping: [redis-node-4]
 
 TASK [Download Redis target version source] ************************************
-ok: [redis-node-4]
+skipping: [redis-node-4]
 
 TASK [Extract Redis target version source] *************************************
-changed: [redis-node-4]
+skipping: [redis-node-4]
 
 TASK [Build Redis target version] **********************************************
-changed: [redis-node-4]
+skipping: [redis-node-4]
 
 TASK [Stop Redis replica] ******************************************************
-changed: [redis-node-4]
+skipping: [redis-node-4]
 
 TASK [Wait for replica port to stop] *******************************************
-ok: [redis-node-4]
+skipping: [redis-node-4]
 
 TASK [Install Redis target binaries] *******************************************
-changed: [redis-node-4]
+skipping: [redis-node-4]
 
 TASK [Normalize legacy cluster address metadata before replica restart] ********
-ok: [redis-node-4]
+skipping: [redis-node-4]
 
 TASK [Start Redis replica] *****************************************************
-changed: [redis-node-4]
+skipping: [redis-node-4]
 
 TASK [Wait for replica port to start] ******************************************
-ok: [redis-node-4]
+skipping: [redis-node-4]
 
 TASK [Check replica version after upgrade] *************************************
-ok: [redis-node-4]
+skipping: [redis-node-4]
 
 TASK [Wait for upgraded replica to reconnect and finish synchronization] *******
-FAILED - RETRYING: [redis-node-4]: Wait for upgraded replica to reconnect and finish synchronization (19 retries left).
-FAILED - RETRYING: [redis-node-4]: Wait for upgraded replica to reconnect and finish synchronization (18 retries left).
-ok: [redis-node-4]
+skipping: [redis-node-4]
 
 TASK [Show replica upgrade result] *********************************************
-ok: [redis-node-4] => {
-    "msg": "redis-node-4 upgraded replica -> redis_version:7.2.6"
-}
+skipping: [redis-node-4]
 
 TASK [Verify cluster state after replica upgrade] ******************************
-ok: [redis-node-4 -> redis-node-1(localhost)]
+skipping: [redis-node-4]
 
 TASK [Print replica upgrade progress] ******************************************
-ok: [redis-node-4] => {
-    "msg": "Upgraded replica redis-node-4 (10.10.0.14) - cluster: ok"
-}
+skipping: [redis-node-4]
 
 PLAY [Upgrade Redis replicas first] ********************************************
 
@@ -468,62 +488,56 @@ ok: [redis-node-5]
 
 TASK [Show replica upgrade decision] *******************************************
 ok: [redis-node-5] => {
-    "msg": "redis-node-5 role=slave version=7.0.15 target=7.2.6"
+    "msg": "redis-node-5 role=master version=7.2.6 target=7.2.6"
 }
 
 TASK [Install build dependencies] **********************************************
-ok: [redis-node-5]
+skipping: [redis-node-5]
 
 TASK [Remove old source directory] *********************************************
-changed: [redis-node-5]
+skipping: [redis-node-5]
 
 TASK [Download Redis target version source] ************************************
-ok: [redis-node-5]
+skipping: [redis-node-5]
 
 TASK [Extract Redis target version source] *************************************
-changed: [redis-node-5]
+skipping: [redis-node-5]
 
 TASK [Build Redis target version] **********************************************
-changed: [redis-node-5]
+skipping: [redis-node-5]
 
 TASK [Stop Redis replica] ******************************************************
-changed: [redis-node-5]
+skipping: [redis-node-5]
 
 TASK [Wait for replica port to stop] *******************************************
-ok: [redis-node-5]
+skipping: [redis-node-5]
 
 TASK [Install Redis target binaries] *******************************************
-changed: [redis-node-5]
+skipping: [redis-node-5]
 
 TASK [Normalize legacy cluster address metadata before replica restart] ********
-ok: [redis-node-5]
+skipping: [redis-node-5]
 
 TASK [Start Redis replica] *****************************************************
-changed: [redis-node-5]
+skipping: [redis-node-5]
 
 TASK [Wait for replica port to start] ******************************************
-ok: [redis-node-5]
+skipping: [redis-node-5]
 
 TASK [Check replica version after upgrade] *************************************
-ok: [redis-node-5]
+skipping: [redis-node-5]
 
 TASK [Wait for upgraded replica to reconnect and finish synchronization] *******
-FAILED - RETRYING: [redis-node-5]: Wait for upgraded replica to reconnect and finish synchronization (19 retries left).
-FAILED - RETRYING: [redis-node-5]: Wait for upgraded replica to reconnect and finish synchronization (18 retries left).
-ok: [redis-node-5]
+skipping: [redis-node-5]
 
 TASK [Show replica upgrade result] *********************************************
-ok: [redis-node-5] => {
-    "msg": "redis-node-5 upgraded replica -> redis_version:7.2.6"
-}
+skipping: [redis-node-5]
 
 TASK [Verify cluster state after replica upgrade] ******************************
-ok: [redis-node-5 -> redis-node-1(localhost)]
+skipping: [redis-node-5]
 
 TASK [Print replica upgrade progress] ******************************************
-ok: [redis-node-5] => {
-    "msg": "Upgraded replica redis-node-5 (10.10.0.15) - cluster: ok"
-}
+skipping: [redis-node-5]
 
 PLAY [Upgrade Redis replicas first] ********************************************
 
@@ -538,62 +552,56 @@ ok: [redis-node-6]
 
 TASK [Show replica upgrade decision] *******************************************
 ok: [redis-node-6] => {
-    "msg": "redis-node-6 role=slave version=7.0.15 target=7.2.6"
+    "msg": "redis-node-6 role=master version=7.2.6 target=7.2.6"
 }
 
 TASK [Install build dependencies] **********************************************
-ok: [redis-node-6]
+skipping: [redis-node-6]
 
 TASK [Remove old source directory] *********************************************
-changed: [redis-node-6]
+skipping: [redis-node-6]
 
 TASK [Download Redis target version source] ************************************
-ok: [redis-node-6]
+skipping: [redis-node-6]
 
 TASK [Extract Redis target version source] *************************************
-changed: [redis-node-6]
+skipping: [redis-node-6]
 
 TASK [Build Redis target version] **********************************************
-changed: [redis-node-6]
+skipping: [redis-node-6]
 
 TASK [Stop Redis replica] ******************************************************
-changed: [redis-node-6]
+skipping: [redis-node-6]
 
 TASK [Wait for replica port to stop] *******************************************
-ok: [redis-node-6]
+skipping: [redis-node-6]
 
 TASK [Install Redis target binaries] *******************************************
-changed: [redis-node-6]
+skipping: [redis-node-6]
 
 TASK [Normalize legacy cluster address metadata before replica restart] ********
-ok: [redis-node-6]
+skipping: [redis-node-6]
 
 TASK [Start Redis replica] *****************************************************
-changed: [redis-node-6]
+skipping: [redis-node-6]
 
 TASK [Wait for replica port to start] ******************************************
-ok: [redis-node-6]
+skipping: [redis-node-6]
 
 TASK [Check replica version after upgrade] *************************************
-ok: [redis-node-6]
+skipping: [redis-node-6]
 
 TASK [Wait for upgraded replica to reconnect and finish synchronization] *******
-FAILED - RETRYING: [redis-node-6]: Wait for upgraded replica to reconnect and finish synchronization (19 retries left).
-FAILED - RETRYING: [redis-node-6]: Wait for upgraded replica to reconnect and finish synchronization (18 retries left).
-ok: [redis-node-6]
+skipping: [redis-node-6]
 
 TASK [Show replica upgrade result] *********************************************
-ok: [redis-node-6] => {
-    "msg": "redis-node-6 upgraded replica -> redis_version:7.2.6"
-}
+skipping: [redis-node-6]
 
 TASK [Verify cluster state after replica upgrade] ******************************
-ok: [redis-node-6 -> redis-node-1(localhost)]
+skipping: [redis-node-6]
 
 TASK [Print replica upgrade progress] ******************************************
-ok: [redis-node-6] => {
-    "msg": "Upgraded replica redis-node-6 (10.10.0.16) - cluster: ok"
-}
+skipping: [redis-node-6]
 
 PLAY [Upgrade Redis masters using failover] ************************************
 
@@ -608,77 +616,71 @@ ok: [redis-node-7]
 
 TASK [Show master upgrade decision] ********************************************
 ok: [redis-node-7] => {
-    "msg": "redis-node-7 role=master version=7.0.15 target=7.2.6"
+    "msg": "redis-node-7 role=master version=7.2.6 target=7.2.6"
 }
 
 TASK [Get current master node id] **********************************************
-ok: [redis-node-7 -> redis-node-1(localhost)]
+skipping: [redis-node-7]
 
 TASK [Get replica IP for this master] ******************************************
-ok: [redis-node-7 -> redis-node-1(localhost)]
+skipping: [redis-node-7]
 
 TASK [Fail if master has no replica for failover] ******************************
 skipping: [redis-node-7]
 
 TASK [Trigger CLUSTER FAILOVER on replica] *************************************
-changed: [redis-node-7 -> redis-node-1(localhost)]
+skipping: [redis-node-7]
 
 TASK [Wait until old master becomes replica] ***********************************
-ok: [redis-node-7]
+skipping: [redis-node-7]
 
 TASK [Install build dependencies for old master] *******************************
-ok: [redis-node-7]
+skipping: [redis-node-7]
 
 TASK [Remove old source directory for master] **********************************
-changed: [redis-node-7]
+skipping: [redis-node-7]
 
 TASK [Download Redis target version source for master] *************************
-ok: [redis-node-7]
+skipping: [redis-node-7]
 
 TASK [Extract Redis target version source for master] **************************
-changed: [redis-node-7]
+skipping: [redis-node-7]
 
 TASK [Build Redis target version for master] ***********************************
-changed: [redis-node-7]
+skipping: [redis-node-7]
 
 TASK [Stop old master after failover] ******************************************
-changed: [redis-node-7]
+skipping: [redis-node-7]
 
 TASK [Wait for old master port to stop] ****************************************
-ok: [redis-node-7]
+skipping: [redis-node-7]
 
 TASK [Install Redis target binaries on old master] *****************************
-changed: [redis-node-7]
+skipping: [redis-node-7]
 
 TASK [Normalize legacy cluster address metadata before former master restart] ***
-ok: [redis-node-7]
+skipping: [redis-node-7]
 
 TASK [Start old master as replica] *********************************************
-changed: [redis-node-7]
+skipping: [redis-node-7]
 
 TASK [Wait for old master port to start] ***************************************
-ok: [redis-node-7]
+skipping: [redis-node-7]
 
 TASK [Check upgraded old master version] ***************************************
-ok: [redis-node-7]
+skipping: [redis-node-7]
 
 TASK [Wait for upgraded old master to rejoin as a synchronized replica] ********
-FAILED - RETRYING: [redis-node-7]: Wait for upgraded old master to rejoin as a synchronized replica (19 retries left).
-FAILED - RETRYING: [redis-node-7]: Wait for upgraded old master to rejoin as a synchronized replica (18 retries left).
-ok: [redis-node-7]
+skipping: [redis-node-7]
 
 TASK [Show master upgrade result] **********************************************
-ok: [redis-node-7] => {
-    "msg": "redis-node-7 upgraded after failover -> redis_version:7.2.6"
-}
+skipping: [redis-node-7]
 
 TASK [Verify cluster state after master upgrade] *******************************
-ok: [redis-node-7 -> redis-node-1(localhost)]
+skipping: [redis-node-7]
 
 TASK [Print former master upgrade progress] ************************************
-ok: [redis-node-7] => {
-    "msg": "Upgraded former master redis-node-7 (10.10.0.17) as replica - cluster: ok"
-}
+skipping: [redis-node-7]
 
 PLAY [Upgrade Redis masters using failover] ************************************
 
@@ -693,7 +695,7 @@ ok: [redis-node-8]
 
 TASK [Show master upgrade decision] ********************************************
 ok: [redis-node-8] => {
-    "msg": "redis-node-8 role=master version=7.2.6 target=7.2.6"
+    "msg": "redis-node-8 role=slave version=7.2.6 target=7.2.6"
 }
 
 TASK [Get current master node id] **********************************************
@@ -772,77 +774,71 @@ ok: [redis-node-1]
 
 TASK [Show master upgrade decision] ********************************************
 ok: [redis-node-1] => {
-    "msg": "redis-node-1 role=master version=7.0.15 target=7.2.6"
+    "msg": "redis-node-1 role=slave version=7.2.6 target=7.2.6"
 }
 
 TASK [Get current master node id] **********************************************
-ok: [redis-node-1]
+skipping: [redis-node-1]
 
 TASK [Get replica IP for this master] ******************************************
-ok: [redis-node-1]
+skipping: [redis-node-1]
 
 TASK [Fail if master has no replica for failover] ******************************
 skipping: [redis-node-1]
 
 TASK [Trigger CLUSTER FAILOVER on replica] *************************************
-changed: [redis-node-1]
+skipping: [redis-node-1]
 
 TASK [Wait until old master becomes replica] ***********************************
-ok: [redis-node-1]
+skipping: [redis-node-1]
 
 TASK [Install build dependencies for old master] *******************************
-ok: [redis-node-1]
+skipping: [redis-node-1]
 
 TASK [Remove old source directory for master] **********************************
-changed: [redis-node-1]
+skipping: [redis-node-1]
 
 TASK [Download Redis target version source for master] *************************
-ok: [redis-node-1]
+skipping: [redis-node-1]
 
 TASK [Extract Redis target version source for master] **************************
-changed: [redis-node-1]
+skipping: [redis-node-1]
 
 TASK [Build Redis target version for master] ***********************************
-changed: [redis-node-1]
+skipping: [redis-node-1]
 
 TASK [Stop old master after failover] ******************************************
-changed: [redis-node-1]
+skipping: [redis-node-1]
 
 TASK [Wait for old master port to stop] ****************************************
-ok: [redis-node-1]
+skipping: [redis-node-1]
 
 TASK [Install Redis target binaries on old master] *****************************
-changed: [redis-node-1]
+skipping: [redis-node-1]
 
 TASK [Normalize legacy cluster address metadata before former master restart] ***
-ok: [redis-node-1]
+skipping: [redis-node-1]
 
 TASK [Start old master as replica] *********************************************
-changed: [redis-node-1]
+skipping: [redis-node-1]
 
 TASK [Wait for old master port to start] ***************************************
-ok: [redis-node-1]
+skipping: [redis-node-1]
 
 TASK [Check upgraded old master version] ***************************************
-ok: [redis-node-1]
+skipping: [redis-node-1]
 
 TASK [Wait for upgraded old master to rejoin as a synchronized replica] ********
-FAILED - RETRYING: [redis-node-1]: Wait for upgraded old master to rejoin as a synchronized replica (19 retries left).
-FAILED - RETRYING: [redis-node-1]: Wait for upgraded old master to rejoin as a synchronized replica (18 retries left).
-ok: [redis-node-1]
+skipping: [redis-node-1]
 
 TASK [Show master upgrade result] **********************************************
-ok: [redis-node-1] => {
-    "msg": "redis-node-1 upgraded after failover -> redis_version:7.2.6"
-}
+skipping: [redis-node-1]
 
 TASK [Verify cluster state after master upgrade] *******************************
-ok: [redis-node-1]
+skipping: [redis-node-1]
 
 TASK [Print former master upgrade progress] ************************************
-ok: [redis-node-1] => {
-    "msg": "Upgraded former master redis-node-1 (10.10.0.11) as replica - cluster: ok"
-}
+skipping: [redis-node-1]
 
 PLAY [Upgrade Redis masters using failover] ************************************
 
@@ -857,77 +853,71 @@ ok: [redis-node-2]
 
 TASK [Show master upgrade decision] ********************************************
 ok: [redis-node-2] => {
-    "msg": "redis-node-2 role=master version=7.0.15 target=7.2.6"
+    "msg": "redis-node-2 role=slave version=7.2.6 target=7.2.6"
 }
 
 TASK [Get current master node id] **********************************************
-ok: [redis-node-2 -> redis-node-1(localhost)]
+skipping: [redis-node-2]
 
 TASK [Get replica IP for this master] ******************************************
-ok: [redis-node-2 -> redis-node-1(localhost)]
+skipping: [redis-node-2]
 
 TASK [Fail if master has no replica for failover] ******************************
 skipping: [redis-node-2]
 
 TASK [Trigger CLUSTER FAILOVER on replica] *************************************
-changed: [redis-node-2 -> redis-node-1(localhost)]
+skipping: [redis-node-2]
 
 TASK [Wait until old master becomes replica] ***********************************
-ok: [redis-node-2]
+skipping: [redis-node-2]
 
 TASK [Install build dependencies for old master] *******************************
-ok: [redis-node-2]
+skipping: [redis-node-2]
 
 TASK [Remove old source directory for master] **********************************
-changed: [redis-node-2]
+skipping: [redis-node-2]
 
 TASK [Download Redis target version source for master] *************************
-ok: [redis-node-2]
+skipping: [redis-node-2]
 
 TASK [Extract Redis target version source for master] **************************
-changed: [redis-node-2]
+skipping: [redis-node-2]
 
 TASK [Build Redis target version for master] ***********************************
-changed: [redis-node-2]
+skipping: [redis-node-2]
 
 TASK [Stop old master after failover] ******************************************
-changed: [redis-node-2]
+skipping: [redis-node-2]
 
 TASK [Wait for old master port to stop] ****************************************
-ok: [redis-node-2]
+skipping: [redis-node-2]
 
 TASK [Install Redis target binaries on old master] *****************************
-changed: [redis-node-2]
+skipping: [redis-node-2]
 
 TASK [Normalize legacy cluster address metadata before former master restart] ***
-ok: [redis-node-2]
+skipping: [redis-node-2]
 
 TASK [Start old master as replica] *********************************************
-changed: [redis-node-2]
+skipping: [redis-node-2]
 
 TASK [Wait for old master port to start] ***************************************
-ok: [redis-node-2]
+skipping: [redis-node-2]
 
 TASK [Check upgraded old master version] ***************************************
-ok: [redis-node-2]
+skipping: [redis-node-2]
 
 TASK [Wait for upgraded old master to rejoin as a synchronized replica] ********
-FAILED - RETRYING: [redis-node-2]: Wait for upgraded old master to rejoin as a synchronized replica (19 retries left).
-FAILED - RETRYING: [redis-node-2]: Wait for upgraded old master to rejoin as a synchronized replica (18 retries left).
-ok: [redis-node-2]
+skipping: [redis-node-2]
 
 TASK [Show master upgrade result] **********************************************
-ok: [redis-node-2] => {
-    "msg": "redis-node-2 upgraded after failover -> redis_version:7.2.6"
-}
+skipping: [redis-node-2]
 
 TASK [Verify cluster state after master upgrade] *******************************
-ok: [redis-node-2 -> redis-node-1(localhost)]
+skipping: [redis-node-2]
 
 TASK [Print former master upgrade progress] ************************************
-ok: [redis-node-2] => {
-    "msg": "Upgraded former master redis-node-2 (10.10.0.12) as replica - cluster: ok"
-}
+skipping: [redis-node-2]
 
 PLAY [Upgrade Redis masters using failover] ************************************
 
@@ -942,77 +932,71 @@ ok: [redis-node-3]
 
 TASK [Show master upgrade decision] ********************************************
 ok: [redis-node-3] => {
-    "msg": "redis-node-3 role=master version=7.0.15 target=7.2.6"
+    "msg": "redis-node-3 role=slave version=7.2.6 target=7.2.6"
 }
 
 TASK [Get current master node id] **********************************************
-ok: [redis-node-3 -> redis-node-1(localhost)]
+skipping: [redis-node-3]
 
 TASK [Get replica IP for this master] ******************************************
-ok: [redis-node-3 -> redis-node-1(localhost)]
+skipping: [redis-node-3]
 
 TASK [Fail if master has no replica for failover] ******************************
 skipping: [redis-node-3]
 
 TASK [Trigger CLUSTER FAILOVER on replica] *************************************
-changed: [redis-node-3 -> redis-node-1(localhost)]
+skipping: [redis-node-3]
 
 TASK [Wait until old master becomes replica] ***********************************
-ok: [redis-node-3]
+skipping: [redis-node-3]
 
 TASK [Install build dependencies for old master] *******************************
-ok: [redis-node-3]
+skipping: [redis-node-3]
 
 TASK [Remove old source directory for master] **********************************
-changed: [redis-node-3]
+skipping: [redis-node-3]
 
 TASK [Download Redis target version source for master] *************************
-ok: [redis-node-3]
+skipping: [redis-node-3]
 
 TASK [Extract Redis target version source for master] **************************
-changed: [redis-node-3]
+skipping: [redis-node-3]
 
 TASK [Build Redis target version for master] ***********************************
-changed: [redis-node-3]
+skipping: [redis-node-3]
 
 TASK [Stop old master after failover] ******************************************
-changed: [redis-node-3]
+skipping: [redis-node-3]
 
 TASK [Wait for old master port to stop] ****************************************
-ok: [redis-node-3]
+skipping: [redis-node-3]
 
 TASK [Install Redis target binaries on old master] *****************************
-changed: [redis-node-3]
+skipping: [redis-node-3]
 
 TASK [Normalize legacy cluster address metadata before former master restart] ***
-ok: [redis-node-3]
+skipping: [redis-node-3]
 
 TASK [Start old master as replica] *********************************************
-changed: [redis-node-3]
+skipping: [redis-node-3]
 
 TASK [Wait for old master port to start] ***************************************
-ok: [redis-node-3]
+skipping: [redis-node-3]
 
 TASK [Check upgraded old master version] ***************************************
-ok: [redis-node-3]
+skipping: [redis-node-3]
 
 TASK [Wait for upgraded old master to rejoin as a synchronized replica] ********
-FAILED - RETRYING: [redis-node-3]: Wait for upgraded old master to rejoin as a synchronized replica (19 retries left).
-FAILED - RETRYING: [redis-node-3]: Wait for upgraded old master to rejoin as a synchronized replica (18 retries left).
-ok: [redis-node-3]
+skipping: [redis-node-3]
 
 TASK [Show master upgrade result] **********************************************
-ok: [redis-node-3] => {
-    "msg": "redis-node-3 upgraded after failover -> redis_version:7.2.6"
-}
+skipping: [redis-node-3]
 
 TASK [Verify cluster state after master upgrade] *******************************
-ok: [redis-node-3 -> redis-node-1(localhost)]
+skipping: [redis-node-3]
 
 TASK [Print former master upgrade progress] ************************************
-ok: [redis-node-3] => {
-    "msg": "Upgraded former master redis-node-3 (10.10.0.13) as replica - cluster: ok"
-}
+skipping: [redis-node-3]
 
 PLAY [Upgrade Redis masters using failover] ************************************
 
@@ -1259,14 +1243,14 @@ ok: [redis-node-1]
 TASK [Print final Redis versions] **********************************************
 ok: [redis-node-1] => {
     "msg": [
-        "10.10.0.14:6379 -> Redis 7.2.6",
-        "10.10.0.12:6379 -> Redis 7.2.6",
-        "10.10.0.15:6379 -> Redis 7.2.6",
-        "10.10.0.17:6379 -> Redis 7.2.6",
-        "10.10.0.18:6379 -> Redis 7.2.6",
         "10.10.0.13:6379 -> Redis 7.2.6",
+        "10.10.0.15:6379 -> Redis 7.2.6",
+        "10.10.0.16:6379 -> Redis 7.2.6",
+        "10.10.0.12:6379 -> Redis 7.2.6",
+        "10.10.0.18:6379 -> Redis 7.2.6",
+        "10.10.0.14:6379 -> Redis 7.2.6",
         "10.10.0.11:6379 -> Redis 7.2.6",
-        "10.10.0.16:6379 -> Redis 7.2.6"
+        "10.10.0.17:6379 -> Redis 7.2.6"
     ]
 }
 
@@ -1283,15 +1267,14 @@ ok: [redis-node-1] => {
         "cluster_slots_fail:0",
         "cluster_known_nodes:8",
         "cluster_size:4",
-        "cluster_current_epoch:34",
-        "cluster_my_epoch:32",
-        "cluster_stats_messages_ping_sent:248",
-        "cluster_stats_messages_pong_sent:246",
-        "cluster_stats_messages_sent:494",
-        "cluster_stats_messages_ping_received:246",
-        "cluster_stats_messages_pong_received:249",
-        "cluster_stats_messages_auth-req_received:2",
-        "cluster_stats_messages_received:497",
+        "cluster_current_epoch:21",
+        "cluster_my_epoch:17",
+        "cluster_stats_messages_ping_sent:908",
+        "cluster_stats_messages_pong_sent:887",
+        "cluster_stats_messages_sent:1795",
+        "cluster_stats_messages_ping_received:887",
+        "cluster_stats_messages_pong_received:905",
+        "cluster_stats_messages_received:1792",
         "total_cluster_links_buffer_limit_exceeded:0"
     ]
 }
@@ -1302,30 +1285,30 @@ ok: [redis-node-1]
 TASK [Print final cluster nodes] ***********************************************
 ok: [redis-node-1] => {
     "msg": [
-        "0cd26b7e44abed1fb0dcc5e46e74850a9b1584f5 10.10.0.14:6379@16379 master - 0 1781508258525 34 connected 6827-7100 11197-11742 13108-16383",
-        "ad68cf83298e8e7b765ee736cf4278cf8887b1df 10.10.0.12:6379@16379 slave 996dd09d072c06400283874dee0eac5684d40b73 0 1781508258730 33 connected",
-        "a2c9605f032f5610c7836b03ceb8da68cf4d8d4a 10.10.0.15:6379@16379 master - 0 1781508259754 32 connected 2185-6280",
-        "b4cbd725d5f09414d9a317896857ca41cf18f2a4 10.10.0.17:6379@16379 slave 81f57a561bcace0d7ed242c00929f39ba7a5805a 0 1781508258730 31 connected",
-        "81f57a561bcace0d7ed242c00929f39ba7a5805a 10.10.0.18:6379@16379 master - 0 1781508258525 31 connected 0-2184 6281-6826 7101-8465",
-        "d95cb4a9948ae3e8e14e998e2f49edbd0e0e78c5 10.10.0.13:6379@16379 slave 0cd26b7e44abed1fb0dcc5e46e74850a9b1584f5 0 1781508258000 34 connected",
-        "a33ca0f0e6d14e47bb4af0d6410840245ea016f7 10.10.0.11:6379@16379 myself,slave a2c9605f032f5610c7836b03ceb8da68cf4d8d4a 0 1781508259000 32 connected",
-        "996dd09d072c06400283874dee0eac5684d40b73 10.10.0.16:6379@16379 master - 0 1781508258000 33 connected 8466-11196 11743-13107"
+        "d95cb4a9948ae3e8e14e998e2f49edbd0e0e78c5 10.10.0.13:6379@16379 slave 0cd26b7e44abed1fb0dcc5e46e74850a9b1584f5 0 1781499039096 18 connected",
+        "a2c9605f032f5610c7836b03ceb8da68cf4d8d4a 10.10.0.15:6379@16379 master - 0 1781499038081 17 connected 2185-6280",
+        "996dd09d072c06400283874dee0eac5684d40b73 10.10.0.16:6379@16379 master - 0 1781499039508 19 connected 8466-11196 11743-13107",
+        "ad68cf83298e8e7b765ee736cf4278cf8887b1df 10.10.0.12:6379@16379 slave 996dd09d072c06400283874dee0eac5684d40b73 0 1781499039608 19 connected",
+        "df992dc5bb74ab12d6d59713c7992a4adf2630fd 10.10.0.18:6379@16379 slave 9e3ae58b3c63886da659418600c775561d853ded 0 1781499038000 21 connected",
+        "0cd26b7e44abed1fb0dcc5e46e74850a9b1584f5 10.10.0.14:6379@16379 master - 0 1781499039508 18 connected 6827-7100 11197-11742 13108-16383",
+        "a33ca0f0e6d14e47bb4af0d6410840245ea016f7 10.10.0.11:6379@16379 myself,slave a2c9605f032f5610c7836b03ceb8da68cf4d8d4a 0 1781499038000 17 connected",
+        "9e3ae58b3c63886da659418600c775561d853ded 10.10.0.17:6379@16379 master - 0 1781499038591 21 connected 0-2184 6281-6826 7101-8465"
     ]
 }
 
 PLAY RECAP *********************************************************************
-redis-node-1               : ok=37   changed=7    unreachable=0    failed=0    skipped=18   rescued=0    ignored=0   
-redis-node-2               : ok=28   changed=7    unreachable=0    failed=0    skipped=17   rescued=0    ignored=0   
-redis-node-3               : ok=28   changed=7    unreachable=0    failed=0    skipped=17   rescued=0    ignored=0   
-redis-node-4               : ok=24   changed=6    unreachable=0    failed=0    skipped=21   rescued=0    ignored=0   
-redis-node-5               : ok=24   changed=6    unreachable=0    failed=0    skipped=21   rescued=0    ignored=0   
-redis-node-6               : ok=24   changed=6    unreachable=0    failed=0    skipped=21   rescued=0    ignored=0   
-redis-node-7               : ok=28   changed=7    unreachable=0    failed=0    skipped=17   rescued=0    ignored=0   
+redis-node-1               : ok=17   changed=0    unreachable=0    failed=0    skipped=38   rescued=0    ignored=0   
+redis-node-2               : ok=8    changed=0    unreachable=0    failed=0    skipped=37   rescued=0    ignored=0   
+redis-node-3               : ok=8    changed=0    unreachable=0    failed=0    skipped=37   rescued=0    ignored=0   
+redis-node-4               : ok=8    changed=0    unreachable=0    failed=0    skipped=37   rescued=0    ignored=0   
+redis-node-5               : ok=8    changed=0    unreachable=0    failed=0    skipped=37   rescued=0    ignored=0   
+redis-node-6               : ok=8    changed=0    unreachable=0    failed=0    skipped=37   rescued=0    ignored=0   
+redis-node-7               : ok=8    changed=0    unreachable=0    failed=0    skipped=37   rescued=0    ignored=0   
 redis-node-8               : ok=24   changed=6    unreachable=0    failed=0    skipped=21   rescued=0    ignored=0   
 
 
 ===== Rolling Upgrade Availability Result =====
-Availability probes: 671
+Availability probes: 112
 Client-visible read outages: 0
 
 ===== Post-upgrade Cluster Info =====
@@ -1337,45 +1320,44 @@ cluster_slots_pfail:0
 cluster_slots_fail:0
 cluster_known_nodes:8
 cluster_size:4
-cluster_current_epoch:34
-cluster_my_epoch:32
-cluster_stats_messages_ping_sent:251
-cluster_stats_messages_pong_sent:248
-cluster_stats_messages_sent:499
-cluster_stats_messages_ping_received:248
-cluster_stats_messages_pong_received:252
-cluster_stats_messages_auth-req_received:2
-cluster_stats_messages_received:502
+cluster_current_epoch:21
+cluster_my_epoch:17
+cluster_stats_messages_ping_sent:909
+cluster_stats_messages_pong_sent:887
+cluster_stats_messages_sent:1796
+cluster_stats_messages_ping_received:887
+cluster_stats_messages_pong_received:906
+cluster_stats_messages_received:1793
 total_cluster_links_buffer_limit_exceeded:0
 
 ===== Post-upgrade Cluster Nodes =====
 redis-node-1 | CHANGED | rc=0 >>
-0cd26b7e44abed1fb0dcc5e46e74850a9b1584f5 10.10.0.14:6379@16379 master - 0 1781508259000 34 connected 6827-7100 11197-11742 13108-16383
-ad68cf83298e8e7b765ee736cf4278cf8887b1df 10.10.0.12:6379@16379 slave 996dd09d072c06400283874dee0eac5684d40b73 0 1781508258730 33 connected
-a2c9605f032f5610c7836b03ceb8da68cf4d8d4a 10.10.0.15:6379@16379 master - 0 1781508260000 32 connected 2185-6280
-b4cbd725d5f09414d9a317896857ca41cf18f2a4 10.10.0.17:6379@16379 slave 81f57a561bcace0d7ed242c00929f39ba7a5805a 0 1781508260000 31 connected
-81f57a561bcace0d7ed242c00929f39ba7a5805a 10.10.0.18:6379@16379 master - 0 1781508260790 31 connected 0-2184 6281-6826 7101-8465
-d95cb4a9948ae3e8e14e998e2f49edbd0e0e78c5 10.10.0.13:6379@16379 slave 0cd26b7e44abed1fb0dcc5e46e74850a9b1584f5 0 1781508260583 34 connected
-a33ca0f0e6d14e47bb4af0d6410840245ea016f7 10.10.0.11:6379@16379 myself,slave a2c9605f032f5610c7836b03ceb8da68cf4d8d4a 0 1781508260000 32 connected
-996dd09d072c06400283874dee0eac5684d40b73 10.10.0.16:6379@16379 master - 0 1781508260583 33 connected 8466-11196 11743-13107
+d95cb4a9948ae3e8e14e998e2f49edbd0e0e78c5 10.10.0.13:6379@16379 slave 0cd26b7e44abed1fb0dcc5e46e74850a9b1584f5 0 1781499039096 18 connected
+a2c9605f032f5610c7836b03ceb8da68cf4d8d4a 10.10.0.15:6379@16379 master - 0 1781499040634 17 connected 2185-6280
+996dd09d072c06400283874dee0eac5684d40b73 10.10.0.16:6379@16379 master - 0 1781499040000 19 connected 8466-11196 11743-13107
+ad68cf83298e8e7b765ee736cf4278cf8887b1df 10.10.0.12:6379@16379 slave 996dd09d072c06400283874dee0eac5684d40b73 0 1781499039608 19 connected
+df992dc5bb74ab12d6d59713c7992a4adf2630fd 10.10.0.18:6379@16379 slave 9e3ae58b3c63886da659418600c775561d853ded 0 1781499040534 21 connected
+0cd26b7e44abed1fb0dcc5e46e74850a9b1584f5 10.10.0.14:6379@16379 master - 0 1781499040000 18 connected 6827-7100 11197-11742 13108-16383
+a33ca0f0e6d14e47bb4af0d6410840245ea016f7 10.10.0.11:6379@16379 myself,slave a2c9605f032f5610c7836b03ceb8da68cf4d8d4a 0 1781499039000 17 connected
+9e3ae58b3c63886da659418600c775561d853ded 10.10.0.17:6379@16379 master - 0 1781499038591 21 connected 0-2184 6281-6826 7101-8465
 
 ===== Post-upgrade Redis Versions =====
-redis-node-7 | CHANGED | rc=0 >>
-Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=e268442a828a4ef5
-redis-node-2 | CHANGED | rc=0 >>
-Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=97f295890791cff9
-redis-node-3 | CHANGED | rc=0 >>
-Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=9d636e25bc1ac849
-redis-node-1 | CHANGED | rc=0 >>
-Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=e780a519c98fd7d2
 redis-node-8 | CHANGED | rc=0 >>
-Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=242e29ae3419680d
+Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=fc551af3106f7bb7
+redis-node-1 | CHANGED | rc=0 >>
+Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=bd9a8b811639e0b0
+redis-node-7 | CHANGED | rc=0 >>
+Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=317b02ec02da129a
+redis-node-3 | CHANGED | rc=0 >>
+Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=d5d267817cb10088
+redis-node-2 | CHANGED | rc=0 >>
+Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=42d20aac5da75e5
 redis-node-4 | CHANGED | rc=0 >>
-Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=6ad5f3917bb513f7
+Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=15de11e2639099c
 redis-node-6 | CHANGED | rc=0 >>
-Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=3483e75dfcc89ffc
+Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=42bbf529713178d1
 redis-node-5 | CHANGED | rc=0 >>
-Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=f4b24bf6242e0ec3
+Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=75ff76ac60c8862e
 
 ===== Post-upgrade Data Verification =====
 
@@ -1410,15 +1392,15 @@ ok: [redis-node-1] => {
         "Cluster State: ok",
         "",
         "MASTERS",
-        "10.10.0.14:6379 [master] v7.2.6 slots: 6827-7100 11197-11742 13108-16383  keys: 251 mem: 1.84M",
-        "10.10.0.15:6379 [master] v7.2.6 slots: 2185-6280  keys: 250 mem: 1.84M",
-        "10.10.0.18:6379 [master] v7.2.6 slots: 0-2184 6281-6826 7101-8465  keys: 251 mem: 1.84M",
-        "10.10.0.16:6379 [master] v7.2.6 slots: 8466-11196 11743-13107  keys: 248 mem: 1.84M",
+        "10.10.0.15:6379 [master] v7.2.6 slots: 2185-6280  keys: 250 mem: 2.01M",
+        "10.10.0.16:6379 [master] v7.2.6 slots: 8466-11196 11743-13107  keys: 248 mem: 2.01M",
+        "10.10.0.14:6379 [master] v7.2.6 slots: 6827-7100 11197-11742 13108-16383  keys: 251 mem: 2.01M",
+        "10.10.0.17:6379 [master] v7.2.6 slots: 0-2184 6281-6826 7101-8465  keys: 251 mem: 2.05M",
         "",
         "REPLICAS",
-        "10.10.0.12:6379 [replica] v7.2.6 replicating: 10.10.0.16:6379 keys: 248 mem: 1.73M",
-        "10.10.0.17:6379 [replica] v7.2.6 replicating: 10.10.0.18:6379 keys: 251 mem: 1.73M",
         "10.10.0.13:6379 [replica] v7.2.6 replicating: 10.10.0.14:6379 keys: 251 mem: 1.73M",
+        "10.10.0.12:6379 [replica] v7.2.6 replicating: 10.10.0.16:6379 keys: 248 mem: 1.73M",
+        "10.10.0.18:6379 [replica] v7.2.6 replicating: 10.10.0.17:6379 keys: 251 mem: 1.73M",
         "10.10.0.11:6379 [replica] v7.2.6 replicating: 10.10.0.15:6379 keys: 250 mem: 1.78M"
     ]
 }
@@ -1429,4 +1411,6 @@ redis-node-1               : ok=2    changed=0    unreachable=0    failed=0    s
 
 UPGRADE COMPLETE - all nodes on v7.2.6, data integrity verified
 ===== Redis Rolling Upgrade Completed =====
-Mon Jun 15 12:54:23 IST 2026
+Mon Jun 15 10:20:42 IST 2026
+timestamp=2026-06-15T04:50:42Z level=INFO command=upgrade node=all action=operation outcome=success details="exit_code=0"
+Structured operation log: logs/20260615T044934Z_upgrade_23866.log
