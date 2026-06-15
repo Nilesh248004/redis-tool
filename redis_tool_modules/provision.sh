@@ -182,6 +182,11 @@ ensure_ssh_key_ready() {
   else
     echo "[OK] SSH key already exists: $SSH_KEY"
   fi
+
+  mkdir -p "$(dirname "$INFRA_PUBLIC_KEY_COPY")"
+  cp "$SSH_PUBLIC_KEY" "$INFRA_PUBLIC_KEY_COPY"
+  chmod 644 "$INFRA_PUBLIC_KEY_COPY"
+  echo "[OK] Public key visible at: $INFRA_PUBLIC_KEY_COPY"
 }
 
 patch_ssh_key_to_containers() {

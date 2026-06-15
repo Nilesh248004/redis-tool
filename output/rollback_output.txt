@@ -1,5 +1,5 @@
 ===== Redis Rollback Started =====
-Tue Jun 16 00:37:39 IST 2026
+Tue Jun 16 03:24:10 IST 2026
 Target version: 7.0.15
 
 ===== Pre-rollback Cluster Info =====
@@ -13,14 +13,14 @@ cluster_known_nodes:8
 cluster_size:4
 cluster_current_epoch:10
 cluster_my_epoch:7
-cluster_stats_messages_ping_sent:918
-cluster_stats_messages_pong_sent:911
-cluster_stats_messages_sent:1829
-cluster_stats_messages_ping_received:908
-cluster_stats_messages_pong_received:5014
+cluster_stats_messages_ping_sent:1741
+cluster_stats_messages_pong_sent:1711
+cluster_stats_messages_sent:3452
+cluster_stats_messages_ping_received:1708
+cluster_stats_messages_pong_received:5839
 cluster_stats_messages_meet_received:3
 cluster_stats_messages_auth-req_received:2
-cluster_stats_messages_received:5927
+cluster_stats_messages_received:7552
 total_cluster_links_buffer_limit_exceeded:0
 
 ===== Pre-rollback Data Verification =====
@@ -54,13 +54,13 @@ ok: [redis-node-1]
 TASK [Print selective rollback plan] *******************************************
 ok: [redis-node-1] => {
     "msg": [
-        "10.10.0.11:6379 Redis 7.2.6 -> rollback required",
-        "10.10.0.14:6379 Redis 7.2.6 -> rollback required",
-        "10.10.0.12:6379 Redis 7.2.6 -> rollback required",
-        "10.10.0.15:6379 Redis 7.2.6 -> rollback required",
         "10.10.0.18:6379 Redis 7.2.6 -> rollback required",
+        "10.10.0.15:6379 Redis 7.2.6 -> rollback required",
         "10.10.0.13:6379 Redis 7.2.6 -> rollback required",
         "10.10.0.17:6379 Redis 7.2.6 -> rollback required",
+        "10.10.0.11:6379 Redis 7.2.6 -> rollback required",
+        "10.10.0.12:6379 Redis 7.2.6 -> rollback required",
+        "10.10.0.14:6379 Redis 7.2.6 -> rollback required",
         "10.10.0.16:6379 Redis 7.2.6 -> rollback required"
     ]
 }
@@ -68,9 +68,9 @@ ok: [redis-node-1] => {
 PLAY [Capture replica roles before rollback changes topology] ******************
 
 TASK [Read initial Redis role] *************************************************
+ok: [redis-node-7]
 ok: [redis-node-1]
 ok: [redis-node-8]
-ok: [redis-node-7]
 ok: [redis-node-2]
 ok: [redis-node-3]
 ok: [redis-node-4]
@@ -1203,20 +1203,21 @@ ok: [redis-node-1]
 TASK [Print final Redis versions] **********************************************
 ok: [redis-node-1] => {
     "msg": [
-        "10.10.0.11:6379 -> Redis 7.0.15",
-        "10.10.0.15:6379 -> Redis 7.0.15",
-        "10.10.0.12:6379 -> Redis 7.0.15",
-        "10.10.0.17:6379 -> Redis 7.0.15",
-        "10.10.0.16:6379 -> Redis 7.0.15",
-        "10.10.0.14:6379 -> Redis 7.0.15",
+        "10.10.0.18:6379 -> Redis 7.0.15",
         "10.10.0.13:6379 -> Redis 7.0.15",
-        "10.10.0.18:6379 -> Redis 7.0.15"
+        "10.10.0.15:6379 -> Redis 7.0.15",
+        "10.10.0.11:6379 -> Redis 7.0.15",
+        "10.10.0.17:6379 -> Redis 7.0.15",
+        "10.10.0.14:6379 -> Redis 7.0.15",
+        "10.10.0.16:6379 -> Redis 7.0.15",
+        "10.10.0.12:6379 -> Redis 7.0.15"
     ]
 }
 
 TASK [Verify final cluster health and replica links] ***************************
 FAILED - RETRYING: [redis-node-1]: Verify final cluster health and replica links (19 retries left).
 FAILED - RETRYING: [redis-node-1]: Verify final cluster health and replica links (18 retries left).
+FAILED - RETRYING: [redis-node-1]: Verify final cluster health and replica links (17 retries left).
 ok: [redis-node-1]
 
 TASK [Print final rollback health] *********************************************
@@ -1251,10 +1252,10 @@ ok: [redis-node-1] => {
     "msg": [
         "",
         "Key distribution across masters:",
+        "10.10.0.18:6379 -> 250 keys",
+        "10.10.0.13:6379 -> 250 keys",
         "10.10.0.11:6379 -> 248 keys",
         "10.10.0.12:6379 -> 252 keys",
-        "10.10.0.13:6379 -> 250 keys",
-        "10.10.0.18:6379 -> 250 keys",
         "",
         "PASS - 1000/1000 keys inserted; failures: 0"
     ]
@@ -1297,4 +1298,4 @@ redis-node-1               : ok=2    changed=0    unreachable=0    failed=0    s
 
 ROLLBACK COMPLETE - changed nodes restored to v7.0.15, data integrity verified
 ===== Redis Rollback Completed =====
-Tue Jun 16 00:41:16 IST 2026
+Tue Jun 16 03:27:55 IST 2026

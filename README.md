@@ -1,495 +1,362 @@
 # Redis Cluster Lifecycle Tool
 
-## Project Overview
-
-This project is about automating the setup and management of a Redis Cluster.
-
-Redis is a fast database used to store data in memory. In this project, I created a Redis Cluster with 6 nodes using Docker, Ansible, and a custom command-line tool called `redis-tool`.
-
-The main purpose of this project is to avoid doing the setup manually and automate the Redis Cluster lifecycle step by step.
+This project automates Redis Cluster lifecycle operations using Docker or Podman, Ansible, Redis, and a Bash CLI named `redis-tool`.
 
 ---
 
-## What This Project Does
+## Bring Up The Container Infrastructure
 
-This project can:
+The project works with either Docker or Podman. Podman is preferred automatically by `redis-tool` if both Docker and Podman are installed.
+
+Manual Docker commands:
+
+```bash
+docker compose -f infra/compose.yml build
+docker compose -f infra/compose.yml up -d
+```
+
+Manual Podman commands:
+
+```bash
+podman compose -f infra/compose.yml build
+podman compose -f infra/compose.yml up -d
+```
+
+To stop and remove the infrastructure:
+
+```bash
+docker compose -f infra/compose.yml down
+```
+
+or:
+
+```bash
+podman compose -f infra/compose.yml down
+```
+
+The base infrastructure creates six Ubuntu-based Redis node containers:
 
 ```text
-Create 6 Redis server containers
-Install Redis automatically
-Create a Redis Cluster
-Add test data into the cluster
-Verify the stored data
-Show cluster health and node status
-Upgrade Redis safely from one version to another
+redis-node-1
+redis-node-2
+redis-node-3
+redis-node-4
+redis-node-5
+redis-node-6
+```
+
+Normally, you do not need to start the containers manually. The provision command checks and starts the required containers automatically.
+
+## Project Structure
+
+```text
+submission/
+├── redis-tool
+├── README.md
+├── ansible/
+│   ├── ansible.cfg
+│   ├── inventory/
+│   │   └── hosts.ini
+│   └── playbooks/
+│       ├── configure_redis.yml
+│       ├── create_cluster.yml
+│       ├── data_seed.yml
+│       ├── data_verify.yml
+│       ├── install_redis.yml
+│       ├── provision.yml
+│       ├── rollback.yml
+│       ├── scale_out.yml
+│       ├── status.yml
+│       ├── upgrade.yml
+│       ├── verify_full.yml
+│       └── tasks/
+│           └── rollback_node.yml
+├── infra/
+│   ├── Dockerfile
+│   └── compose.yml
+├── logs/
+│   └── .gitkeep
+├── output/
+│   ├── data_seed_output.txt
+│   ├── full_verify_output.txt
+│   ├── provision_output.txt
+│   ├── rollback_output.txt
+│   ├── scale_out_output.txt
+│   ├── status_output.txt
+│   ├── upgrade_output.txt
+│   └── verify_output.txt
+└── redis_tool_modules/
+    ├── health.sh
+    ├── inventory.sh
+    ├── logs.sh
+    ├── prerequisite.sh
+    ├── provision.sh
+    ├── rollback.sh
+    ├── scale_out.sh
+    ├── status_check.sh
+    ├── upgrade.sh
+    └── verify.sh
 ```
 
 ---
 
-## Tools Used
+## Run Each redis-tool Command
 
-```text
-Docker  -> To create Redis server containers
-Ansible -> To automate installation and configuration
-Redis   -> Database used in the cluster
-Bash    -> To create the redis-tool CLI
-```
-
----
-
-## CLI Code Layout
-
-`redis-tool` is the public entry point and command router. Its implementation is
-split into ten Bash modules:
-
-```text
-redis_tool_modules/
-|-- prerequisite.sh   Settings, tools, and Docker/Podman helpers
-|-- provision.sh      Provision, data, and SSH setup functions
-|-- status_check.sh   Phase 3 cluster health and topology status
-|-- logs.sh           Terminal and operation logging
-|-- upgrade.sh        Rolling upgrade and availability monitoring
-|-- verify.sh         Cluster verification and repository verification
-|-- health.sh         Redis health and version checks
-|-- rollback.sh       Rollback command
-|-- inventory.sh      Dynamic Ansible inventory creation
-`-- scale_out.sh      Scale-out command and node creation
-```
-
-`redis-tool` calculates `BASE_DIR`, the directory where the script itself is
-stored, and sources modules using absolute paths from that directory. This is
-necessary because Bash `source` normally resolves relative paths from the
-user's current directory. Using `BASE_DIR` allows the CLI to work consistently
-whether it is launched from the project root or another directory.
-
-### Repository Verification
-
-Run the repository verification script before provisioning:
+Run repository verification first:
 
 ```bash
 ./redis_tool_modules/verify.sh
 ```
 
-It checks required files, local tools, executable permissions, Bash syntax,
-Docker Compose configuration, and Ansible playbook syntax.
-
----
-
-## Redis Cluster Setup
-
-The cluster contains 6 Redis nodes.
-
-```text
-3 nodes work as masters
-3 nodes work as replicas
-```
-
-Master nodes handle the main data operations.
-
-Replica nodes keep a copy of the master data and help during failover.
-
-This setup improves availability because if one master has an issue, its replica can take over.
-
----
-
-## Phase 1: Cluster Provisioning
-
-In Phase 1, I created the Redis Cluster.
-
-I used Docker to create 6 Ubuntu containers. Then I used Ansible to install Redis `7.0.15` on all nodes and configure them in cluster mode.
-
-Command used:
+Provision the base six-node Redis Cluster:
 
 ```bash
 ./redis-tool provision --version 7.0.15 --masters 3 --replicas-per-master 1
 ```
 
-Result:
+Output:
 
 ```text
-Redis Cluster created successfully
-Cluster state: ok
-Total nodes: 6
-Masters: 3
-Replicas: 3
-All 16384 hash slots assigned
+output/provision_output.txt
 ```
 
----
-
-## Phase 2: Data Seed and Verification
-
-In Phase 2, I added test data into the Redis Cluster.
-
-I inserted 1000 key-value pairs into Redis.
-
-Example:
-
-```text
-user:1 -> value-1
-user:2 -> value-2
-user:3 -> value-3
-```
-
-Command used to add data:
+Seed deterministic test data:
 
 ```bash
 ./redis-tool data seed --keys 1000
 ```
 
-Then I verified whether all the data was stored correctly.
+Output:
 
-Command used:
+```text
+output/data_seed_output.txt
+```
+
+Verify deterministic test data:
 
 ```bash
 ./redis-tool data verify
 ```
 
-Result:
+Output:
 
 ```text
-Key distribution across masters:
-10.10.0.11:6379 -> 332 keys
-10.10.0.12:6379 -> 337 keys
-10.10.0.13:6379 -> 331 keys
-
-PASS - 1000/1000 keys inserted; failures: 0
-PASS - 1000/1000 keys verified
+output/verify_output.txt
 ```
 
-If verification fails, the command reports missing keys and mismatched values
-separately and exits with a non-zero status.
-
----
-
-## Phase 3: Cluster Status
-
-In Phase 3, I added a status command.
-
-This command shows the current health of the Redis Cluster.
-
-Command used:
+Check cluster status:
 
 ```bash
 ./redis-tool status
 ```
 
-It shows:
+Output:
 
 ```text
-Cluster health
-Master nodes
-Replica nodes
-Redis version
-Hash slots
-Key count
-Memory usage
+output/status_output.txt
 ```
 
-Result:
-
-```text
-Cluster state: ok
-All nodes were connected properly
-```
-
----
-
-## Phase 4: Rolling Upgrade
-
-In Phase 4, I upgraded Redis from version `7.0.15` to `7.2.6`.
-
-The important part is that I did not stop the full cluster at once.
-
-I used a rolling upgrade method, which means one node is upgraded at a time.
-
-Command used:
+Run a rolling upgrade:
 
 ```bash
 ./redis-tool upgrade --target-version 7.2.6 --strategy rolling
 ```
 
-Before upgrading master nodes, I used failover.
-
-Failover means the replica becomes the new master before the old master is upgraded.
-
-This helps reduce downtime.
-
-Result:
+Output:
 
 ```text
-All 6 nodes upgraded to Redis 7.2.6
-Cluster state: ok
-All 16384 hash slots covered
-Availability probes: 531
-Client-visible read outages: 0
-PASS - 1000/1000 keys verified
-UPGRADE COMPLETE - all nodes on v7.2.6, data integrity verified
+output/upgrade_output.txt
 ```
 
-The promoted replicas become the new masters, while the former masters rejoin
-as replicas after their upgrade. This role swap is expected.
-
----
-
-## Output Files
-
-The command outputs are saved inside the `output/` folder.
-
-```text
-provision_output.txt  -> Cluster creation output
-data_seed_output.txt  -> Data seed output
-verify_output.txt     -> Data verification output
-status_output.txt     -> Cluster status output
-upgrade_output.txt    -> Rolling upgrade output
-full_verify_output.txt -> Full verification output
-scale_out_output.txt  -> Scale-out output
-rollback_output.txt   -> Rollback output
-```
-
-Provision, upgrade, and rollback each use one output file. If no change is
-required, the normal command output file records that the operation was safely
-skipped.
-
----
-
-## Phase 5: Full Verification
-
-In Phase 5, I added a full verification command to check the Redis Cluster after the rolling upgrade.
-
-The command is:
+Run full cluster verification:
 
 ```bash
 ./redis-tool verify --full
 ```
 
-This command performs a complete health check of the cluster.
-
-It checks:
-
-```text
-Data integrity
-Redis version consistency
-Cluster state
-Hash slot coverage
-Master and replica topology
-Replica connection status
-```
-
-The full verification confirmed:
-
-```text
-Cluster state is ok
-All 16384 hash slots are covered
-All 6 cluster nodes are present and reachable
-All 6 nodes are running Redis 7.2.6
-Topology has 3 masters and 3 replicas
-Every master has at least one replica
-All 3 replicas have master_link_status:up
-Data integrity verified: 1000/1000 keys matched
-```
-
-Final result:
-
-```text
-Passed checks: 7
-Failed checks: 0
-FULL VERIFICATION RESULT: PASS
-```
-
-The output is saved in:
+Output:
 
 ```text
 output/full_verify_output.txt
 ```
 
-## Stretch Goal S1: Scale Out
-
-The default Docker Compose file and Ansible inventory define only:
-
-```text
-redis-node-1 through redis-node-6
-```
-
-The scale-out command dynamically creates two additional containers by using
-the same image and Docker network as the existing cluster. It also generates a
-temporary Ansible inventory for the new nodes, installs the Redis version
-currently running in the cluster, and configures their cluster announce
-addresses.
-
-Command used:
+Scale out the cluster:
 
 ```bash
 ./redis-tool scale --add-nodes 2
 ```
 
-Before scale out:
+This adds:
 
 ```text
-3 masters + 3 replicas = 6 nodes
+redis-node-7 -> master
+redis-node-8 -> replica of redis-node-7
 ```
 
-After scale out:
-
-```text
-4 masters + 4 replicas = 8 nodes
-```
-
-New nodes added:
-
-```text
-redis-node-7 -> 10.10.0.17 -> master
-redis-node-8 -> 10.10.0.18 -> replica of redis-node-7
-```
-
-The playbook adds `redis-node-7` as a master, adds `redis-node-8` as its
-replica, rebalances hash slots across all four masters, waits for the expected
-topology, and runs full cluster verification.
-
-Final result:
-
-```text
-Cluster state: ok
-All 16384 slots covered
-Every master has a replica
-1000 keys verified
-FULL VERIFICATION RESULT: PASS
-```
-
-Output file:
+Output:
 
 ```text
 output/scale_out_output.txt
 ```
 
----
-
-## Stretch Goal S3: Rollback
-
-I implemented rollback to downgrade Redis to a previous version if needed.
-
-Command used:
+Rollback to a target Redis version:
 
 ```bash
 ./redis-tool rollback --target-version 7.0.15
 ```
 
-Rollback tested:
-
-Redis 7.2.6 -> Redis 7.0.15
-
-The rollback command downgrades Redis one node at a time and checks cluster health after each node.
-
-During rollback, Redis 7.0.15 cannot read Redis 7.2.6 RDB format 11. The
-workflow performs a controlled shard takeover, removes incompatible local
-persistence, and automatically restores the verified deterministic dataset
-before final verification.
-
-Final rollback result:
-
-```text
-All 8 nodes running Redis 7.0.15
-Cluster state: ok
-All 16384 slots covered
-Every master has a replica
-```
-
-After rollback, data is reseeded automatically by the rollback command:
-
-```bash
-./redis-tool rollback --target-version 7.0.15
-```
-
-Then full verification runs automatically:
-
-```text
-Data integrity verified: all 1000 keys matched
-FULL VERIFICATION RESULT: PASS
-```
-
-Output file:
+Output:
 
 ```text
 output/rollback_output.txt
 ```
 
----
-
-## Stretch Goal S4: Idempotency
-
-Provisioning is safe to run against an existing healthy cluster:
+Recommended demo flow:
 
 ```bash
+./redis_tool_modules/verify.sh
 ./redis-tool provision --version 7.0.15 --masters 3 --replicas-per-master 1
-```
-
-The command detects all six healthy cluster nodes and exits without
-reinstalling Redis, restarting nodes, clearing persistence files, or recreating
-the cluster:
-
-```text
-PROVISION SKIPPED - existing healthy cluster was left unchanged
-```
-
-The provision playbook has the same protection when executed directly. A
-second run completed with `changed=0` on every node.
-
-Upgrade also checks every live cluster node before starting the rolling
-workflow:
-
-```bash
-./redis-tool upgrade --target-version 7.0.15 --strategy rolling
-```
-
-When every node is already at the target version, it exits successfully before
-starting the availability monitor or running upgrade tasks:
-
-```text
-All cluster nodes are already running Redis 7.0.15.
-No upgrade is required; exiting cleanly without restarting any node.
-UPGRADE SKIPPED - all nodes already at target version
-```
-
-After the skipped provision, full verification confirmed:
-
-```text
-Data integrity verified: 1000/1000 keys matched
-FULL VERIFICATION RESULT: PASS
-```
-
-## Stretch Goal S5: Structured Logging
-
-Every `redis-tool` invocation creates a unique operation log in `logs/`:
-
-```text
-logs/YYYYMMDDTHHMMSSZ_<command>_<process-id>.log
-```
-
-Logs contain UTC timestamps, command names, node names, actions, outcomes,
-details, the complete operation output, and the final exit code. Structured
-records use this format:
-
-```text
-timestamp=2026-06-14T18:18:24Z level=INFO command=provision node=all action=provision outcome=skipped details="healthy cluster already exists; requested_version=7.0.15; data_preserved=true"
-```
-
-Successful, skipped, and failed commands are all recorded with the appropriate
-final outcome.
-
----
-
-## Stretch Goal Summary
-
-S1 Scale Out completed
-S3 Rollback completed
-S4 Idempotency completed
-S5 Structured Logging completed
-
-The stretch goals are available through the CLI:
-
-```bash
+./redis-tool data seed --keys 1000
+./redis-tool data verify
+./redis-tool status
+./redis-tool upgrade --target-version 7.2.6 --strategy rolling
+./redis-tool verify --full
 ./redis-tool scale --add-nodes 2
 ./redis-tool rollback --target-version 7.0.15
 ```
 
 ---
+
+## Rolling Upgrade Strategy
+
+The rolling upgrade avoids stopping the full Redis Cluster at once.
+
+High-level flow:
+
+```text
+Check cluster health
+Upgrade replica nodes first
+Use failover when a master must be upgraded
+Upgrade the old master after failover
+Restart Redis on the upgraded node
+Verify the node version
+Verify cluster health
+Continue to the next node
+```
+
+Why this strategy:
+
+- Upgrading one node at a time reduces cluster risk.
+- Replicas are upgraded before masters so a healthy replica is available for failover.
+- Master failover allows the cluster to keep serving while the old master is upgraded.
+- The tool verifies versions, cluster health, replica links, and data integrity after upgrade.
+- A lightweight availability monitor runs during upgrade to detect client-visible read outages.
+
+If all nodes are already at the requested target version, upgrade exits cleanly:
+
+```text
+UPGRADE SKIPPED - all nodes already at target version
+```
+
+---
+
+## Assumptions And Trade-Offs
+
+- The project is designed for local DevOps practice.
+- Redis nodes run inside local Docker/Podman containers instead of real cloud servers.
+- Ansible connects to containers through SSH to simulate real server automation.
+- The base topology is fixed to 3 masters and 3 replicas.
+- Scale-out currently supports exactly two added nodes: one master and one replica.
+- Redis is built from source to control exact versions, which is slower than package installation.
+- Full verification expects deterministic test data: `user:1` through `user:1000`.
+- Rollback removes potentially incompatible local RDB/AOF files before starting an older Redis version, then restores deterministic test data. This is acceptable for the lab, but it is not a production backup/restore strategy.
+- The private SSH key is generated locally at `~/.ssh/redis_cluster_key` and must not be committed. The public key is patched into containers at runtime.
+
+---
+
+## Known Limitations
+
+- No Kubernetes or managed Redis Cloud integration.
+- No production monitoring stack such as Prometheus or Grafana.
+- No automatic scale-in implemented yet.
+- Scale-out is fixed to adding two nodes.
+- The base provision topology is fixed to 3 masters and 3 replicas.
+- Local-container performance is not equivalent to real distributed production infrastructure.
+- Rollback compatibility is handled for deterministic lab data, not arbitrary production data.
+- `--auto-install` is not implemented; the tool prints install instructions instead of changing the host automatically.
+
+---
+
+## Prerequisites
+
+`redis-tool` checks required dependencies before running supported lifecycle commands.
+
+Required host tools:
+
+```text
+Docker Engine or Podman
+Docker Compose plugin or Podman Compose
+Ansible 2.14+
+nc
+ssh-keygen
+```
+
+If dependencies are present, the tool prints versions and continues:
+
+```text
+[OK] Docker version ... found
+[OK] Ansible ... found
+Proceeding...
+```
+
+If something is missing, the tool prints install guidance and exits nonzero. It does not auto-install dependencies.
+
+---
+
+## Module-Based CLI Structure
+
+`redis-tool` is the entrypoint and router. It loads focused modules from `redis_tool_modules/` using `source`.
+
+```text
+prerequisite.sh   Shared config, dependency checks, Docker/Podman helpers
+provision.sh      Provision, data seed/verify, and SSH setup helpers
+status_check.sh   Cluster status command
+upgrade.sh        Rolling upgrade command
+verify.sh         Full cluster verification and repository verification
+rollback.sh       Rollback command
+scale_out.sh      Scale-out command
+health.sh         Cluster health and version checks
+logs.sh           Structured logging
+inventory.sh      Temporary dynamic inventories
+```
+
+---
+
+## Stretch Goals Implemented
+
+```text
+S1 Scale Out
+S3 Rollback
+S4 Idempotency
+S5 Structured Logging
+```
+
+Provision is idempotent on a healthy existing cluster:
+
+```bash
+PROVISION SKIPPED - existing healthy cluster was left unchanged
+```
+
+Every supported command creates a timestamped structured log under `logs/`.
+
+Log format:
+
+```bash
+timestamp=... level=... command=... node=... action=... outcome=... details="..."
+```
+
+Example log entry:
+
+```bash
+timestamp=2026-06-16T14:32:45Z level=INFO command=provision node=redis-node-1 action=provision_container outcome=success details="address=10.10.0.11 ssh_port=2211 image=infra-redis-node-1 network=infra_redis-cluster-net"
+```

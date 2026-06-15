@@ -159,7 +159,7 @@ check_configuration_load() {
   if (
     set -u
     source "$PROJECT_ROOT/redis_tool_modules/prerequisite.sh"
-    : "$INVENTORY" "$OUTPUT_DIR" "$LOG_DIR" "$SSH_KEY" "$SSH_PUBLIC_KEY"
+    : "$INVENTORY" "$OUTPUT_DIR" "$LOG_DIR" "$SSH_KEY" "$SSH_PUBLIC_KEY" "$INFRA_PUBLIC_KEY_COPY"
   ); then
     print_pass "Configuration module loads without runtime errors"
   else
@@ -208,7 +208,6 @@ check_module_layout() {
 
   expected=$(
     printf '%s\n' \
-      prerequisite.sh \
       provision.sh \
       status_check.sh \
       logs.sh \
@@ -271,7 +270,6 @@ check_file "$PROJECT_ROOT/logs/.gitkeep" "Logs directory placeholder"
 
 echo
 echo "Checking redis-tool modules..."
-check_file "$PROJECT_ROOT/redis_tool_modules/prerequisite.sh" "Prerequisite and runtime module"
 check_file "$PROJECT_ROOT/redis_tool_modules/provision.sh" "Provision command"
 check_file "$PROJECT_ROOT/redis_tool_modules/status_check.sh" "Status command"
 check_file "$PROJECT_ROOT/redis_tool_modules/logs.sh" "Operation logging module"

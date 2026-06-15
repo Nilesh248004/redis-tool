@@ -1,5 +1,5 @@
 ===== Redis Data Seed Started =====
-Tue Jun 16 00:23:40 IST 2026
+Tue Jun 16 03:06:09 IST 2026
 Keys: 1000
 
 PLAY [Seed deterministic data into Redis Cluster] ******************************
@@ -12,9 +12,9 @@ ok: [redis-node-1] => {
     "msg": [
         "",
         "Key distribution across masters:",
-        "10.10.0.12:6379 -> 337 keys",
-        "10.10.0.11:6379 -> 332 keys",
         "10.10.0.13:6379 -> 331 keys",
+        "10.10.0.11:6379 -> 332 keys",
+        "10.10.0.12:6379 -> 337 keys",
         "",
         "PASS - 1000/1000 keys inserted; failures: 0"
     ]
@@ -24,4 +24,4 @@ PLAY RECAP *********************************************************************
 redis-node-1               : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 
 ===== Redis Data Seed Completed =====
-Tue Jun 16 00:23:41 IST 2026
+Tue Jun 16 03:06:10 IST 2026
