@@ -1,15 +1,14 @@
 ===== Redis Scale Out Started =====
-Tue Jun 16 00:33:58 IST 2026
+Tue Jun 16 03:23:17 IST 2026
 
 ===== Creating Dynamic Scale-Out Infrastructure =====
 Creating Redis scale-out container infrastructure dynamically...
-Creating redis-node-7 at 10.10.0.17 with SSH port 2217...
-timestamp=2026-06-15T19:03:59Z level=INFO command=scale node=redis-node-7 action=scale_out_container outcome=created details="address=10.10.0.17 ssh_port=2217 image=infra-redis-node-7 network=infra_redis-cluster-net"
-Creating redis-node-8 at 10.10.0.18 with SSH port 2218...
-timestamp=2026-06-15T19:03:59Z level=INFO command=scale node=redis-node-8 action=scale_out_container outcome=created details="address=10.10.0.18 ssh_port=2218 image=infra-redis-node-8 network=infra_redis-cluster-net"
+[OK] redis-node-7 already exists in the Redis cluster
+[OK] redis-node-8 already exists in the Redis cluster
 Patching SSH public key into Redis containers...
 Checking SSH key setup...
 [OK] SSH key already exists: /Users/nileshkrishnamurthy/.ssh/redis_cluster_key
+[OK] Public key visible at: /Users/nileshkrishnamurthy/Documents/Projects/submission/infra/redis_cluster_key.pub
 Patching SSH key into redis-node-7...
 [OK] SSH key patched into redis-node-7
 Patching SSH key into redis-node-8...
@@ -29,74 +28,76 @@ ok: [redis-node-7]
 ok: [redis-node-8]
 
 TASK [Detect the current cluster Redis version] ********************************
-ok: [redis-node-7 -> redis-node-1(localhost)]
 ok: [redis-node-8 -> redis-node-1(localhost)]
+ok: [redis-node-7 -> redis-node-1(localhost)]
 
 TASK [Check if this node is already part of Redis Cluster] *********************
-ok: [redis-node-7 -> redis-node-1(localhost)]
 ok: [redis-node-8 -> redis-node-1(localhost)]
+ok: [redis-node-7 -> redis-node-1(localhost)]
 
 TASK [Show node cluster membership status] *************************************
 ok: [redis-node-7] => {
-    "msg": "redis-node-7 is already in cluster: False"
+    "msg": "redis-node-7 is already in cluster: True"
 }
 ok: [redis-node-8] => {
-    "msg": "redis-node-8 is already in cluster: False"
+    "msg": "redis-node-8 is already in cluster: True"
 }
 
 TASK [Stop any existing Redis process on a new node] ***************************
-ok: [redis-node-8]
-ok: [redis-node-7]
+skipping: [redis-node-7]
+skipping: [redis-node-8]
 
 TASK [Install build dependencies] **********************************************
-ok: [redis-node-8]
-ok: [redis-node-7]
+skipping: [redis-node-7]
+skipping: [redis-node-8]
 
 TASK [Remove old Redis source directory] ***************************************
-ok: [redis-node-7]
-ok: [redis-node-8]
+skipping: [redis-node-7]
+skipping: [redis-node-8]
 
 TASK [Download Redis source] ***************************************************
-changed: [redis-node-8]
-changed: [redis-node-7]
+skipping: [redis-node-7]
+skipping: [redis-node-8]
 
 TASK [Extract Redis source] ****************************************************
-changed: [redis-node-7]
-changed: [redis-node-8]
+skipping: [redis-node-7]
+skipping: [redis-node-8]
 
 TASK [Build Redis from source] *************************************************
-changed: [redis-node-7]
-changed: [redis-node-8]
+skipping: [redis-node-7]
+skipping: [redis-node-8]
 
 TASK [Install Redis binaries] **************************************************
-changed: [redis-node-8]
-changed: [redis-node-7]
+skipping: [redis-node-7]
+skipping: [redis-node-8]
 
 TASK [Create redis user] *******************************************************
-changed: [redis-node-7]
-changed: [redis-node-8]
+skipping: [redis-node-7]
+skipping: [redis-node-8]
 
 TASK [Create Redis directories] ************************************************
-changed: [redis-node-8] => (item=/etc/redis)
-changed: [redis-node-7] => (item=/etc/redis)
-changed: [redis-node-8] => (item=/var/lib/redis)
-changed: [redis-node-7] => (item=/var/lib/redis)
-changed: [redis-node-8] => (item=/var/log/redis)
-changed: [redis-node-7] => (item=/var/log/redis)
-changed: [redis-node-7] => (item=/var/run/redis)
-changed: [redis-node-8] => (item=/var/run/redis)
+skipping: [redis-node-7] => (item=/etc/redis) 
+skipping: [redis-node-7] => (item=/var/lib/redis) 
+skipping: [redis-node-7] => (item=/var/log/redis) 
+skipping: [redis-node-7] => (item=/var/run/redis) 
+skipping: [redis-node-7]
+skipping: [redis-node-8] => (item=/etc/redis) 
+skipping: [redis-node-8] => (item=/var/lib/redis) 
+skipping: [redis-node-8] => (item=/var/log/redis) 
+skipping: [redis-node-8] => (item=/var/run/redis) 
+skipping: [redis-node-8]
 
 TASK [Clear stale Redis state before first cluster join] ***********************
-changed: [redis-node-7]
-changed: [redis-node-8]
+skipping: [redis-node-7]
+skipping: [redis-node-8]
 
 TASK [Create Redis cluster configuration] **************************************
-changed: [redis-node-8]
-changed: [redis-node-7]
+skipping: [redis-node-7]
+skipping: [redis-node-8]
 
 TASK [Start Redis with cluster config] *****************************************
-changed: [redis-node-7]
-changed: [redis-node-8]
+skipping: [redis-node-7]
+skipping: [redis-node-8]
 
 TASK [Wait for Redis port] *****************************************************
 ok: [redis-node-7]
@@ -123,7 +124,7 @@ TASK [Fail if cluster is not healthy before scale out] *************************
 skipping: [redis-node-1]
 
 TASK [Add redis-node-7 as new master if not already added] *********************
-changed: [redis-node-1]
+ok: [redis-node-1]
 
 TASK [Get redis-node-7 node id] ************************************************
 ok: [redis-node-1]
@@ -132,17 +133,16 @@ TASK [Wait until the seed recognizes redis-node-7 stable node id] **************
 ok: [redis-node-1]
 
 TASK [Add redis-node-8 to the cluster if not already added] ********************
-changed: [redis-node-1]
+ok: [redis-node-1]
 
 TASK [Get redis-node-8 node id] ************************************************
 ok: [redis-node-1]
 
 TASK [Wait until every master knows both new nodes] ****************************
-FAILED - RETRYING: [redis-node-1]: Wait until every master knows both new nodes (29 retries left).
 ok: [redis-node-1]
 
 TASK [Normalize unexpected redis-node-7 and redis-node-8 roles] ****************
-changed: [redis-node-1]
+ok: [redis-node-1]
 
 TASK [Refresh redis-node-7 node id after role normalization] *******************
 ok: [redis-node-1]
@@ -154,13 +154,9 @@ TASK [Drain slots from redis-node-8 before assigning its replica role] *********
 ok: [redis-node-1]
 
 TASK [Assign redis-node-8 as replica of redis-node-7] **************************
-FAILED - RETRYING: [redis-node-1]: Assign redis-node-8 as replica of redis-node-7 (29 retries left).
-FAILED - RETRYING: [redis-node-1]: Assign redis-node-8 as replica of redis-node-7 (28 retries left).
 ok: [redis-node-1]
 
 TASK [Wait for redis-node-8 replication link] **********************************
-FAILED - RETRYING: [redis-node-1]: Wait for redis-node-8 replication link (29 retries left).
-FAILED - RETRYING: [redis-node-1]: Wait for redis-node-8 replication link (28 retries left).
 ok: [redis-node-1]
 
 TASK [Repair any slot state left by an interrupted rebalance] ******************
@@ -170,7 +166,7 @@ TASK [Confirm all slots are stable before rebalancing] *************************
 ok: [redis-node-1]
 
 TASK [Rebalance hash slots across all masters] *********************************
-changed: [redis-node-1]
+ok: [redis-node-1]
 
 TASK [Show rebalance output] ***************************************************
 ok: [redis-node-1] => {
@@ -180,13 +176,8 @@ ok: [redis-node-1] => {
         "\u001b[0m\u001b[29;1m>>> Check for open slots...",
         "\u001b[0m\u001b[29;1m>>> Check slots coverage...",
         "\u001b[0m\u001b[32;1m[OK] All 16384 slots covered.",
-        "\u001b[0m\u001b[29;1m>>> Rebalancing across 4 nodes. Total weight = 4.00",
-        "\u001b[0mMoving 1366 slots from 10.10.0.16:6379 to 10.10.0.17:6379",
-        "######################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################",
-        "Moving 1365 slots from 10.10.0.15:6379 to 10.10.0.17:6379",
-        "#####################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################",
-        "Moving 1365 slots from 10.10.0.14:6379 to 10.10.0.17:6379",
-        "#####################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################"
+        "\u001b[0m\u001b[33;1m*** No rebalancing needed! All nodes are within the 2.00% threshold.",
+        "\u001b[0m"
     ]
 }
 
@@ -199,14 +190,14 @@ ok: [redis-node-1]
 TASK [Print final cluster nodes] ***********************************************
 ok: [redis-node-1] => {
     "msg": [
-        "c7fbc1c183154711b11ca86955bbfac996e57fbc 10.10.0.11:6379@16379 myself,slave 67b7c4347b5dc606f832ab88aab625d1054b06cd 0 1781550309000 7 connected",
-        "9a7c570081b6b3dc559b75ba72c10178ca2463ce 10.10.0.14:6379@16379 master - 0 1781550310000 9 connected 12288-16383",
-        "e8cec96a793438f638b8a728583f64eed7be43e0 10.10.0.12:6379@16379 slave 5ee99b223f3ca86a2e922b230385701548fb308a 0 1781550310523 8 connected",
-        "67b7c4347b5dc606f832ab88aab625d1054b06cd 10.10.0.15:6379@16379 master - 0 1781550310022 7 connected 1365-5460",
-        "489795cf31d0b4d74e07d2fae0e7fb095563531d 10.10.0.18:6379@16379 slave 26d564b5d89aeca0f430f1188f5778af5c6c1839 0 1781550311026 10 connected",
-        "8e5b8c492cbf0242802c07a120bc00e05ca0111d 10.10.0.13:6379@16379 slave 9a7c570081b6b3dc559b75ba72c10178ca2463ce 0 1781550310000 9 connected",
-        "26d564b5d89aeca0f430f1188f5778af5c6c1839 10.10.0.17:6379@16379 master - 0 1781550311026 10 connected 0-1364 5461-6826 10923-12287",
-        "5ee99b223f3ca86a2e922b230385701548fb308a 10.10.0.16:6379@16379 master - 0 1781550309000 8 connected 6827-10922"
+        "227166f3d3f0cbf9d9c6cfe64b4ffda1c10b2b14 10.10.0.18:6379@16379 slave 36ac04574d4a4743815a653b1f01b0641bd711a7 0 1781560403000 10 connected",
+        "1aaab28b44b47624b4e9002fb3c5e926b4df7198 10.10.0.15:6379@16379 master - 0 1781560402255 7 connected 1365-5460",
+        "8e654f60fb5fe8392b4a582d27c5430dafc95e68 10.10.0.13:6379@16379 slave 1a7f3182bf7a4cc9abe44977051efb57af1a63af 0 1781560403778 9 connected",
+        "36ac04574d4a4743815a653b1f01b0641bd711a7 10.10.0.17:6379@16379 master - 0 1781560403000 10 connected 0-1364 5461-6826 10923-12287",
+        "d99d502a5199afcde8ec9e73e947da1a3b149e8f 10.10.0.11:6379@16379 myself,slave 1aaab28b44b47624b4e9002fb3c5e926b4df7198 0 1781560402000 7 connected",
+        "422582987acdd63948f962257e5d60455ec40221 10.10.0.12:6379@16379 slave b1c8a0f6b9c1ccfc935b5a13d6518ed8a1f5f628 0 1781560403575 8 connected",
+        "1a7f3182bf7a4cc9abe44977051efb57af1a63af 10.10.0.14:6379@16379 master - 0 1781560403778 9 connected 12288-16383",
+        "b1c8a0f6b9c1ccfc935b5a13d6518ed8a1f5f628 10.10.0.16:6379@16379 master - 0 1781560403269 8 connected 6827-10922"
     ]
 }
 
@@ -220,9 +211,9 @@ ok: [redis-node-1] => {
 }
 
 PLAY RECAP *********************************************************************
-redis-node-1               : ok=21   changed=4    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
-redis-node-7               : ok=19   changed=9    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
-redis-node-8               : ok=19   changed=9    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+redis-node-1               : ok=21   changed=0    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+redis-node-7               : ok=7    changed=0    unreachable=0    failed=0    skipped=12   rescued=0    ignored=0   
+redis-node-8               : ok=7    changed=0    unreachable=0    failed=0    skipped=12   rescued=0    ignored=0   
 
 
 ===== Full Verification After Scale Out =====
@@ -256,8 +247,8 @@ PLAY RECAP *********************************************************************
 redis-node-1               : ok=2    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 
 
-timestamp=2026-06-15T19:05:12Z level=INFO command=scale node=redis-node-7 action=scale_out outcome=success details="role=master address=10.10.0.17:6379 slots=rebalanced"
-timestamp=2026-06-15T19:05:12Z level=INFO command=scale node=redis-node-8 action=scale_out outcome=success details="role=replica address=10.10.0.18:6379 master=redis-node-7"
+timestamp=2026-06-15T21:53:25Z level=INFO command=scale node=redis-node-7 action=scale_out outcome=success details="role=master address=10.10.0.17:6379 slots=rebalanced"
+timestamp=2026-06-15T21:53:25Z level=INFO command=scale node=redis-node-8 action=scale_out outcome=success details="role=replica address=10.10.0.18:6379 master=redis-node-7"
 SCALE OUT COMPLETE - added redis-node-7 master and redis-node-8 replica
 ===== Redis Scale Out Completed =====
-Tue Jun 16 00:35:12 IST 2026
+Tue Jun 16 03:23:25 IST 2026

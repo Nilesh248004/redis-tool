@@ -4,7 +4,7 @@ This project automates Redis Cluster lifecycle operations using Docker or Podman
 
 ---
 
-## 1. Bring Up The Container Infrastructure
+## Bring Up The Container Infrastructure
 
 The project works with either Docker or Podman. Podman is preferred automatically by `redis-tool` if both Docker and Podman are installed.
 
@@ -47,9 +47,60 @@ redis-node-6
 
 Normally, you do not need to start the containers manually. The provision command checks and starts the required containers automatically.
 
+## Project Structure
+
+```text
+submission/
+├── redis-tool
+├── README.md
+├── ansible/
+│   ├── ansible.cfg
+│   ├── inventory/
+│   │   └── hosts.ini
+│   └── playbooks/
+│       ├── configure_redis.yml
+│       ├── create_cluster.yml
+│       ├── data_seed.yml
+│       ├── data_verify.yml
+│       ├── install_redis.yml
+│       ├── provision.yml
+│       ├── rollback.yml
+│       ├── scale_out.yml
+│       ├── status.yml
+│       ├── upgrade.yml
+│       ├── verify_full.yml
+│       └── tasks/
+│           └── rollback_node.yml
+├── infra/
+│   ├── Dockerfile
+│   └── compose.yml
+├── logs/
+│   └── .gitkeep
+├── output/
+│   ├── data_seed_output.txt
+│   ├── full_verify_output.txt
+│   ├── provision_output.txt
+│   ├── rollback_output.txt
+│   ├── scale_out_output.txt
+│   ├── status_output.txt
+│   ├── upgrade_output.txt
+│   └── verify_output.txt
+└── redis_tool_modules/
+    ├── health.sh
+    ├── inventory.sh
+    ├── logs.sh
+    ├── prerequisite.sh
+    ├── provision.sh
+    ├── rollback.sh
+    ├── scale_out.sh
+    ├── status_check.sh
+    ├── upgrade.sh
+    └── verify.sh
+```
+
 ---
 
-## 2. Run Each redis-tool Command
+## Run Each redis-tool Command
 
 Run repository verification first:
 
@@ -176,7 +227,7 @@ Recommended demo flow:
 
 ---
 
-## 3. Rolling Upgrade Strategy
+## Rolling Upgrade Strategy
 
 The rolling upgrade avoids stopping the full Redis Cluster at once.
 
@@ -209,9 +260,9 @@ UPGRADE SKIPPED - all nodes already at target version
 
 ---
 
-## 4. Assumptions And Trade-Offs
+## Assumptions And Trade-Offs
 
-- The project is designed for local DevOps practice, not direct production deployment.
+- The project is designed for local DevOps practice.
 - Redis nodes run inside local Docker/Podman containers instead of real cloud servers.
 - Ansible connects to containers through SSH to simulate real server automation.
 - The base topology is fixed to 3 masters and 3 replicas.
@@ -223,11 +274,11 @@ UPGRADE SKIPPED - all nodes already at target version
 
 ---
 
-## 5. Known Limitations
+## Known Limitations
 
 - No Kubernetes or managed Redis Cloud integration.
 - No production monitoring stack such as Prometheus or Grafana.
-- No automatic scale-in.
+- No automatic scale-in implemented yet.
 - Scale-out is fixed to adding two nodes.
 - The base provision topology is fixed to 3 masters and 3 replicas.
 - Local-container performance is not equivalent to real distributed production infrastructure.
@@ -262,59 +313,6 @@ If something is missing, the tool prints install guidance and exits nonzero. It 
 
 ---
 
-## Project Structure
-
-```text
-submission/
-├── redis-tool
-├── README.md
-├── ansible/
-│   ├── ansible.cfg
-│   ├── inventory/
-│   │   └── hosts.ini
-│   └── playbooks/
-│       ├── configure_redis.yml
-│       ├── create_cluster.yml
-│       ├── data_seed.yml
-│       ├── data_verify.yml
-│       ├── install_redis.yml
-│       ├── provision.yml
-│       ├── rollback.yml
-│       ├── scale_out.yml
-│       ├── status.yml
-│       ├── upgrade.yml
-│       ├── verify_full.yml
-│       └── tasks/
-│           └── rollback_node.yml
-├── infra/
-│   ├── Dockerfile
-│   └── compose.yml
-├── logs/
-│   └── .gitkeep
-├── output/
-│   ├── data_seed_output.txt
-│   ├── full_verify_output.txt
-│   ├── provision_output.txt
-│   ├── rollback_output.txt
-│   ├── scale_out_output.txt
-│   ├── status_output.txt
-│   ├── upgrade_output.txt
-│   └── verify_output.txt
-└── redis_tool_modules/
-    ├── health.sh
-    ├── inventory.sh
-    ├── logs.sh
-    ├── prerequisite.sh
-    ├── provision.sh
-    ├── rollback.sh
-    ├── scale_out.sh
-    ├── status_check.sh
-    ├── upgrade.sh
-    └── verify.sh
-```
-
----
-
 ## Module-Based CLI Structure
 
 `redis-tool` is the entrypoint and router. It loads focused modules from `redis_tool_modules/` using `source`.
@@ -345,7 +343,7 @@ S5 Structured Logging
 
 Provision is idempotent on a healthy existing cluster:
 
-```text
+```bash
 PROVISION SKIPPED - existing healthy cluster was left unchanged
 ```
 
@@ -353,6 +351,12 @@ Every supported command creates a timestamped structured log under `logs/`.
 
 Log format:
 
-```text
+```bash
 timestamp=... level=... command=... node=... action=... outcome=... details="..."
+```
+
+Example log entry:
+
+```bash
+timestamp=2026-06-16T14:32:45Z level=INFO command=provision node=redis-node-1 action=provision_container outcome=success details="address=10.10.0.11 ssh_port=2211 image=infra-redis-node-1 network=infra_redis-cluster-net"
 ```

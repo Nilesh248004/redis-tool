@@ -1,279 +1,246 @@
-# Purpose: store shared settings and provide prerequisite/container runtime functions.
-INVENTORY="ansible/inventory/hosts.ini"
-OUTPUT_DIR="output"
-LOG_DIR="logs"
-PROVISION_OUTPUT="$OUTPUT_DIR/provision_output.txt"
-DATA_SEED_OUTPUT="$OUTPUT_DIR/data_seed_output.txt"
-STATUS_OUTPUT="$OUTPUT_DIR/status_output.txt"
-VERIFY_OUTPUT="$OUTPUT_DIR/verify_output.txt"
-UPGRADE_OUTPUT="$OUTPUT_DIR/upgrade_output.txt"
-FULL_VERIFY_OUTPUT="$OUTPUT_DIR/full_verify_output.txt"
-SCALE_OUT_OUTPUT="$OUTPUT_DIR/scale_out_output.txt"
-ROLLBACK_OUTPUT="$OUTPUT_DIR/rollback_output.txt"
-COMPOSE_FILE="infra/compose.yml"
-SSH_KEY="$HOME/.ssh/redis_cluster_key"
-SSH_PUBLIC_KEY="$HOME/.ssh/redis_cluster_key.pub"
+# Purpose: set up project-wide configuration variables and paths.
 
-REQUIRED_PROVISION_NODES=(
-  "redis-node-1"
-  "redis-node-2"
-  "redis-node-3"
-  "redis-node-4"
-  "redis-node-5"
-  "redis-node-6"
-)
-REQUIRED_SSH_PORTS=("2211" "2212" "2213" "2214" "2215" "2216")
-SCALE_OUT_NODES=("redis-node-7" "redis-node-8")
-SCALE_OUT_SSH_PORTS=("2217" "2218")
+# Resolve the project root relative to this module's location.
+MODULES_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+BASE_DIR=$(cd -- "$MODULES_DIR/.." && pwd)
+
+# Core configuration paths
+export INVENTORY="$BASE_DIR/ansible/inventory/hosts.ini"
+export OUTPUT_DIR="$BASE_DIR/output"
+export LOG_DIR="$BASE_DIR/logs"
+
+# SSH key paths for Ansible authentication
+export SSH_KEY="${HOME}/.ssh/redis_cluster_key"
+export SSH_PUBLIC_KEY="${SSH_KEY}.pub"
+export INFRA_PUBLIC_KEY_COPY="$BASE_DIR/infra/redis_cluster_key.pub"
+
+# Output file paths for command operations
+export PROVISION_OUTPUT="$OUTPUT_DIR/provision_output.txt"
+export DATA_SEED_OUTPUT="$OUTPUT_DIR/data_seed_output.txt"
+export STATUS_OUTPUT="$OUTPUT_DIR/status_output.txt"
+export UPGRADE_OUTPUT="$OUTPUT_DIR/upgrade_output.txt"
+export VERIFY_OUTPUT="$OUTPUT_DIR/verify_output.txt"
+export FULL_VERIFY_OUTPUT="$OUTPUT_DIR/full_verify_output.txt"
+export SCALE_OUT_OUTPUT="$OUTPUT_DIR/scale_out_output.txt"
+export ROLLBACK_OUTPUT="$OUTPUT_DIR/rollback_output.txt"
+
+# Temporary files tracking (cleared at end of each operation)
 TEMP_FILES=()
 
-require_option_value() {
-  local option="$1"
-  local value="$2"
+# Infrastructure configuration
+export COMPOSE_FILE="$BASE_DIR/infra/compose.yml"
+export REQUIRED_PROVISION_NODES=(redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5 redis-node-6)
+export REQUIRED_SSH_PORTS=(2211 2212 2213 2214 2215 2216)
+export SCALE_OUT_NODES=(redis-node-7 redis-node-8)
+export SCALE_OUT_SSH_PORTS=(2217 2218)
 
-  if [ -z "$value" ] || [[ "$value" == --* ]]; then
-    echo "[ERROR] $option requires a value."
+# Helper functions for container and infrastructure interactions
+require_healthy_cluster() {
+  local context="${1:-command}"
+  
+  if ! healthy_existing_cluster; then
+    echo "[ERROR] $context requires a healthy Redis Cluster. Provision a cluster first."
     exit 1
-  fi
-}
-
-validate_redis_version() {
-  local version="$1"
-
-  if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-    echo "[ERROR] Redis version must use MAJOR.MINOR.PATCH format, for example 7.0.15."
-    exit 1
-  fi
-}
-
-check_prerequisites() {
-  echo "Checking prerequisites..."
-  MISSING=0
-
-  if command -v podman >/dev/null 2>&1; then
-    RUNTIME="podman"
-    RUNTIME_VERSION=$(podman --version)
-    echo "[OK] $RUNTIME_VERSION found"
-
-    if ! podman compose version >/dev/null 2>&1; then
-      echo "[ERROR] Podman Compose is not available."
-      echo "Install: pip install podman-compose"
-      MISSING=1
-    fi
-  elif command -v docker >/dev/null 2>&1; then
-    RUNTIME="docker"
-    RUNTIME_VERSION=$(docker --version)
-    echo "[OK] $RUNTIME_VERSION found"
-
-    if ! docker compose version >/dev/null 2>&1; then
-      echo "[ERROR] Docker Compose is not available."
-      echo "Install the Docker Compose plugin: https://docs.docker.com/compose/install/"
-      MISSING=1
-    fi
-  else
-    echo "[ERROR] Container runtime not found. Docker or Podman is required."
-    echo "Install Podman: https://podman.io/docs/installation"
-    echo "Install Docker: https://docs.docker.com/engine/install/"
-    MISSING=1
-  fi
-
-  if command -v ansible-playbook >/dev/null 2>&1; then
-    ANSIBLE_VERSION=$(ansible-playbook --version | head -n 1 | awk '{print $3}' | tr -d '[]')
-    echo "[OK] Ansible $ANSIBLE_VERSION found"
-
-    ANSIBLE_MAJOR=$(echo "$ANSIBLE_VERSION" | cut -d. -f1)
-    ANSIBLE_MINOR=$(echo "$ANSIBLE_VERSION" | cut -d. -f2)
-
-    if [ "$ANSIBLE_MAJOR" -gt 2 ] || {
-      [ "$ANSIBLE_MAJOR" -eq 2 ] && [ "$ANSIBLE_MINOR" -ge 14 ]
-    }; then
-      :
-    else
-      echo "[ERROR] Ansible version must be 2.14 or higher. Found: $ANSIBLE_VERSION"
-      echo "Install or upgrade: pip install --upgrade ansible"
-      MISSING=1
-    fi
-  else
-    echo "[ERROR] Ansible not found."
-    echo "Install: pip install ansible"
-    echo "Or use your OS package manager."
-    MISSING=1
-  fi
-
-  if command -v nc >/dev/null 2>&1; then
-    echo "[OK] nc found"
-  else
-    echo "[ERROR] nc command not found. It is required to check SSH ports."
-    echo "On macOS, install using:"
-    echo "  brew install netcat"
-    MISSING=1
-  fi
-
-  if command -v ssh-keygen >/dev/null 2>&1; then
-    echo "[OK] ssh-keygen found"
-  else
-    echo "[ERROR] ssh-keygen not found. Install an OpenSSH client package."
-    MISSING=1
-  fi
-
-  if [ "$MISSING" -ne 0 ]; then
-    echo "Please install the missing dependencies and retry."
-    exit 1
-  fi
-
-  check_container_runtime_running
-  echo "Proceeding..."
-}
-
-check_container_runtime_running() {
-  echo "Checking container runtime status..."
-
-  if [ "$RUNTIME" = "docker" ]; then
-    if ! docker info >/dev/null 2>&1; then
-      echo "[ERROR] Docker is installed but Docker Desktop / Docker daemon is not running."
-      echo "Please start Docker Desktop and run the command again."
-      exit 1
-    fi
-  elif [ "$RUNTIME" = "podman" ]; then
-    if ! podman info >/dev/null 2>&1; then
-      echo "[ERROR] Podman is installed but Podman machine is not running."
-      echo "Start it using:"
-      echo "  podman machine start"
-      exit 1
-    fi
-  fi
-
-  echo "[OK] Container runtime is running"
-}
-
-compose_cmd() {
-  if [ "$RUNTIME" = "docker" ]; then
-    docker compose -f "$COMPOSE_FILE" "$@"
-  else
-    podman compose -f "$COMPOSE_FILE" "$@"
-  fi
-}
-
-runtime_exec() {
-  local container_name="$1"
-  shift
-
-  if [ "$RUNTIME" = "docker" ]; then
-    docker exec "$container_name" "$@"
-  else
-    podman exec "$container_name" "$@"
-  fi
-}
-
-container_exec_root() {
-  local container_name="$1"
-  shift
-
-  if [ "$RUNTIME" = "docker" ]; then
-    docker exec -u root "$container_name" "$@"
-  else
-    podman exec -u root "$container_name" "$@"
   fi
 }
 
 is_container_running() {
-  local container_name="$1"
-
-  if [ "$RUNTIME" = "docker" ]; then
-    docker ps --format '{{.Names}}' | grep -qx "$container_name"
+  local container="$1"
+  
+  if command -v podman >/dev/null 2>&1; then
+    podman ps --format "{{.Names}}" | grep -q "^${container}$"
+  elif command -v docker >/dev/null 2>&1; then
+    docker ps --format "{{.Names}}" | grep -q "^${container}$"
   else
-    podman ps --format '{{.Names}}' | grep -qx "$container_name"
+    return 1
   fi
 }
 
-container_exists() {
-  local container_name="$1"
-
-  if [ "$RUNTIME" = "docker" ]; then
-    docker ps -a --format '{{.Names}}' | grep -qx "$container_name"
+runtime_exec() {
+  local container="$1"
+  shift
+  
+  if ! is_container_running "$container"; then
+    return 1
+  fi
+  
+  if command -v podman >/dev/null 2>&1; then
+    podman exec "$container" "$@"
+  elif command -v docker >/dev/null 2>&1; then
+    docker exec "$container" "$@"
   else
-    podman ps -a --format '{{.Names}}' | grep -qx "$container_name"
+    return 1
   fi
 }
 
-remove_container() {
-  local container_name="$1"
-
-  if [ "$RUNTIME" = "docker" ]; then
-    docker rm -f "$container_name"
-  else
-    podman rm -f "$container_name"
+ensure_infra_running() {
+  if is_container_running redis-node-1; then
+    return 0
   fi
+  
+  echo "Starting Redis Cluster infrastructure..."
+  
+  if command -v podman >/dev/null 2>&1; then
+    podman compose -f "$BASE_DIR/infra/compose.yml" up -d
+  elif command -v docker >/dev/null 2>&1; then
+    docker compose -f "$BASE_DIR/infra/compose.yml" up -d
+  else
+    echo "[ERROR] No container runtime (Docker or Podman) found."
+    exit 1
+  fi
+  
+  sleep 3
+}
+
+validate_redis_version() {
+  local version="$1"
+  
+  if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    echo "[ERROR] Invalid Redis version format: $version (expected: X.Y.Z)"
+    exit 1
+  fi
+}
+
+require_option_value() {
+  local option="$1"
+  local value="$2"
+  
+  if [ -z "$value" ]; then
+    echo "[ERROR] Option $option requires a value"
+    exit 1
+  fi
+}
+
+compose_cmd() {
+  if command -v podman >/dev/null 2>&1; then
+    podman compose -f "$COMPOSE_FILE" "$@"
+  elif command -v docker >/dev/null 2>&1; then
+    docker compose -f "$COMPOSE_FILE" "$@"
+  else
+    echo "[ERROR] No container runtime (Docker or Podman) found."
+    return 1
+  fi
+}
+
+container_exec_root() {
+  local container="$1"
+  shift
+  
+  if ! is_container_running "$container"; then
+    echo "[ERROR] Container $container is not running."
+    return 1
+  fi
+  
+  if command -v podman >/dev/null 2>&1; then
+    podman exec -u root "$container" "$@"
+  elif command -v docker >/dev/null 2>&1; then
+    docker exec -u root "$container" "$@"
+  else
+    return 1
+  fi
+}
+
+check_prerequisites() {
+  # Check for container runtime (Docker or Podman)
+  if command -v podman >/dev/null 2>&1; then
+    RUNTIME_VERSION=$(podman --version 2>/dev/null | head -1)
+  elif command -v docker >/dev/null 2>&1; then
+    RUNTIME_VERSION=$(docker --version 2>/dev/null | head -1)
+  else
+    echo "[ERROR] Neither Docker nor Podman is installed. Install one to continue."
+    exit 1
+  fi
+  
+  # Check for Ansible
+  if ! command -v ansible-playbook >/dev/null 2>&1; then
+    echo "[ERROR] Ansible is not installed. Install it to continue."
+    exit 1
+  fi
+  
+  ANSIBLE_VERSION=$(ansible-playbook --version 2>/dev/null | head -1)
+  
+  # Export the version variables for logging
+  export RUNTIME_VERSION
+  export ANSIBLE_VERSION
 }
 
 inspect_container_image() {
-  local container_name="$1"
-
-  if [ "$RUNTIME" = "docker" ]; then
-    docker inspect "$container_name" --format '{{.Config.Image}}'
-  else
-    podman inspect "$container_name" --format '{{.Config.Image}}'
+  local container="$1"
+  
+  if command -v podman >/dev/null 2>&1; then
+    podman inspect "$container" --format='{{.Config.Image}}' 2>/dev/null || true
+  elif command -v docker >/dev/null 2>&1; then
+    docker inspect "$container" --format='{{.Config.Image}}' 2>/dev/null || true
   fi
 }
 
 inspect_container_network() {
-  local container_name="$1"
+  local container="$1"
+  
+  if command -v podman >/dev/null 2>&1; then
+    podman inspect "$container" --format='{{range $k, $v := .NetworkSettings.Networks}}{{$k}}{{end}}' 2>/dev/null || true
+  elif command -v docker >/dev/null 2>&1; then
+    docker inspect "$container" --format='{{range $k, $v := .NetworkSettings.Networks}}{{$k}}{{end}}' 2>/dev/null || true
+  fi
+}
 
-  if [ "$RUNTIME" = "docker" ]; then
-    docker inspect "$container_name" \
-      --format '{{range $name, $_ := .NetworkSettings.Networks}}{{$name}}{{"\n"}}{{end}}' |
-      head -n 1
+container_exists() {
+  local container="$1"
+  
+  if command -v podman >/dev/null 2>&1; then
+    podman ps -a --format "{{.Names}}" | grep -q "^${container}$"
+  elif command -v docker >/dev/null 2>&1; then
+    docker ps -a --format "{{.Names}}" | grep -q "^${container}$"
   else
-    podman inspect "$container_name" \
-      --format '{{range $name, $_ := .NetworkSettings.Networks}}{{$name}}{{"\n"}}{{end}}' |
-      head -n 1
+    return 1
+  fi
+}
+
+remove_container() {
+  local container="$1"
+  
+  if ! container_exists "$container"; then
+    return 0
+  fi
+  
+  if command -v podman >/dev/null 2>&1; then
+    podman rm -f "$container" >/dev/null 2>&1 || true
+  elif command -v docker >/dev/null 2>&1; then
+    docker rm -f "$container" >/dev/null 2>&1 || true
   fi
 }
 
 tag_scale_out_image() {
   local source_image="$1"
-  local node="$2"
-  local target_image
-
-  if [[ "$source_image" == *redis-node-1* ]]; then
-    target_image="${source_image/redis-node-1/$node}"
-  else
-    target_image="$node:latest"
-  fi
-
-  if [ "$RUNTIME" = "docker" ]; then
-    docker tag "$source_image" "$target_image"
-  else
-    podman tag "$source_image" "$target_image"
-  fi
-
-  printf '%s\n' "$target_image"
+  local node_name="$2"
+  
+  # Return the base image without additional tagging
+  # All scale-out nodes use the same base image
+  echo "$source_image"
 }
 
 run_scale_out_container() {
-  local node="$1"
+  local container="$1"
   local ssh_port="$2"
   local internal_ip="$3"
   local image="$4"
   local network="$5"
-
-  if [ "$RUNTIME" = "docker" ]; then
-    docker run -d \
-      --name "$node" \
-      --hostname "$node" \
-      --label "com.docker.compose.service=$node" \
-      --publish "$ssh_port:22" \
-      --network "$network" \
-      --ip "$internal_ip" \
-      "$image"
-  else
+  
+  if command -v podman >/dev/null 2>&1; then
     podman run -d \
-      --name "$node" \
-      --hostname "$node" \
-      --label "com.docker.compose.service=$node" \
-      --publish "$ssh_port:22" \
+      --name "$container" \
       --network "$network" \
       --ip "$internal_ip" \
+      -p "${ssh_port}:22" \
+      -e TERM=xterm \
+      "$image"
+  elif command -v docker >/dev/null 2>&1; then
+    docker run -d \
+      --name "$container" \
+      --network "$network" \
+      --ip "$internal_ip" \
+      -p "${ssh_port}:22" \
+      -e TERM=xterm \
       "$image"
   fi
 }
