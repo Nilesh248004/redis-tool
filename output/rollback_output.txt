@@ -1,5 +1,5 @@
 ===== Redis Rollback Started =====
-Mon Jun 15 00:34:43 IST 2026
+Tue Jun 16 00:37:39 IST 2026
 Target version: 7.0.15
 
 ===== Pre-rollback Cluster Info =====
@@ -9,17 +9,18 @@ cluster_slots_assigned:16384
 cluster_slots_ok:16384
 cluster_slots_pfail:0
 cluster_slots_fail:0
-cluster_known_nodes:6
-cluster_size:3
-cluster_current_epoch:6
-cluster_my_epoch:1
-cluster_stats_messages_ping_sent:505
-cluster_stats_messages_pong_sent:501
-cluster_stats_messages_sent:1006
-cluster_stats_messages_ping_received:496
-cluster_stats_messages_pong_received:504
-cluster_stats_messages_meet_received:5
-cluster_stats_messages_received:1005
+cluster_known_nodes:8
+cluster_size:4
+cluster_current_epoch:10
+cluster_my_epoch:7
+cluster_stats_messages_ping_sent:918
+cluster_stats_messages_pong_sent:911
+cluster_stats_messages_sent:1829
+cluster_stats_messages_ping_received:908
+cluster_stats_messages_pong_received:5014
+cluster_stats_messages_meet_received:3
+cluster_stats_messages_auth-req_received:2
+cluster_stats_messages_received:5927
 total_cluster_links_buffer_limit_exceeded:0
 
 ===== Pre-rollback Data Verification =====
@@ -47,37 +48,604 @@ PLAY [Validate cluster before selective rollback] ******************************
 TASK [Verify cluster health, reachability, and replica coverage] ***************
 ok: [redis-node-1]
 
-TASK [Validate that every rollback has a target-version shard anchor] **********
-ok: [redis-node-1]
-
-TASK [Print rollback safety plan] **********************************************
-ok: [redis-node-1] => {
-    "msg": [
-        "SAFE: replica 10.10.0.14 can roll back against target-version master 10.10.0.13."
-    ]
-}
-
-TASK [Stop before an unsafe rollback] ******************************************
-skipping: [redis-node-1]
-
 TASK [Report versions before rollback] *****************************************
 ok: [redis-node-1]
 
 TASK [Print selective rollback plan] *******************************************
 ok: [redis-node-1] => {
     "msg": [
-        "10.10.0.12:6379 Redis 7.0.15 -> already target; skip",
-        "10.10.0.16:6379 Redis 7.0.15 -> already target; skip",
-        "10.10.0.11:6379 Redis 7.0.15 -> already target; skip",
+        "10.10.0.11:6379 Redis 7.2.6 -> rollback required",
         "10.10.0.14:6379 Redis 7.2.6 -> rollback required",
-        "10.10.0.13:6379 Redis 7.0.15 -> already target; skip",
-        "10.10.0.15:6379 Redis 7.0.15 -> already target; skip"
+        "10.10.0.12:6379 Redis 7.2.6 -> rollback required",
+        "10.10.0.15:6379 Redis 7.2.6 -> rollback required",
+        "10.10.0.18:6379 Redis 7.2.6 -> rollback required",
+        "10.10.0.13:6379 Redis 7.2.6 -> rollback required",
+        "10.10.0.17:6379 Redis 7.2.6 -> rollback required",
+        "10.10.0.16:6379 Redis 7.2.6 -> rollback required"
     ]
 }
 
-PLAY [Roll back upgraded replicas first] ***************************************
+PLAY [Capture replica roles before rollback changes topology] ******************
+
+TASK [Read initial Redis role] *************************************************
+ok: [redis-node-1]
+ok: [redis-node-8]
+ok: [redis-node-7]
+ok: [redis-node-2]
+ok: [redis-node-3]
+ok: [redis-node-4]
+ok: [redis-node-6]
+ok: [redis-node-5]
+
+TASK [Group nodes by their initial Redis role] *********************************
+ok: [redis-node-7]
+ok: [redis-node-1]
+ok: [redis-node-8]
+ok: [redis-node-2]
+ok: [redis-node-3]
+ok: [redis-node-4]
+ok: [redis-node-5]
+ok: [redis-node-6]
+
+PLAY [Roll back each original replica and promote it immediately] **************
 
 TASK [Process replica rollback decision] ***************************************
+included: /Users/nileshkrishnamurthy/Documents/Projects/submission/ansible/playbooks/tasks/rollback_node.yml for redis-node-1
+
+TASK [Read current Redis version for slave pass] *******************************
+ok: [redis-node-1]
+
+TASK [Read current Redis role for slave pass] **********************************
+ok: [redis-node-1]
+
+TASK [Set slave rollback decision] *********************************************
+ok: [redis-node-1]
+
+TASK [Show slave rollback decision] ********************************************
+ok: [redis-node-1] => {
+    "msg": "redis-node-1 role=slave current=7.2.6 target=7.0.15 pass=slave action=rollback"
+}
+
+TASK [Install rollback build dependencies] *************************************
+ok: [redis-node-1]
+
+TASK [Remove previous rollback source directory] *******************************
+ok: [redis-node-1]
+
+TASK [Download rollback Redis source] ******************************************
+ok: [redis-node-1]
+
+TASK [Extract rollback Redis source] *******************************************
+changed: [redis-node-1]
+
+TASK [Build rollback Redis version while the node remains online] **************
+changed: [redis-node-1]
+
+TASK [Find the current master's node id] ***************************************
+skipping: [redis-node-1]
+
+TASK [Find a healthy replica for master failover] ******************************
+skipping: [redis-node-1]
+
+TASK [Fail if a master has no healthy replica] *********************************
+skipping: [redis-node-1]
+
+TASK [Wait until the failover replica is synchronized] *************************
+skipping: [redis-node-1]
+
+TASK [Fail over before rolling back a master] **********************************
+skipping: [redis-node-1]
+
+TASK [Wait until the former master becomes a replica] **************************
+skipping: [redis-node-1]
+
+TASK [Stop Redis on the node being rolled back] ********************************
+changed: [redis-node-1]
+
+TASK [Wait for the Redis port to stop] *****************************************
+ok: [redis-node-1]
+
+TASK [Install rollback Redis binaries] *****************************************
+changed: [redis-node-1]
+
+TASK [Remove only local persistence that may be incompatible] ******************
+changed: [redis-node-1]
+
+TASK [Remove unsupported cluster address metadata before rollback restart] *****
+changed: [redis-node-1]
+
+TASK [Start Redis with the existing cluster configuration] *********************
+changed: [redis-node-1]
+
+TASK [Wait for the Redis port to start] ****************************************
+ok: [redis-node-1]
+
+TASK [Wait for the target-version replica to be ready for takeover] ************
+ok: [redis-node-1]
+
+TASK [Wait for the rolled back former master to synchronize as a replica] ******
+skipping: [redis-node-1]
+
+TASK [Promote the target-version replica immediately] **************************
+changed: [redis-node-1]
+
+TASK [Wait until the target-version node becomes master] ***********************
+ok: [redis-node-1]
+
+TASK [Verify cluster health after this node rollback] **************************
+ok: [redis-node-1]
+
+TASK [Print rollback result for this node] *************************************
+ok: [redis-node-1] => {
+    "msg": "redis-node-1 rollback complete: Redis 7.0.15, promoted master, cluster_state:ok"
+}
+
+PLAY [Roll back each original replica and promote it immediately] **************
+
+TASK [Process replica rollback decision] ***************************************
+included: /Users/nileshkrishnamurthy/Documents/Projects/submission/ansible/playbooks/tasks/rollback_node.yml for redis-node-8
+
+TASK [Read current Redis version for slave pass] *******************************
+ok: [redis-node-8]
+
+TASK [Read current Redis role for slave pass] **********************************
+ok: [redis-node-8]
+
+TASK [Set slave rollback decision] *********************************************
+ok: [redis-node-8]
+
+TASK [Show slave rollback decision] ********************************************
+ok: [redis-node-8] => {
+    "msg": "redis-node-8 role=slave current=7.2.6 target=7.0.15 pass=slave action=rollback"
+}
+
+TASK [Install rollback build dependencies] *************************************
+ok: [redis-node-8]
+
+TASK [Remove previous rollback source directory] *******************************
+ok: [redis-node-8]
+
+TASK [Download rollback Redis source] ******************************************
+changed: [redis-node-8]
+
+TASK [Extract rollback Redis source] *******************************************
+changed: [redis-node-8]
+
+TASK [Build rollback Redis version while the node remains online] **************
+changed: [redis-node-8]
+
+TASK [Find the current master's node id] ***************************************
+skipping: [redis-node-8]
+
+TASK [Find a healthy replica for master failover] ******************************
+skipping: [redis-node-8]
+
+TASK [Fail if a master has no healthy replica] *********************************
+skipping: [redis-node-8]
+
+TASK [Wait until the failover replica is synchronized] *************************
+skipping: [redis-node-8]
+
+TASK [Fail over before rolling back a master] **********************************
+skipping: [redis-node-8]
+
+TASK [Wait until the former master becomes a replica] **************************
+skipping: [redis-node-8]
+
+TASK [Stop Redis on the node being rolled back] ********************************
+changed: [redis-node-8]
+
+TASK [Wait for the Redis port to stop] *****************************************
+ok: [redis-node-8]
+
+TASK [Install rollback Redis binaries] *****************************************
+changed: [redis-node-8]
+
+TASK [Remove only local persistence that may be incompatible] ******************
+changed: [redis-node-8]
+
+TASK [Remove unsupported cluster address metadata before rollback restart] *****
+changed: [redis-node-8]
+
+TASK [Start Redis with the existing cluster configuration] *********************
+changed: [redis-node-8]
+
+TASK [Wait for the Redis port to start] ****************************************
+ok: [redis-node-8]
+
+TASK [Wait for the target-version replica to be ready for takeover] ************
+ok: [redis-node-8]
+
+TASK [Wait for the rolled back former master to synchronize as a replica] ******
+skipping: [redis-node-8]
+
+TASK [Promote the target-version replica immediately] **************************
+changed: [redis-node-8]
+
+TASK [Wait until the target-version node becomes master] ***********************
+ok: [redis-node-8]
+
+TASK [Verify cluster health after this node rollback] **************************
+ok: [redis-node-8 -> redis-node-1(localhost)]
+
+TASK [Print rollback result for this node] *************************************
+ok: [redis-node-8] => {
+    "msg": "redis-node-8 rollback complete: Redis 7.0.15, promoted master, cluster_state:ok"
+}
+
+PLAY [Roll back each original replica and promote it immediately] **************
+
+TASK [Process replica rollback decision] ***************************************
+included: /Users/nileshkrishnamurthy/Documents/Projects/submission/ansible/playbooks/tasks/rollback_node.yml for redis-node-2
+
+TASK [Read current Redis version for slave pass] *******************************
+ok: [redis-node-2]
+
+TASK [Read current Redis role for slave pass] **********************************
+ok: [redis-node-2]
+
+TASK [Set slave rollback decision] *********************************************
+ok: [redis-node-2]
+
+TASK [Show slave rollback decision] ********************************************
+ok: [redis-node-2] => {
+    "msg": "redis-node-2 role=slave current=7.2.6 target=7.0.15 pass=slave action=rollback"
+}
+
+TASK [Install rollback build dependencies] *************************************
+ok: [redis-node-2]
+
+TASK [Remove previous rollback source directory] *******************************
+ok: [redis-node-2]
+
+TASK [Download rollback Redis source] ******************************************
+ok: [redis-node-2]
+
+TASK [Extract rollback Redis source] *******************************************
+changed: [redis-node-2]
+
+TASK [Build rollback Redis version while the node remains online] **************
+changed: [redis-node-2]
+
+TASK [Find the current master's node id] ***************************************
+skipping: [redis-node-2]
+
+TASK [Find a healthy replica for master failover] ******************************
+skipping: [redis-node-2]
+
+TASK [Fail if a master has no healthy replica] *********************************
+skipping: [redis-node-2]
+
+TASK [Wait until the failover replica is synchronized] *************************
+skipping: [redis-node-2]
+
+TASK [Fail over before rolling back a master] **********************************
+skipping: [redis-node-2]
+
+TASK [Wait until the former master becomes a replica] **************************
+skipping: [redis-node-2]
+
+TASK [Stop Redis on the node being rolled back] ********************************
+changed: [redis-node-2]
+
+TASK [Wait for the Redis port to stop] *****************************************
+ok: [redis-node-2]
+
+TASK [Install rollback Redis binaries] *****************************************
+changed: [redis-node-2]
+
+TASK [Remove only local persistence that may be incompatible] ******************
+changed: [redis-node-2]
+
+TASK [Remove unsupported cluster address metadata before rollback restart] *****
+changed: [redis-node-2]
+
+TASK [Start Redis with the existing cluster configuration] *********************
+changed: [redis-node-2]
+
+TASK [Wait for the Redis port to start] ****************************************
+ok: [redis-node-2]
+
+TASK [Wait for the target-version replica to be ready for takeover] ************
+ok: [redis-node-2]
+
+TASK [Wait for the rolled back former master to synchronize as a replica] ******
+skipping: [redis-node-2]
+
+TASK [Promote the target-version replica immediately] **************************
+changed: [redis-node-2]
+
+TASK [Wait until the target-version node becomes master] ***********************
+ok: [redis-node-2]
+
+TASK [Verify cluster health after this node rollback] **************************
+ok: [redis-node-2 -> redis-node-1(localhost)]
+
+TASK [Print rollback result for this node] *************************************
+ok: [redis-node-2] => {
+    "msg": "redis-node-2 rollback complete: Redis 7.0.15, promoted master, cluster_state:ok"
+}
+
+PLAY [Roll back each original replica and promote it immediately] **************
+
+TASK [Process replica rollback decision] ***************************************
+included: /Users/nileshkrishnamurthy/Documents/Projects/submission/ansible/playbooks/tasks/rollback_node.yml for redis-node-3
+
+TASK [Read current Redis version for slave pass] *******************************
+ok: [redis-node-3]
+
+TASK [Read current Redis role for slave pass] **********************************
+ok: [redis-node-3]
+
+TASK [Set slave rollback decision] *********************************************
+ok: [redis-node-3]
+
+TASK [Show slave rollback decision] ********************************************
+ok: [redis-node-3] => {
+    "msg": "redis-node-3 role=slave current=7.2.6 target=7.0.15 pass=slave action=rollback"
+}
+
+TASK [Install rollback build dependencies] *************************************
+ok: [redis-node-3]
+
+TASK [Remove previous rollback source directory] *******************************
+ok: [redis-node-3]
+
+TASK [Download rollback Redis source] ******************************************
+ok: [redis-node-3]
+
+TASK [Extract rollback Redis source] *******************************************
+changed: [redis-node-3]
+
+TASK [Build rollback Redis version while the node remains online] **************
+changed: [redis-node-3]
+
+TASK [Find the current master's node id] ***************************************
+skipping: [redis-node-3]
+
+TASK [Find a healthy replica for master failover] ******************************
+skipping: [redis-node-3]
+
+TASK [Fail if a master has no healthy replica] *********************************
+skipping: [redis-node-3]
+
+TASK [Wait until the failover replica is synchronized] *************************
+skipping: [redis-node-3]
+
+TASK [Fail over before rolling back a master] **********************************
+skipping: [redis-node-3]
+
+TASK [Wait until the former master becomes a replica] **************************
+skipping: [redis-node-3]
+
+TASK [Stop Redis on the node being rolled back] ********************************
+changed: [redis-node-3]
+
+TASK [Wait for the Redis port to stop] *****************************************
+ok: [redis-node-3]
+
+TASK [Install rollback Redis binaries] *****************************************
+changed: [redis-node-3]
+
+TASK [Remove only local persistence that may be incompatible] ******************
+changed: [redis-node-3]
+
+TASK [Remove unsupported cluster address metadata before rollback restart] *****
+changed: [redis-node-3]
+
+TASK [Start Redis with the existing cluster configuration] *********************
+changed: [redis-node-3]
+
+TASK [Wait for the Redis port to start] ****************************************
+ok: [redis-node-3]
+
+TASK [Wait for the target-version replica to be ready for takeover] ************
+ok: [redis-node-3]
+
+TASK [Wait for the rolled back former master to synchronize as a replica] ******
+skipping: [redis-node-3]
+
+TASK [Promote the target-version replica immediately] **************************
+changed: [redis-node-3]
+
+TASK [Wait until the target-version node becomes master] ***********************
+ok: [redis-node-3]
+
+TASK [Verify cluster health after this node rollback] **************************
+ok: [redis-node-3 -> redis-node-1(localhost)]
+
+TASK [Print rollback result for this node] *************************************
+ok: [redis-node-3] => {
+    "msg": "redis-node-3 rollback complete: Redis 7.0.15, promoted master, cluster_state:ok"
+}
+
+PLAY [Roll back former masters after the target-version failovers] *************
+
+TASK [Process former-master rollback decision] *********************************
+included: /Users/nileshkrishnamurthy/Documents/Projects/submission/ansible/playbooks/tasks/rollback_node.yml for redis-node-7
+
+TASK [Read current Redis version for slave pass] *******************************
+ok: [redis-node-7]
+
+TASK [Read current Redis role for slave pass] **********************************
+ok: [redis-node-7]
+
+TASK [Set slave rollback decision] *********************************************
+ok: [redis-node-7]
+
+TASK [Show slave rollback decision] ********************************************
+ok: [redis-node-7] => {
+    "msg": "redis-node-7 role=slave current=7.2.6 target=7.0.15 pass=slave action=rollback"
+}
+
+TASK [Install rollback build dependencies] *************************************
+ok: [redis-node-7]
+
+TASK [Remove previous rollback source directory] *******************************
+ok: [redis-node-7]
+
+TASK [Download rollback Redis source] ******************************************
+changed: [redis-node-7]
+
+TASK [Extract rollback Redis source] *******************************************
+changed: [redis-node-7]
+
+TASK [Build rollback Redis version while the node remains online] **************
+changed: [redis-node-7]
+
+TASK [Find the current master's node id] ***************************************
+skipping: [redis-node-7]
+
+TASK [Find a healthy replica for master failover] ******************************
+skipping: [redis-node-7]
+
+TASK [Fail if a master has no healthy replica] *********************************
+skipping: [redis-node-7]
+
+TASK [Wait until the failover replica is synchronized] *************************
+skipping: [redis-node-7]
+
+TASK [Fail over before rolling back a master] **********************************
+skipping: [redis-node-7]
+
+TASK [Wait until the former master becomes a replica] **************************
+skipping: [redis-node-7]
+
+TASK [Stop Redis on the node being rolled back] ********************************
+changed: [redis-node-7]
+
+TASK [Wait for the Redis port to stop] *****************************************
+ok: [redis-node-7]
+
+TASK [Install rollback Redis binaries] *****************************************
+changed: [redis-node-7]
+
+TASK [Remove only local persistence that may be incompatible] ******************
+changed: [redis-node-7]
+
+TASK [Remove unsupported cluster address metadata before rollback restart] *****
+changed: [redis-node-7]
+
+TASK [Start Redis with the existing cluster configuration] *********************
+changed: [redis-node-7]
+
+TASK [Wait for the Redis port to start] ****************************************
+ok: [redis-node-7]
+
+TASK [Wait for the target-version replica to be ready for takeover] ************
+skipping: [redis-node-7]
+
+TASK [Wait for the rolled back former master to synchronize as a replica] ******
+ok: [redis-node-7]
+
+TASK [Promote the target-version replica immediately] **************************
+skipping: [redis-node-7]
+
+TASK [Wait until the target-version node becomes master] ***********************
+skipping: [redis-node-7]
+
+TASK [Verify cluster health after this node rollback] **************************
+ok: [redis-node-7 -> redis-node-1(localhost)]
+
+TASK [Print rollback result for this node] *************************************
+ok: [redis-node-7] => {
+    "msg": "redis-node-7 rollback complete: Redis 7.0.15, synchronized replica, cluster_state:ok"
+}
+
+PLAY [Roll back former masters after the target-version failovers] *************
+
+TASK [Process former-master rollback decision] *********************************
+included: /Users/nileshkrishnamurthy/Documents/Projects/submission/ansible/playbooks/tasks/rollback_node.yml for redis-node-8
+
+TASK [Read current Redis version for slave pass] *******************************
+ok: [redis-node-8]
+
+TASK [Read current Redis role for slave pass] **********************************
+ok: [redis-node-8]
+
+TASK [Set slave rollback decision] *********************************************
+ok: [redis-node-8]
+
+TASK [Show slave rollback decision] ********************************************
+ok: [redis-node-8] => {
+    "msg": "redis-node-8 role=master current=7.0.15 target=7.0.15 pass=slave action=skip"
+}
+
+TASK [Install rollback build dependencies] *************************************
+skipping: [redis-node-8]
+
+TASK [Remove previous rollback source directory] *******************************
+skipping: [redis-node-8]
+
+TASK [Download rollback Redis source] ******************************************
+skipping: [redis-node-8]
+
+TASK [Extract rollback Redis source] *******************************************
+skipping: [redis-node-8]
+
+TASK [Build rollback Redis version while the node remains online] **************
+skipping: [redis-node-8]
+
+TASK [Find the current master's node id] ***************************************
+skipping: [redis-node-8]
+
+TASK [Find a healthy replica for master failover] ******************************
+skipping: [redis-node-8]
+
+TASK [Fail if a master has no healthy replica] *********************************
+skipping: [redis-node-8]
+
+TASK [Wait until the failover replica is synchronized] *************************
+skipping: [redis-node-8]
+
+TASK [Fail over before rolling back a master] **********************************
+skipping: [redis-node-8]
+
+TASK [Wait until the former master becomes a replica] **************************
+skipping: [redis-node-8]
+
+TASK [Stop Redis on the node being rolled back] ********************************
+skipping: [redis-node-8]
+
+TASK [Wait for the Redis port to stop] *****************************************
+skipping: [redis-node-8]
+
+TASK [Install rollback Redis binaries] *****************************************
+skipping: [redis-node-8]
+
+TASK [Remove only local persistence that may be incompatible] ******************
+skipping: [redis-node-8]
+
+TASK [Remove unsupported cluster address metadata before rollback restart] *****
+skipping: [redis-node-8]
+
+TASK [Start Redis with the existing cluster configuration] *********************
+skipping: [redis-node-8]
+
+TASK [Wait for the Redis port to start] ****************************************
+skipping: [redis-node-8]
+
+TASK [Wait for the target-version replica to be ready for takeover] ************
+skipping: [redis-node-8]
+
+TASK [Wait for the rolled back former master to synchronize as a replica] ******
+skipping: [redis-node-8]
+
+TASK [Promote the target-version replica immediately] **************************
+skipping: [redis-node-8]
+
+TASK [Wait until the target-version node becomes master] ***********************
+skipping: [redis-node-8]
+
+TASK [Verify cluster health after this node rollback] **************************
+skipping: [redis-node-8]
+
+TASK [Print rollback result for this node] *************************************
+skipping: [redis-node-8]
+
+PLAY [Roll back former masters after the target-version failovers] *************
+
+TASK [Process former-master rollback decision] *********************************
 included: /Users/nileshkrishnamurthy/Documents/Projects/submission/ansible/playbooks/tasks/rollback_node.yml for redis-node-1
 
 TASK [Read current Redis version for slave pass] *******************************
@@ -139,13 +707,25 @@ skipping: [redis-node-1]
 TASK [Remove only local persistence that may be incompatible] ******************
 skipping: [redis-node-1]
 
+TASK [Remove unsupported cluster address metadata before rollback restart] *****
+skipping: [redis-node-1]
+
 TASK [Start Redis with the existing cluster configuration] *********************
 skipping: [redis-node-1]
 
 TASK [Wait for the Redis port to start] ****************************************
 skipping: [redis-node-1]
 
-TASK [Wait for the rolled back node to synchronize as a replica] ***************
+TASK [Wait for the target-version replica to be ready for takeover] ************
+skipping: [redis-node-1]
+
+TASK [Wait for the rolled back former master to synchronize as a replica] ******
+skipping: [redis-node-1]
+
+TASK [Promote the target-version replica immediately] **************************
+skipping: [redis-node-1]
+
+TASK [Wait until the target-version node becomes master] ***********************
 skipping: [redis-node-1]
 
 TASK [Verify cluster health after this node rollback] **************************
@@ -154,9 +734,9 @@ skipping: [redis-node-1]
 TASK [Print rollback result for this node] *************************************
 skipping: [redis-node-1]
 
-PLAY [Roll back upgraded replicas first] ***************************************
+PLAY [Roll back former masters after the target-version failovers] *************
 
-TASK [Process replica rollback decision] ***************************************
+TASK [Process former-master rollback decision] *********************************
 included: /Users/nileshkrishnamurthy/Documents/Projects/submission/ansible/playbooks/tasks/rollback_node.yml for redis-node-2
 
 TASK [Read current Redis version for slave pass] *******************************
@@ -218,13 +798,25 @@ skipping: [redis-node-2]
 TASK [Remove only local persistence that may be incompatible] ******************
 skipping: [redis-node-2]
 
+TASK [Remove unsupported cluster address metadata before rollback restart] *****
+skipping: [redis-node-2]
+
 TASK [Start Redis with the existing cluster configuration] *********************
 skipping: [redis-node-2]
 
 TASK [Wait for the Redis port to start] ****************************************
 skipping: [redis-node-2]
 
-TASK [Wait for the rolled back node to synchronize as a replica] ***************
+TASK [Wait for the target-version replica to be ready for takeover] ************
+skipping: [redis-node-2]
+
+TASK [Wait for the rolled back former master to synchronize as a replica] ******
+skipping: [redis-node-2]
+
+TASK [Promote the target-version replica immediately] **************************
+skipping: [redis-node-2]
+
+TASK [Wait until the target-version node becomes master] ***********************
 skipping: [redis-node-2]
 
 TASK [Verify cluster health after this node rollback] **************************
@@ -233,9 +825,9 @@ skipping: [redis-node-2]
 TASK [Print rollback result for this node] *************************************
 skipping: [redis-node-2]
 
-PLAY [Roll back upgraded replicas first] ***************************************
+PLAY [Roll back former masters after the target-version failovers] *************
 
-TASK [Process replica rollback decision] ***************************************
+TASK [Process former-master rollback decision] *********************************
 included: /Users/nileshkrishnamurthy/Documents/Projects/submission/ansible/playbooks/tasks/rollback_node.yml for redis-node-3
 
 TASK [Read current Redis version for slave pass] *******************************
@@ -297,13 +889,25 @@ skipping: [redis-node-3]
 TASK [Remove only local persistence that may be incompatible] ******************
 skipping: [redis-node-3]
 
+TASK [Remove unsupported cluster address metadata before rollback restart] *****
+skipping: [redis-node-3]
+
 TASK [Start Redis with the existing cluster configuration] *********************
 skipping: [redis-node-3]
 
 TASK [Wait for the Redis port to start] ****************************************
 skipping: [redis-node-3]
 
-TASK [Wait for the rolled back node to synchronize as a replica] ***************
+TASK [Wait for the target-version replica to be ready for takeover] ************
+skipping: [redis-node-3]
+
+TASK [Wait for the rolled back former master to synchronize as a replica] ******
+skipping: [redis-node-3]
+
+TASK [Promote the target-version replica immediately] **************************
+skipping: [redis-node-3]
+
+TASK [Wait until the target-version node becomes master] ***********************
 skipping: [redis-node-3]
 
 TASK [Verify cluster health after this node rollback] **************************
@@ -312,9 +916,9 @@ skipping: [redis-node-3]
 TASK [Print rollback result for this node] *************************************
 skipping: [redis-node-3]
 
-PLAY [Roll back upgraded replicas first] ***************************************
+PLAY [Roll back former masters after the target-version failovers] *************
 
-TASK [Process replica rollback decision] ***************************************
+TASK [Process former-master rollback decision] *********************************
 included: /Users/nileshkrishnamurthy/Documents/Projects/submission/ansible/playbooks/tasks/rollback_node.yml for redis-node-4
 
 TASK [Read current Redis version for slave pass] *******************************
@@ -376,14 +980,26 @@ changed: [redis-node-4]
 TASK [Remove only local persistence that may be incompatible] ******************
 changed: [redis-node-4]
 
+TASK [Remove unsupported cluster address metadata before rollback restart] *****
+changed: [redis-node-4]
+
 TASK [Start Redis with the existing cluster configuration] *********************
 changed: [redis-node-4]
 
 TASK [Wait for the Redis port to start] ****************************************
 ok: [redis-node-4]
 
-TASK [Wait for the rolled back node to synchronize as a replica] ***************
+TASK [Wait for the target-version replica to be ready for takeover] ************
+skipping: [redis-node-4]
+
+TASK [Wait for the rolled back former master to synchronize as a replica] ******
 ok: [redis-node-4]
+
+TASK [Promote the target-version replica immediately] **************************
+skipping: [redis-node-4]
+
+TASK [Wait until the target-version node becomes master] ***********************
+skipping: [redis-node-4]
 
 TASK [Verify cluster health after this node rollback] **************************
 ok: [redis-node-4 -> redis-node-1(localhost)]
@@ -393,9 +1009,9 @@ ok: [redis-node-4] => {
     "msg": "redis-node-4 rollback complete: Redis 7.0.15, synchronized replica, cluster_state:ok"
 }
 
-PLAY [Roll back upgraded replicas first] ***************************************
+PLAY [Roll back former masters after the target-version failovers] *************
 
-TASK [Process replica rollback decision] ***************************************
+TASK [Process former-master rollback decision] *********************************
 included: /Users/nileshkrishnamurthy/Documents/Projects/submission/ansible/playbooks/tasks/rollback_node.yml for redis-node-5
 
 TASK [Read current Redis version for slave pass] *******************************
@@ -409,23 +1025,23 @@ ok: [redis-node-5]
 
 TASK [Show slave rollback decision] ********************************************
 ok: [redis-node-5] => {
-    "msg": "redis-node-5 role=slave current=7.0.15 target=7.0.15 pass=slave action=skip"
+    "msg": "redis-node-5 role=slave current=7.2.6 target=7.0.15 pass=slave action=rollback"
 }
 
 TASK [Install rollback build dependencies] *************************************
-skipping: [redis-node-5]
+ok: [redis-node-5]
 
 TASK [Remove previous rollback source directory] *******************************
-skipping: [redis-node-5]
+ok: [redis-node-5]
 
 TASK [Download rollback Redis source] ******************************************
-skipping: [redis-node-5]
+ok: [redis-node-5]
 
 TASK [Extract rollback Redis source] *******************************************
-skipping: [redis-node-5]
+changed: [redis-node-5]
 
 TASK [Build rollback Redis version while the node remains online] **************
-skipping: [redis-node-5]
+changed: [redis-node-5]
 
 TASK [Find the current master's node id] ***************************************
 skipping: [redis-node-5]
@@ -446,35 +1062,49 @@ TASK [Wait until the former master becomes a replica] **************************
 skipping: [redis-node-5]
 
 TASK [Stop Redis on the node being rolled back] ********************************
-skipping: [redis-node-5]
+changed: [redis-node-5]
 
 TASK [Wait for the Redis port to stop] *****************************************
-skipping: [redis-node-5]
+ok: [redis-node-5]
 
 TASK [Install rollback Redis binaries] *****************************************
-skipping: [redis-node-5]
+changed: [redis-node-5]
 
 TASK [Remove only local persistence that may be incompatible] ******************
-skipping: [redis-node-5]
+changed: [redis-node-5]
+
+TASK [Remove unsupported cluster address metadata before rollback restart] *****
+changed: [redis-node-5]
 
 TASK [Start Redis with the existing cluster configuration] *********************
-skipping: [redis-node-5]
+changed: [redis-node-5]
 
 TASK [Wait for the Redis port to start] ****************************************
+ok: [redis-node-5]
+
+TASK [Wait for the target-version replica to be ready for takeover] ************
 skipping: [redis-node-5]
 
-TASK [Wait for the rolled back node to synchronize as a replica] ***************
+TASK [Wait for the rolled back former master to synchronize as a replica] ******
+ok: [redis-node-5]
+
+TASK [Promote the target-version replica immediately] **************************
+skipping: [redis-node-5]
+
+TASK [Wait until the target-version node becomes master] ***********************
 skipping: [redis-node-5]
 
 TASK [Verify cluster health after this node rollback] **************************
-skipping: [redis-node-5]
+ok: [redis-node-5 -> redis-node-1(localhost)]
 
 TASK [Print rollback result for this node] *************************************
-skipping: [redis-node-5]
+ok: [redis-node-5] => {
+    "msg": "redis-node-5 rollback complete: Redis 7.0.15, synchronized replica, cluster_state:ok"
+}
 
-PLAY [Roll back upgraded replicas first] ***************************************
+PLAY [Roll back former masters after the target-version failovers] *************
 
-TASK [Process replica rollback decision] ***************************************
+TASK [Process former-master rollback decision] *********************************
 included: /Users/nileshkrishnamurthy/Documents/Projects/submission/ansible/playbooks/tasks/rollback_node.yml for redis-node-6
 
 TASK [Read current Redis version for slave pass] *******************************
@@ -488,542 +1118,82 @@ ok: [redis-node-6]
 
 TASK [Show slave rollback decision] ********************************************
 ok: [redis-node-6] => {
-    "msg": "redis-node-6 role=slave current=7.0.15 target=7.0.15 pass=slave action=skip"
+    "msg": "redis-node-6 role=slave current=7.2.6 target=7.0.15 pass=slave action=rollback"
 }
 
 TASK [Install rollback build dependencies] *************************************
-skipping: [redis-node-6]
-
-TASK [Remove previous rollback source directory] *******************************
-skipping: [redis-node-6]
-
-TASK [Download rollback Redis source] ******************************************
-skipping: [redis-node-6]
-
-TASK [Extract rollback Redis source] *******************************************
-skipping: [redis-node-6]
-
-TASK [Build rollback Redis version while the node remains online] **************
-skipping: [redis-node-6]
-
-TASK [Find the current master's node id] ***************************************
-skipping: [redis-node-6]
-
-TASK [Find a healthy replica for master failover] ******************************
-skipping: [redis-node-6]
-
-TASK [Fail if a master has no healthy replica] *********************************
-skipping: [redis-node-6]
-
-TASK [Wait until the failover replica is synchronized] *************************
-skipping: [redis-node-6]
-
-TASK [Fail over before rolling back a master] **********************************
-skipping: [redis-node-6]
-
-TASK [Wait until the former master becomes a replica] **************************
-skipping: [redis-node-6]
-
-TASK [Stop Redis on the node being rolled back] ********************************
-skipping: [redis-node-6]
-
-TASK [Wait for the Redis port to stop] *****************************************
-skipping: [redis-node-6]
-
-TASK [Install rollback Redis binaries] *****************************************
-skipping: [redis-node-6]
-
-TASK [Remove only local persistence that may be incompatible] ******************
-skipping: [redis-node-6]
-
-TASK [Start Redis with the existing cluster configuration] *********************
-skipping: [redis-node-6]
-
-TASK [Wait for the Redis port to start] ****************************************
-skipping: [redis-node-6]
-
-TASK [Wait for the rolled back node to synchronize as a replica] ***************
-skipping: [redis-node-6]
-
-TASK [Verify cluster health after this node rollback] **************************
-skipping: [redis-node-6]
-
-TASK [Print rollback result for this node] *************************************
-skipping: [redis-node-6]
-
-PLAY [Roll back upgraded masters using failover] *******************************
-
-TASK [Process master rollback decision] ****************************************
-included: /Users/nileshkrishnamurthy/Documents/Projects/submission/ansible/playbooks/tasks/rollback_node.yml for redis-node-1
-
-TASK [Read current Redis version for master pass] ******************************
-ok: [redis-node-1]
-
-TASK [Read current Redis role for master pass] *********************************
-ok: [redis-node-1]
-
-TASK [Set master rollback decision] ********************************************
-ok: [redis-node-1]
-
-TASK [Show master rollback decision] *******************************************
-ok: [redis-node-1] => {
-    "msg": "redis-node-1 role=master current=7.0.15 target=7.0.15 pass=master action=skip"
-}
-
-TASK [Install rollback build dependencies] *************************************
-skipping: [redis-node-1]
-
-TASK [Remove previous rollback source directory] *******************************
-skipping: [redis-node-1]
-
-TASK [Download rollback Redis source] ******************************************
-skipping: [redis-node-1]
-
-TASK [Extract rollback Redis source] *******************************************
-skipping: [redis-node-1]
-
-TASK [Build rollback Redis version while the node remains online] **************
-skipping: [redis-node-1]
-
-TASK [Find the current master's node id] ***************************************
-skipping: [redis-node-1]
-
-TASK [Find a healthy replica for master failover] ******************************
-skipping: [redis-node-1]
-
-TASK [Fail if a master has no healthy replica] *********************************
-skipping: [redis-node-1]
-
-TASK [Wait until the failover replica is synchronized] *************************
-skipping: [redis-node-1]
-
-TASK [Fail over before rolling back a master] **********************************
-skipping: [redis-node-1]
-
-TASK [Wait until the former master becomes a replica] **************************
-skipping: [redis-node-1]
-
-TASK [Stop Redis on the node being rolled back] ********************************
-skipping: [redis-node-1]
-
-TASK [Wait for the Redis port to stop] *****************************************
-skipping: [redis-node-1]
-
-TASK [Install rollback Redis binaries] *****************************************
-skipping: [redis-node-1]
-
-TASK [Remove only local persistence that may be incompatible] ******************
-skipping: [redis-node-1]
-
-TASK [Start Redis with the existing cluster configuration] *********************
-skipping: [redis-node-1]
-
-TASK [Wait for the Redis port to start] ****************************************
-skipping: [redis-node-1]
-
-TASK [Wait for the rolled back node to synchronize as a replica] ***************
-skipping: [redis-node-1]
-
-TASK [Verify cluster health after this node rollback] **************************
-skipping: [redis-node-1]
-
-TASK [Print rollback result for this node] *************************************
-skipping: [redis-node-1]
-
-PLAY [Roll back upgraded masters using failover] *******************************
-
-TASK [Process master rollback decision] ****************************************
-included: /Users/nileshkrishnamurthy/Documents/Projects/submission/ansible/playbooks/tasks/rollback_node.yml for redis-node-2
-
-TASK [Read current Redis version for master pass] ******************************
-ok: [redis-node-2]
-
-TASK [Read current Redis role for master pass] *********************************
-ok: [redis-node-2]
-
-TASK [Set master rollback decision] ********************************************
-ok: [redis-node-2]
-
-TASK [Show master rollback decision] *******************************************
-ok: [redis-node-2] => {
-    "msg": "redis-node-2 role=master current=7.0.15 target=7.0.15 pass=master action=skip"
-}
-
-TASK [Install rollback build dependencies] *************************************
-skipping: [redis-node-2]
-
-TASK [Remove previous rollback source directory] *******************************
-skipping: [redis-node-2]
-
-TASK [Download rollback Redis source] ******************************************
-skipping: [redis-node-2]
-
-TASK [Extract rollback Redis source] *******************************************
-skipping: [redis-node-2]
-
-TASK [Build rollback Redis version while the node remains online] **************
-skipping: [redis-node-2]
-
-TASK [Find the current master's node id] ***************************************
-skipping: [redis-node-2]
-
-TASK [Find a healthy replica for master failover] ******************************
-skipping: [redis-node-2]
-
-TASK [Fail if a master has no healthy replica] *********************************
-skipping: [redis-node-2]
-
-TASK [Wait until the failover replica is synchronized] *************************
-skipping: [redis-node-2]
-
-TASK [Fail over before rolling back a master] **********************************
-skipping: [redis-node-2]
-
-TASK [Wait until the former master becomes a replica] **************************
-skipping: [redis-node-2]
-
-TASK [Stop Redis on the node being rolled back] ********************************
-skipping: [redis-node-2]
-
-TASK [Wait for the Redis port to stop] *****************************************
-skipping: [redis-node-2]
-
-TASK [Install rollback Redis binaries] *****************************************
-skipping: [redis-node-2]
-
-TASK [Remove only local persistence that may be incompatible] ******************
-skipping: [redis-node-2]
-
-TASK [Start Redis with the existing cluster configuration] *********************
-skipping: [redis-node-2]
-
-TASK [Wait for the Redis port to start] ****************************************
-skipping: [redis-node-2]
-
-TASK [Wait for the rolled back node to synchronize as a replica] ***************
-skipping: [redis-node-2]
-
-TASK [Verify cluster health after this node rollback] **************************
-skipping: [redis-node-2]
-
-TASK [Print rollback result for this node] *************************************
-skipping: [redis-node-2]
-
-PLAY [Roll back upgraded masters using failover] *******************************
-
-TASK [Process master rollback decision] ****************************************
-included: /Users/nileshkrishnamurthy/Documents/Projects/submission/ansible/playbooks/tasks/rollback_node.yml for redis-node-3
-
-TASK [Read current Redis version for master pass] ******************************
-ok: [redis-node-3]
-
-TASK [Read current Redis role for master pass] *********************************
-ok: [redis-node-3]
-
-TASK [Set master rollback decision] ********************************************
-ok: [redis-node-3]
-
-TASK [Show master rollback decision] *******************************************
-ok: [redis-node-3] => {
-    "msg": "redis-node-3 role=master current=7.0.15 target=7.0.15 pass=master action=skip"
-}
-
-TASK [Install rollback build dependencies] *************************************
-skipping: [redis-node-3]
-
-TASK [Remove previous rollback source directory] *******************************
-skipping: [redis-node-3]
-
-TASK [Download rollback Redis source] ******************************************
-skipping: [redis-node-3]
-
-TASK [Extract rollback Redis source] *******************************************
-skipping: [redis-node-3]
-
-TASK [Build rollback Redis version while the node remains online] **************
-skipping: [redis-node-3]
-
-TASK [Find the current master's node id] ***************************************
-skipping: [redis-node-3]
-
-TASK [Find a healthy replica for master failover] ******************************
-skipping: [redis-node-3]
-
-TASK [Fail if a master has no healthy replica] *********************************
-skipping: [redis-node-3]
-
-TASK [Wait until the failover replica is synchronized] *************************
-skipping: [redis-node-3]
-
-TASK [Fail over before rolling back a master] **********************************
-skipping: [redis-node-3]
-
-TASK [Wait until the former master becomes a replica] **************************
-skipping: [redis-node-3]
-
-TASK [Stop Redis on the node being rolled back] ********************************
-skipping: [redis-node-3]
-
-TASK [Wait for the Redis port to stop] *****************************************
-skipping: [redis-node-3]
-
-TASK [Install rollback Redis binaries] *****************************************
-skipping: [redis-node-3]
-
-TASK [Remove only local persistence that may be incompatible] ******************
-skipping: [redis-node-3]
-
-TASK [Start Redis with the existing cluster configuration] *********************
-skipping: [redis-node-3]
-
-TASK [Wait for the Redis port to start] ****************************************
-skipping: [redis-node-3]
-
-TASK [Wait for the rolled back node to synchronize as a replica] ***************
-skipping: [redis-node-3]
-
-TASK [Verify cluster health after this node rollback] **************************
-skipping: [redis-node-3]
-
-TASK [Print rollback result for this node] *************************************
-skipping: [redis-node-3]
-
-PLAY [Roll back upgraded masters using failover] *******************************
-
-TASK [Process master rollback decision] ****************************************
-included: /Users/nileshkrishnamurthy/Documents/Projects/submission/ansible/playbooks/tasks/rollback_node.yml for redis-node-4
-
-TASK [Read current Redis version for master pass] ******************************
-ok: [redis-node-4]
-
-TASK [Read current Redis role for master pass] *********************************
-ok: [redis-node-4]
-
-TASK [Set master rollback decision] ********************************************
-ok: [redis-node-4]
-
-TASK [Show master rollback decision] *******************************************
-ok: [redis-node-4] => {
-    "msg": "redis-node-4 role=slave current=7.0.15 target=7.0.15 pass=master action=skip"
-}
-
-TASK [Install rollback build dependencies] *************************************
-skipping: [redis-node-4]
-
-TASK [Remove previous rollback source directory] *******************************
-skipping: [redis-node-4]
-
-TASK [Download rollback Redis source] ******************************************
-skipping: [redis-node-4]
-
-TASK [Extract rollback Redis source] *******************************************
-skipping: [redis-node-4]
-
-TASK [Build rollback Redis version while the node remains online] **************
-skipping: [redis-node-4]
-
-TASK [Find the current master's node id] ***************************************
-skipping: [redis-node-4]
-
-TASK [Find a healthy replica for master failover] ******************************
-skipping: [redis-node-4]
-
-TASK [Fail if a master has no healthy replica] *********************************
-skipping: [redis-node-4]
-
-TASK [Wait until the failover replica is synchronized] *************************
-skipping: [redis-node-4]
-
-TASK [Fail over before rolling back a master] **********************************
-skipping: [redis-node-4]
-
-TASK [Wait until the former master becomes a replica] **************************
-skipping: [redis-node-4]
-
-TASK [Stop Redis on the node being rolled back] ********************************
-skipping: [redis-node-4]
-
-TASK [Wait for the Redis port to stop] *****************************************
-skipping: [redis-node-4]
-
-TASK [Install rollback Redis binaries] *****************************************
-skipping: [redis-node-4]
-
-TASK [Remove only local persistence that may be incompatible] ******************
-skipping: [redis-node-4]
-
-TASK [Start Redis with the existing cluster configuration] *********************
-skipping: [redis-node-4]
-
-TASK [Wait for the Redis port to start] ****************************************
-skipping: [redis-node-4]
-
-TASK [Wait for the rolled back node to synchronize as a replica] ***************
-skipping: [redis-node-4]
-
-TASK [Verify cluster health after this node rollback] **************************
-skipping: [redis-node-4]
-
-TASK [Print rollback result for this node] *************************************
-skipping: [redis-node-4]
-
-PLAY [Roll back upgraded masters using failover] *******************************
-
-TASK [Process master rollback decision] ****************************************
-included: /Users/nileshkrishnamurthy/Documents/Projects/submission/ansible/playbooks/tasks/rollback_node.yml for redis-node-5
-
-TASK [Read current Redis version for master pass] ******************************
-ok: [redis-node-5]
-
-TASK [Read current Redis role for master pass] *********************************
-ok: [redis-node-5]
-
-TASK [Set master rollback decision] ********************************************
-ok: [redis-node-5]
-
-TASK [Show master rollback decision] *******************************************
-ok: [redis-node-5] => {
-    "msg": "redis-node-5 role=slave current=7.0.15 target=7.0.15 pass=master action=skip"
-}
-
-TASK [Install rollback build dependencies] *************************************
-skipping: [redis-node-5]
-
-TASK [Remove previous rollback source directory] *******************************
-skipping: [redis-node-5]
-
-TASK [Download rollback Redis source] ******************************************
-skipping: [redis-node-5]
-
-TASK [Extract rollback Redis source] *******************************************
-skipping: [redis-node-5]
-
-TASK [Build rollback Redis version while the node remains online] **************
-skipping: [redis-node-5]
-
-TASK [Find the current master's node id] ***************************************
-skipping: [redis-node-5]
-
-TASK [Find a healthy replica for master failover] ******************************
-skipping: [redis-node-5]
-
-TASK [Fail if a master has no healthy replica] *********************************
-skipping: [redis-node-5]
-
-TASK [Wait until the failover replica is synchronized] *************************
-skipping: [redis-node-5]
-
-TASK [Fail over before rolling back a master] **********************************
-skipping: [redis-node-5]
-
-TASK [Wait until the former master becomes a replica] **************************
-skipping: [redis-node-5]
-
-TASK [Stop Redis on the node being rolled back] ********************************
-skipping: [redis-node-5]
-
-TASK [Wait for the Redis port to stop] *****************************************
-skipping: [redis-node-5]
-
-TASK [Install rollback Redis binaries] *****************************************
-skipping: [redis-node-5]
-
-TASK [Remove only local persistence that may be incompatible] ******************
-skipping: [redis-node-5]
-
-TASK [Start Redis with the existing cluster configuration] *********************
-skipping: [redis-node-5]
-
-TASK [Wait for the Redis port to start] ****************************************
-skipping: [redis-node-5]
-
-TASK [Wait for the rolled back node to synchronize as a replica] ***************
-skipping: [redis-node-5]
-
-TASK [Verify cluster health after this node rollback] **************************
-skipping: [redis-node-5]
-
-TASK [Print rollback result for this node] *************************************
-skipping: [redis-node-5]
-
-PLAY [Roll back upgraded masters using failover] *******************************
-
-TASK [Process master rollback decision] ****************************************
-included: /Users/nileshkrishnamurthy/Documents/Projects/submission/ansible/playbooks/tasks/rollback_node.yml for redis-node-6
-
-TASK [Read current Redis version for master pass] ******************************
 ok: [redis-node-6]
 
-TASK [Read current Redis role for master pass] *********************************
+TASK [Remove previous rollback source directory] *******************************
 ok: [redis-node-6]
 
-TASK [Set master rollback decision] ********************************************
+TASK [Download rollback Redis source] ******************************************
 ok: [redis-node-6]
 
-TASK [Show master rollback decision] *******************************************
+TASK [Extract rollback Redis source] *******************************************
+changed: [redis-node-6]
+
+TASK [Build rollback Redis version while the node remains online] **************
+changed: [redis-node-6]
+
+TASK [Find the current master's node id] ***************************************
+skipping: [redis-node-6]
+
+TASK [Find a healthy replica for master failover] ******************************
+skipping: [redis-node-6]
+
+TASK [Fail if a master has no healthy replica] *********************************
+skipping: [redis-node-6]
+
+TASK [Wait until the failover replica is synchronized] *************************
+skipping: [redis-node-6]
+
+TASK [Fail over before rolling back a master] **********************************
+skipping: [redis-node-6]
+
+TASK [Wait until the former master becomes a replica] **************************
+skipping: [redis-node-6]
+
+TASK [Stop Redis on the node being rolled back] ********************************
+changed: [redis-node-6]
+
+TASK [Wait for the Redis port to stop] *****************************************
+ok: [redis-node-6]
+
+TASK [Install rollback Redis binaries] *****************************************
+changed: [redis-node-6]
+
+TASK [Remove only local persistence that may be incompatible] ******************
+changed: [redis-node-6]
+
+TASK [Remove unsupported cluster address metadata before rollback restart] *****
+changed: [redis-node-6]
+
+TASK [Start Redis with the existing cluster configuration] *********************
+changed: [redis-node-6]
+
+TASK [Wait for the Redis port to start] ****************************************
+ok: [redis-node-6]
+
+TASK [Wait for the target-version replica to be ready for takeover] ************
+skipping: [redis-node-6]
+
+TASK [Wait for the rolled back former master to synchronize as a replica] ******
+ok: [redis-node-6]
+
+TASK [Promote the target-version replica immediately] **************************
+skipping: [redis-node-6]
+
+TASK [Wait until the target-version node becomes master] ***********************
+skipping: [redis-node-6]
+
+TASK [Verify cluster health after this node rollback] **************************
+ok: [redis-node-6 -> redis-node-1(localhost)]
+
+TASK [Print rollback result for this node] *************************************
 ok: [redis-node-6] => {
-    "msg": "redis-node-6 role=slave current=7.0.15 target=7.0.15 pass=master action=skip"
+    "msg": "redis-node-6 rollback complete: Redis 7.0.15, synchronized replica, cluster_state:ok"
 }
-
-TASK [Install rollback build dependencies] *************************************
-skipping: [redis-node-6]
-
-TASK [Remove previous rollback source directory] *******************************
-skipping: [redis-node-6]
-
-TASK [Download rollback Redis source] ******************************************
-skipping: [redis-node-6]
-
-TASK [Extract rollback Redis source] *******************************************
-skipping: [redis-node-6]
-
-TASK [Build rollback Redis version while the node remains online] **************
-skipping: [redis-node-6]
-
-TASK [Find the current master's node id] ***************************************
-skipping: [redis-node-6]
-
-TASK [Find a healthy replica for master failover] ******************************
-skipping: [redis-node-6]
-
-TASK [Fail if a master has no healthy replica] *********************************
-skipping: [redis-node-6]
-
-TASK [Wait until the failover replica is synchronized] *************************
-skipping: [redis-node-6]
-
-TASK [Fail over before rolling back a master] **********************************
-skipping: [redis-node-6]
-
-TASK [Wait until the former master becomes a replica] **************************
-skipping: [redis-node-6]
-
-TASK [Stop Redis on the node being rolled back] ********************************
-skipping: [redis-node-6]
-
-TASK [Wait for the Redis port to stop] *****************************************
-skipping: [redis-node-6]
-
-TASK [Install rollback Redis binaries] *****************************************
-skipping: [redis-node-6]
-
-TASK [Remove only local persistence that may be incompatible] ******************
-skipping: [redis-node-6]
-
-TASK [Start Redis with the existing cluster configuration] *********************
-skipping: [redis-node-6]
-
-TASK [Wait for the Redis port to start] ****************************************
-skipping: [redis-node-6]
-
-TASK [Wait for the rolled back node to synchronize as a replica] ***************
-skipping: [redis-node-6]
-
-TASK [Verify cluster health after this node rollback] **************************
-skipping: [redis-node-6]
-
-TASK [Print rollback result for this node] *************************************
-skipping: [redis-node-6]
 
 PLAY [Verify final rollback state] *********************************************
 
@@ -1033,17 +1203,20 @@ ok: [redis-node-1]
 TASK [Print final Redis versions] **********************************************
 ok: [redis-node-1] => {
     "msg": [
-        "10.10.0.12:6379 -> Redis 7.0.15",
-        "10.10.0.16:6379 -> Redis 7.0.15",
         "10.10.0.11:6379 -> Redis 7.0.15",
+        "10.10.0.15:6379 -> Redis 7.0.15",
+        "10.10.0.12:6379 -> Redis 7.0.15",
+        "10.10.0.17:6379 -> Redis 7.0.15",
+        "10.10.0.16:6379 -> Redis 7.0.15",
         "10.10.0.14:6379 -> Redis 7.0.15",
         "10.10.0.13:6379 -> Redis 7.0.15",
-        "10.10.0.15:6379 -> Redis 7.0.15"
+        "10.10.0.18:6379 -> Redis 7.0.15"
     ]
 }
 
 TASK [Verify final cluster health and replica links] ***************************
 FAILED - RETRYING: [redis-node-1]: Verify final cluster health and replica links (19 retries left).
+FAILED - RETRYING: [redis-node-1]: Verify final cluster health and replica links (18 retries left).
 ok: [redis-node-1]
 
 TASK [Print final rollback health] *********************************************
@@ -1056,12 +1229,39 @@ ok: [redis-node-1] => {
 }
 
 PLAY RECAP *********************************************************************
-redis-node-1               : ok=19   changed=0    unreachable=0    failed=0    skipped=41   rescued=0    ignored=0   
-redis-node-2               : ok=10   changed=0    unreachable=0    failed=0    skipped=40   rescued=0    ignored=0   
-redis-node-3               : ok=10   changed=0    unreachable=0    failed=0    skipped=40   rescued=0    ignored=0   
-redis-node-4               : ok=24   changed=6    unreachable=0    failed=0    skipped=26   rescued=0    ignored=0   
-redis-node-5               : ok=10   changed=0    unreachable=0    failed=0    skipped=40   rescued=0    ignored=0   
-redis-node-6               : ok=10   changed=0    unreachable=0    failed=0    skipped=40   rescued=0    ignored=0   
+redis-node-1               : ok=36   changed=8    unreachable=0    failed=0    skipped=31   rescued=0    ignored=0   
+redis-node-2               : ok=29   changed=8    unreachable=0    failed=0    skipped=31   rescued=0    ignored=0   
+redis-node-3               : ok=29   changed=8    unreachable=0    failed=0    skipped=31   rescued=0    ignored=0   
+redis-node-4               : ok=22   changed=7    unreachable=0    failed=0    skipped=9    rescued=0    ignored=0   
+redis-node-5               : ok=22   changed=7    unreachable=0    failed=0    skipped=9    rescued=0    ignored=0   
+redis-node-6               : ok=22   changed=7    unreachable=0    failed=0    skipped=9    rescued=0    ignored=0   
+redis-node-7               : ok=22   changed=8    unreachable=0    failed=0    skipped=9    rescued=0    ignored=0   
+redis-node-8               : ok=29   changed=9    unreachable=0    failed=0    skipped=31   rescued=0    ignored=0   
+
+
+===== Restore Deterministic Data After Rollback =====
+
+PLAY [Seed deterministic data into Redis Cluster] ******************************
+
+TASK [Seed deterministic key-value pairs] **************************************
+changed: [redis-node-1]
+
+TASK [Show seed summary] *******************************************************
+ok: [redis-node-1] => {
+    "msg": [
+        "",
+        "Key distribution across masters:",
+        "10.10.0.11:6379 -> 248 keys",
+        "10.10.0.12:6379 -> 252 keys",
+        "10.10.0.13:6379 -> 250 keys",
+        "10.10.0.18:6379 -> 250 keys",
+        "",
+        "PASS - 1000/1000 keys inserted; failures: 0"
+    ]
+}
+
+PLAY RECAP *********************************************************************
+redis-node-1               : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 
 
 ===== Full Verification After Rollback =====
@@ -1078,10 +1278,10 @@ ok: [redis-node-1] => {
         "",
         "[PASS] Cluster state is ok",
         "[PASS] All 16384 hash slots are covered",
-        "[PASS] All 6 cluster nodes are present and reachable",
-        "[PASS] All 6 nodes are running the same Redis version: 7.0.15",
-        "[PASS] Topology has 3 masters and 3 replicas; every master has a replica",
-        "[PASS] All 3 replicas have master_link_status:up",
+        "[PASS] All 8 cluster nodes are present and reachable",
+        "[PASS] All 8 nodes are running the same Redis version: 7.0.15",
+        "[PASS] Topology has 4 masters and 4 replicas; every master has a replica",
+        "[PASS] All 4 replicas have master_link_status:up",
         "[PASS] Data integrity verified: 1000/1000 keys matched",
         "",
         "===== Verification Summary =====",
@@ -1097,4 +1297,4 @@ redis-node-1               : ok=2    changed=0    unreachable=0    failed=0    s
 
 ROLLBACK COMPLETE - changed nodes restored to v7.0.15, data integrity verified
 ===== Redis Rollback Completed =====
-Mon Jun 15 00:35:19 IST 2026
+Tue Jun 16 00:41:16 IST 2026

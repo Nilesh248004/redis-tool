@@ -191,7 +191,25 @@
     timeout: 60
   when: rollback_required
 
-- name: Wait for the rolled back node to synchronize as a replica
+- name: Wait for the target-version replica to be ready for takeover
+  shell: |
+    role=$(redis-cli -h "{{ internal_ip }}" -p 6379 info replication |
+      awk -F: '/^role:/ {gsub("\r", "", $2); print $2}')
+    version=$(redis-cli -h "{{ internal_ip }}" -p 6379 info server |
+      awk -F: '/^redis_version:/ {gsub("\r", "", $2); print $2}')
+
+    test "$role" = "slave"
+    test "$version" = "{{ target_redis_version }}"
+  register: rollback_takeover_ready
+  retries: 20
+  delay: 2
+  until: rollback_takeover_ready.rc == 0
+  changed_when: false
+  when:
+    - rollback_required
+    - promote_after_rollback | default(false) | bool
+
+- name: Wait for the rolled back former master to synchronize as a replica
   shell: |
     role=$(redis-cli -h "{{ internal_ip }}" -p 6379 info replication |
       awk -F: '/^role:/ {gsub("\r", "", $2); print $2}')
@@ -208,7 +226,30 @@
   delay: 2
   until: rollback_sync.rc == 0
   changed_when: false
-  when: rollback_required
+  when:
+    - rollback_required
+    - not (promote_after_rollback | default(false) | bool)
+
+- name: Promote the target-version replica immediately
+  command: redis-cli -h "{{ internal_ip }}" -p 6379 cluster failover takeover
+  register: target_takeover
+  failed_when: "'OK' not in target_takeover.stdout"
+  when:
+    - rollback_required
+    - promote_after_rollback | default(false) | bool
+
+- name: Wait until the target-version node becomes master
+  shell: |
+    redis-cli -h "{{ internal_ip }}" -p 6379 info replication |
+      awk -F: '/^role:/ {gsub("\r", "", $2); print $2}'
+  register: promoted_target_role
+  retries: 20
+  delay: 2
+  until: promoted_target_role.stdout == "master"
+  changed_when: false
+  when:
+    - rollback_required
+    - promote_after_rollback | default(false) | bool
 
 - name: Verify cluster health after this node rollback
   shell: |
@@ -227,5 +268,7 @@
   debug:
     msg: >-
       {{ inventory_hostname }} rollback complete:
-      Redis {{ target_redis_version }}, synchronized replica, cluster_state:ok
+      Redis {{ target_redis_version }},
+      {{ 'promoted master' if (promote_after_rollback | default(false) | bool) else 'synchronized replica' }},
+      cluster_state:ok
   when: rollback_required

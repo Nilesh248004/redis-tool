@@ -1,1 +1,5 @@
-infra/redis_cluster_key
+.DS_Store
+
+# Runtime logs are generated for every redis-tool invocation.
+logs/*.log
+!logs/.gitkeep

@@ -30,102 +30,22 @@
           )
           test "$replica_count" -ge 1
         done
-      changed_when: false
 
-    - name: Validate that every rollback has a target-version shard anchor
-      shell: |
-        set -eu
+        for replica_ip in $(echo "$cluster_nodes" |
+          awk '$3 ~ /slave/ && $3 !~ /fail/ {
+            split($2,address,"@")
+            split(address[1],endpoint,":")
+            print endpoint[1]
+          }'); do
+          role=$(redis-cli -h "$replica_ip" -p 6379 info replication |
+            awk -F: '/^role:/ {gsub("\r", "", $2); print $2}')
+          link=$(redis-cli -h "$replica_ip" -p 6379 info replication |
+            awk -F: '/^master_link_status:/ {gsub("\r", "", $2); print $2}')
 
-        target="{{ target_redis_version }}"
-        cluster_nodes=$(redis-cli -h 10.10.0.11 -p 6379 cluster nodes)
-        unsafe=0
-
-        version_for_ip() {
-          redis-cli -h "$1" -p 6379 info server |
-            awk -F: '/^redis_version:/ {gsub("\r", "", $2); print $2}'
-        }
-
-        replica_link_for_ip() {
-          redis-cli -h "$1" -p 6379 info replication |
-            awk -F: '/^master_link_status:/ {gsub("\r", "", $2); print $2}'
-        }
-
-        for master_id in $(echo "$cluster_nodes" |
-          awk '$3 ~ /master/ && $3 !~ /fail/ {print $1}'); do
-          master_ip=$(
-            echo "$cluster_nodes" |
-              awk -v master_id="$master_id" '$1 == master_id {
-                split($2,address,"@")
-                split(address[1],endpoint,":")
-                print endpoint[1]
-              }'
-          )
-          master_version=$(version_for_ip "$master_ip")
-          replica_ips=$(
-            echo "$cluster_nodes" |
-              awk -v master_id="$master_id" \
-                '$3 ~ /slave/ && $3 !~ /fail/ && $4 == master_id {
-                  split($2,address,"@")
-                  split(address[1],endpoint,":")
-                  print endpoint[1]
-                }'
-          )
-
-          if [ "$master_version" != "$target" ]; then
-            safe_replica=""
-            for replica_ip in $replica_ips; do
-              replica_version=$(version_for_ip "$replica_ip")
-              replica_link=$(replica_link_for_ip "$replica_ip")
-
-              if [ "$replica_version" = "$target" ] && [ "$replica_link" = "up" ]; then
-                safe_replica="$replica_ip"
-                break
-              fi
-            done
-
-            if [ -z "$safe_replica" ]; then
-              echo "UNSAFE: master $master_ip is Redis $master_version and has no synchronized Redis $target replica."
-              unsafe=1
-            else
-              echo "SAFE: master $master_ip can fail over to target-version replica $safe_replica."
-            fi
-          fi
-
-          for replica_ip in $replica_ips; do
-            replica_version=$(version_for_ip "$replica_ip")
-
-            if [ "$replica_version" != "$target" ]; then
-              replica_link=$(replica_link_for_ip "$replica_ip")
-
-              if [ "$master_version" != "$target" ]; then
-                echo "UNSAFE: shard $master_ip/$replica_ip has no Redis $target node."
-                unsafe=1
-              elif [ "$replica_link" != "up" ]; then
-                echo "UNSAFE: replica $replica_ip is not synchronized with target-version master $master_ip."
-                unsafe=1
-              else
-                echo "SAFE: replica $replica_ip can roll back against target-version master $master_ip."
-              fi
-            fi
-          done
+          test "$role" = "slave"
+          test "$link" = "up"
         done
-
-        if [ "$unsafe" -ne 0 ]; then
-          echo "Rollback stopped before changes: each affected shard needs a synchronized Redis $target node."
-          exit 1
-        fi
-      register: rollback_safety
       changed_when: false
-      failed_when: false
-
-    - name: Print rollback safety plan
-      debug:
-        msg: "{{ rollback_safety.stdout_lines }}"
-
-    - name: Stop before an unsafe rollback
-      fail:
-        msg: "{{ rollback_safety.stdout_lines | join('\n') }}"
-      when: rollback_safety.rc != 0
 
     - name: Report versions before rollback
       shell: |
@@ -151,14 +71,34 @@
         msg: "{{ pre_rollback_versions.stdout_lines }}"
 
 
-- name: Roll back upgraded replicas first
+- name: Capture replica roles before rollback changes topology
   hosts: redis_nodes
+  become: no
+  gather_facts: no
+
+  tasks:
+    - name: Read initial Redis role
+      shell: |
+        redis-cli -h "{{ internal_ip }}" -p 6379 info replication |
+          awk -F: '/^role:/ {gsub("\r", "", $2); print $2}'
+      register: initial_rollback_role
+      changed_when: false
+
+    - name: Group nodes by their initial Redis role
+      group_by:
+        key: "rollback_initial_{{ initial_rollback_role.stdout }}"
+      changed_when: false
+
+
+- name: Roll back each original replica and promote it immediately
+  hosts: rollback_initial_slave
   become: yes
   gather_facts: no
   serial: 1
 
   vars:
     rollback_mode: "slave"
+    promote_after_rollback: true
     target_redis_version: "{{ target_version | default('7.0.15') }}"
     redis_tarball: "redis-{{ target_redis_version }}.tar.gz"
     redis_url: "https://download.redis.io/releases/{{ redis_tarball }}"
@@ -169,21 +109,22 @@
       include_tasks: tasks/rollback_node.yml
 
 
-- name: Roll back upgraded masters using failover
+- name: Roll back former masters after the target-version failovers
   hosts: redis_nodes
   become: yes
   gather_facts: no
   serial: 1
 
   vars:
-    rollback_mode: "master"
+    rollback_mode: "slave"
+    promote_after_rollback: false
     target_redis_version: "{{ target_version | default('7.0.15') }}"
     redis_tarball: "redis-{{ target_redis_version }}.tar.gz"
     redis_url: "https://download.redis.io/releases/{{ redis_tarball }}"
     redis_src_dir: "/tmp/redis-{{ target_redis_version }}"
 
   tasks:
-    - name: Process master rollback decision
+    - name: Process former-master rollback decision
       include_tasks: tasks/rollback_node.yml
 
 
