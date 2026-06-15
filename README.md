@@ -58,13 +58,13 @@ redis_tool_modules/container_runtime.sh
 redis_tool_modules/cluster_health.sh
   Redis node discovery, health, membership, and version checks
 
-redis_tool_modules/container_setup.sh
+redis_tool_modules/Docker_setup.sh
   Container startup, SSH setup, and new-node preparation
 
 redis_tool_modules/ansible_inventory.sh
   Temporary Ansible inventories for dynamic nodes
 
-redis_tool_modules/availability_monitor.sh
+redis_tool_modules/Redis_availability_monitor.sh
   Data-availability checks during a rolling upgrade
 
 redis_tool_modules/commands/provision_cluster.sh
@@ -96,6 +96,17 @@ stored, and sources modules using absolute paths from that directory. This is
 necessary because Bash `source` normally resolves relative paths from the
 user's current directory. Using `BASE_DIR` allows the CLI to work consistently
 whether it is launched from the project root or another directory.
+
+### Beginner Interview Guide
+
+A detailed project walkthrough is available in both formats:
+
+- [Redis Tool Beginner Interview Guide (PDF)](docs/Redis_Tool_Beginner_Interview_Guide.pdf)
+- [Editable guide source](docs/redis-tool-beginner-interview-guide.md)
+
+The guide explains the module design, important code lines, complete command
+flows, output handling, safety decisions, troubleshooting, and interview
+answers.
 
 ---
 
