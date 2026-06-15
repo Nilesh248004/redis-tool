@@ -31,7 +31,7 @@
         cluster_already_provisioned: "{{ existing_cluster_check.stdout == 'true' }}"
       changed_when: false
 
-    - name: Report provision no-op for an existing cluster
+    - name: Report skipped provisioning for an existing cluster
       debug:
         msg: "Redis Cluster is already provisioned and healthy; skipping installation, configuration, and cluster creation to preserve data."
       when: cluster_already_provisioned

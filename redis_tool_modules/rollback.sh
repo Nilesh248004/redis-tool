@@ -1,12 +1,13 @@
 # Purpose: roll every live Redis Cluster node back to the requested version.
 
 rollback_command() {
-  TARGET_VERSION=""
+  local target_version=""
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --target-version)
-        TARGET_VERSION="$2"
+        require_option_value "$1" "${2:-}"
+        target_version="$2"
         shift 2
         ;;
       *)
@@ -17,46 +18,42 @@ rollback_command() {
     esac
   done
 
-  if [ -z "$TARGET_VERSION" ]; then
+  if [ -z "$target_version" ]; then
     echo "Usage: ./redis-tool rollback --target-version 7.0.15"
     exit 1
   fi
 
-  if ! healthy_existing_cluster; then
-    structured_log "ERROR" "all" "rollback" "blocked" \
-      "cluster must be healthy and all six base nodes must be reachable"
-    echo "[ERROR] Rollback requires a healthy Redis Cluster with all six base nodes reachable."
-    return 1
-  fi
+  validate_redis_version "$target_version"
+  require_healthy_cluster "Rollback"
 
-  if all_cluster_nodes_at_version "$TARGET_VERSION"; then
+  if all_cluster_nodes_at_version "$target_version"; then
     {
       echo "===== Redis Rollback Started ====="
       date
-      echo "Target version: $TARGET_VERSION"
+      echo "Target version: $target_version"
       echo ""
       printf '%s' "$CLUSTER_VERSION_REPORT"
       echo ""
-      echo "All cluster nodes are already running Redis $TARGET_VERSION."
+      echo "All cluster nodes are already running Redis $target_version."
       echo "No rollback is required; exiting cleanly without restarting any node."
-      echo "ROLLBACK NO-OP - all nodes already at target version"
+      echo "ROLLBACK SKIPPED - all nodes already at target version"
       echo "===== Redis Rollback Completed ====="
       date
-    } | tee "$ROLLBACK_NOOP_OUTPUT"
+    } | tee "$ROLLBACK_OUTPUT"
 
     structured_log "INFO" "all" "rollback" "skipped" \
-      "all nodes already at target_version=$TARGET_VERSION"
+      "all nodes already at target_version=$target_version"
     return 0
   fi
 
   echo "Starting Redis rollback..."
-  echo "Target version: $TARGET_VERSION"
+  echo "Target version: $target_version"
   create_rollback_inventory_args
 
   {
     echo "===== Redis Rollback Started ====="
     date
-    echo "Target version: $TARGET_VERSION"
+    echo "Target version: $target_version"
 
     echo ""
     echo "===== Pre-rollback Cluster Info ====="
@@ -72,7 +69,7 @@ rollback_command() {
     ansible-playbook \
       "${ROLLBACK_INVENTORY_ARGS[@]}" \
       ansible/playbooks/rollback.yml \
-      -e "target_version=$TARGET_VERSION"
+      -e "target_version=$target_version"
 
     echo ""
     echo "===== Restore Deterministic Data After Rollback ====="
@@ -83,7 +80,7 @@ rollback_command() {
     ansible-playbook -i "$INVENTORY" ansible/playbooks/verify_full.yml
 
     echo ""
-    echo "ROLLBACK COMPLETE - changed nodes restored to v$TARGET_VERSION, data integrity verified"
+    echo "ROLLBACK COMPLETE - changed nodes restored to v$target_version, data integrity verified"
     echo "===== Redis Rollback Completed ====="
     date
   } | tee "$ROLLBACK_OUTPUT"

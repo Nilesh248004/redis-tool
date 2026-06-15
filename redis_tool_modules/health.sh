@@ -131,3 +131,16 @@ cluster_has_node_ip() {
     redis-cli -h 10.10.0.11 -p 6379 cluster nodes |
     grep -q "${internal_ip}:6379"
 }
+
+require_healthy_cluster() {
+  local operation="$1"
+
+  if healthy_existing_cluster; then
+    return 0
+  fi
+
+  structured_log "ERROR" "all" "cluster_health" "blocked" \
+    "operation=$operation requires healthy base cluster"
+  echo "[ERROR] $operation requires a healthy Redis Cluster with all six base nodes reachable."
+  return 1
+}

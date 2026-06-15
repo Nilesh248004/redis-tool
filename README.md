@@ -40,56 +40,21 @@ Bash    -> To create the redis-tool CLI
 ## CLI Code Layout
 
 `redis-tool` is the public entry point and command router. Its implementation is
-split into clearly named Bash modules:
+split into ten Bash modules:
 
 ```text
-redis_tool_modules/configuration.sh
-  Common paths, output filenames, SSH settings, and node lists
-
-redis_tool_modules/logging.sh
-  Terminal and file logging for every command
-
-redis_tool_modules/prerequisites.sh
-  Checks Docker/Podman, Ansible, netcat, and SSH tools
-
-redis_tool_modules/container_runtime.sh
-  Reusable Docker and Podman commands
-
-redis_tool_modules/cluster_health.sh
-  Redis node discovery, health, membership, and version checks
-
-redis_tool_modules/Docker_setup.sh
-  Container startup, SSH setup, and new-node preparation
-
-redis_tool_modules/ansible_inventory.sh
-  Temporary Ansible inventories for dynamic nodes
-
-redis_tool_modules/Redis_availability_monitor.sh
-  Data-availability checks during a rolling upgrade
-
-redis_tool_modules/commands/provision_cluster.sh
-  Phase 1 cluster provisioning command
-
-redis_tool_modules/commands/data_seed_and_verify.sh
-  Phase 2 data seed and verification commands
-
-redis_tool_modules/commands/status_check.sh
-  Phase 3 cluster status command
-
-redis_tool_modules/commands/rolling_upgrade.sh
-  Phase 4 rolling upgrade command
-
-redis_tool_modules/commands/full_verification.sh
-  Phase 5 full verification command
-
-redis_tool_modules/commands/scale_out.sh
-  Scale-out stretch goal
-
-redis_tool_modules/commands/rollback.sh
-  Rollback stretch goal
+redis_tool_modules/
+|-- prerequisite.sh   Settings, tools, and Docker/Podman helpers
+|-- provision.sh      Provision, data, and SSH setup functions
+|-- status_check.sh   Phase 3 cluster health and topology status
+|-- logs.sh           Terminal and operation logging
+|-- upgrade.sh        Rolling upgrade and availability monitoring
+|-- verify.sh         Cluster verification and repository verification
+|-- health.sh         Redis health and version checks
+|-- rollback.sh       Rollback command
+|-- inventory.sh      Dynamic Ansible inventory creation
+`-- scale_out.sh      Scale-out command and node creation
 ```
-
-All commands are still run through `./redis-tool`.
 
 `redis-tool` calculates `BASE_DIR`, the directory where the script itself is
 stored, and sources modules using absolute paths from that directory. This is
@@ -97,16 +62,16 @@ necessary because Bash `source` normally resolves relative paths from the
 user's current directory. Using `BASE_DIR` allows the CLI to work consistently
 whether it is launched from the project root or another directory.
 
-### Beginner Interview Guide
+### Repository Verification
 
-A detailed project walkthrough is available in both formats:
+Run the repository verification script before provisioning:
 
-- [Redis Tool Beginner Interview Guide (PDF)](docs/Redis_Tool_Beginner_Interview_Guide.pdf)
-- [Editable guide source](docs/redis-tool-beginner-interview-guide.md)
+```bash
+./redis_tool_modules/verify.sh
+```
 
-The guide explains the module design, important code lines, complete command
-flows, output handling, safety decisions, troubleshooting, and interview
-answers.
+It checks required files, local tools, executable permissions, Bash syntax,
+Docker Compose configuration, and Ansible playbook syntax.
 
 ---
 
@@ -277,15 +242,14 @@ data_seed_output.txt  -> Data seed output
 verify_output.txt     -> Data verification output
 status_output.txt     -> Cluster status output
 upgrade_output.txt    -> Rolling upgrade output
+full_verify_output.txt -> Full verification output
+scale_out_output.txt  -> Scale-out output
+rollback_output.txt   -> Rollback output
 ```
 
----
-
-## Current Progress
-
-The project currently includes Redis Cluster provisioning, data seeding, data verification, status checking, and rolling upgrade automation.
-
-Further verification and final improvements can be added in the next phase.
+Provision, upgrade, and rollback each use one output file. If no change is
+required, the normal command output file records that the operation was safely
+skipped.
 
 ---
 
@@ -339,7 +303,7 @@ The output is saved in:
 output/full_verify_output.txt
 ```
 
-Stretch Goal S1: Scale Out
+## Stretch Goal S1: Scale Out
 
 The default Docker Compose file and Ansible inventory define only:
 
@@ -398,15 +362,17 @@ Output file:
 output/scale_out_output.txt
 ```
 
-⸻
+---
 
-Stretch Goal S3: Rollback
+## Stretch Goal S3: Rollback
 
 I implemented rollback to downgrade Redis to a previous version if needed.
 
 Command used:
 
+```bash
 ./redis-tool rollback --target-version 7.0.15
+```
 
 Rollback tested:
 
@@ -421,10 +387,12 @@ before final verification.
 
 Final rollback result:
 
+```text
 All 8 nodes running Redis 7.0.15
 Cluster state: ok
 All 16384 slots covered
 Every master has a replica
+```
 
 After rollback, data is reseeded automatically by the rollback command:
 
@@ -434,16 +402,20 @@ After rollback, data is reseeded automatically by the rollback command:
 
 Then full verification runs automatically:
 
+```text
 Data integrity verified: all 1000 keys matched
 FULL VERIFICATION RESULT: PASS
+```
 
 Output file:
 
+```text
 output/rollback_output.txt
+```
 
-⸻
+---
 
-Stretch Goal S4: Idempotency
+## Stretch Goal S4: Idempotency
 
 Provisioning is safe to run against an existing healthy cluster:
 
@@ -456,7 +428,7 @@ reinstalling Redis, restarting nodes, clearing persistence files, or recreating
 the cluster:
 
 ```text
-PROVISION NO-OP - existing healthy cluster was left unchanged
+PROVISION SKIPPED - existing healthy cluster was left unchanged
 ```
 
 The provision playbook has the same protection when executed directly. A
@@ -475,17 +447,17 @@ starting the availability monitor or running upgrade tasks:
 ```text
 All cluster nodes are already running Redis 7.0.15.
 No upgrade is required; exiting cleanly without restarting any node.
-UPGRADE NO-OP - all nodes already at target version
+UPGRADE SKIPPED - all nodes already at target version
 ```
 
-After the provision no-op, full verification confirmed:
+After the skipped provision, full verification confirmed:
 
 ```text
 Data integrity verified: 1000/1000 keys matched
 FULL VERIFICATION RESULT: PASS
 ```
 
-Stretch Goal S5: Structured Logging
+## Stretch Goal S5: Structured Logging
 
 Every `redis-tool` invocation creates a unique operation log in `logs/`:
 
@@ -504,9 +476,9 @@ timestamp=2026-06-14T18:18:24Z level=INFO command=provision node=all action=prov
 Successful, skipped, and failed commands are all recorded with the appropriate
 final outcome.
 
-⸻
+---
 
-Stretch Goal Summary
+## Stretch Goal Summary
 
 S1 Scale Out completed
 S3 Rollback completed
@@ -515,7 +487,9 @@ S5 Structured Logging completed
 
 The stretch goals are available through the CLI:
 
+```bash
 ./redis-tool scale --add-nodes 2
 ./redis-tool rollback --target-version 7.0.15
+```
 
 ---

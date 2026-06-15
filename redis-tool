@@ -10,26 +10,17 @@ ORIGINAL_ARGS=("$@")
 
 MODULES_DIR="$BASE_DIR/redis_tool_modules"
 
-# source loads each module's functions into this shell. Absolute paths based on
-# BASE_DIR ensure Bash finds the modules regardless of where the user runs the
-# ./redis-tool command from.
-source "$MODULES_DIR/configuration.sh"
-source "$MODULES_DIR/logging.sh"
-source "$MODULES_DIR/prerequisites.sh"
-source "$MODULES_DIR/container_runtime.sh"
-source "$MODULES_DIR/cluster_health.sh"
-source "$MODULES_DIR/Docker_setup.sh"
-source "$MODULES_DIR/ansible_inventory.sh"
-source "$MODULES_DIR/Redis_availability_monitor.sh"
-
-# Each CLI command has its own file so learners can follow one feature at a time.
-source "$MODULES_DIR/commands/provision_cluster.sh"
-source "$MODULES_DIR/commands/data_seed_and_verify.sh"
-source "$MODULES_DIR/commands/status_check.sh"
-source "$MODULES_DIR/commands/rolling_upgrade.sh"
-source "$MODULES_DIR/commands/full_verification.sh"
-source "$MODULES_DIR/commands/scale_out.sh"
-source "$MODULES_DIR/commands/rollback.sh"
+# Load the project modules.
+source "$MODULES_DIR/prerequisite.sh"
+source "$MODULES_DIR/provision.sh"
+source "$MODULES_DIR/status_check.sh"
+source "$MODULES_DIR/logs.sh"
+source "$MODULES_DIR/upgrade.sh"
+source "$MODULES_DIR/verify.sh"
+source "$MODULES_DIR/health.sh"
+source "$MODULES_DIR/rollback.sh"
+source "$MODULES_DIR/inventory.sh"
+source "$MODULES_DIR/scale_out.sh"
 
 print_usage() {
   echo "Usage:"
@@ -43,17 +34,32 @@ print_usage() {
   echo "  ./redis-tool rollback --target-version 7.0.15"
 }
 
-# Prerequisites are intentionally checked before logging or command routing.
+# Show help and reject unknown commands before checking Docker or Ansible.
+case "${1:-}" in
+  -h|--help|help)
+    print_usage
+    exit 0
+    ;;
+  provision|data|status|upgrade|verify|scale|rollback)
+    ;;
+  *)
+    print_usage
+    exit 1
+    ;;
+esac
+
+# Check the environment and start terminal/file logging.
 check_prerequisites
 initialize_operation_log "${ORIGINAL_ARGS[@]}"
 structured_log "INFO" "all" "prerequisite_check" "success" \
   "runtime=$RUNTIME_VERSION ansible=$ANSIBLE_VERSION"
 log_live_cluster_nodes || true
 
+# Route the command to its handler. The handler runs Ansible and writes
+# the command output file through tee.
 case "${1:-}" in
   provision)
     shift
-    ensure_infra_running
     provision "$@"
     ;;
   data)
@@ -62,6 +68,10 @@ case "${1:-}" in
     ;;
   status)
     shift
+    if [ "$#" -ne 0 ]; then
+      echo "Usage: ./redis-tool status"
+      exit 1
+    fi
     status_command "$@"
     ;;
   upgrade)
@@ -79,9 +89,5 @@ case "${1:-}" in
   rollback)
     shift
     rollback_command "$@"
-    ;;
-  *)
-    print_usage
-    exit 1
     ;;
 esac

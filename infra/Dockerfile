@@ -25,12 +25,8 @@ RUN useradd -m -s /bin/bash ansible \
 
 RUN mkdir -p /var/run/sshd \
     && mkdir -p /home/ansible/.ssh \
-    && chmod 700 /home/ansible/.ssh \
-    && chown -R ansible:ansible /home/ansible/.ssh
-
-COPY redis_cluster_key.pub /home/ansible/.ssh/authorized_keys
-
-RUN chmod 755 /home/ansible \
+    && touch /home/ansible/.ssh/authorized_keys \
+    && chmod 755 /home/ansible \
     && chmod 700 /home/ansible/.ssh \
     && chmod 600 /home/ansible/.ssh/authorized_keys \
     && chown -R ansible:ansible /home/ansible

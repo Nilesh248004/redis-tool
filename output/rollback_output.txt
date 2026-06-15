@@ -1,5 +1,5 @@
 ===== Redis Rollback Started =====
-Mon Jun 15 12:58:02 IST 2026
+Tue Jun 16 00:37:39 IST 2026
 Target version: 7.0.15
 
 ===== Pre-rollback Cluster Info =====
@@ -11,17 +11,16 @@ cluster_slots_pfail:0
 cluster_slots_fail:0
 cluster_known_nodes:8
 cluster_size:4
-cluster_current_epoch:37
-cluster_my_epoch:35
-cluster_stats_messages_ping_sent:774
-cluster_stats_messages_pong_sent:761
-cluster_stats_messages_update_sent:1
-cluster_stats_messages_sent:1536
-cluster_stats_messages_ping_received:759
-cluster_stats_messages_pong_received:8967
-cluster_stats_messages_meet_received:2
+cluster_current_epoch:10
+cluster_my_epoch:7
+cluster_stats_messages_ping_sent:918
+cluster_stats_messages_pong_sent:911
+cluster_stats_messages_sent:1829
+cluster_stats_messages_ping_received:908
+cluster_stats_messages_pong_received:5014
+cluster_stats_messages_meet_received:3
 cluster_stats_messages_auth-req_received:2
-cluster_stats_messages_received:9730
+cluster_stats_messages_received:5927
 total_cluster_links_buffer_limit_exceeded:0
 
 ===== Pre-rollback Data Verification =====
@@ -55,13 +54,13 @@ ok: [redis-node-1]
 TASK [Print selective rollback plan] *******************************************
 ok: [redis-node-1] => {
     "msg": [
+        "10.10.0.11:6379 Redis 7.2.6 -> rollback required",
         "10.10.0.14:6379 Redis 7.2.6 -> rollback required",
         "10.10.0.12:6379 Redis 7.2.6 -> rollback required",
-        "10.10.0.18:6379 Redis 7.2.6 -> rollback required",
         "10.10.0.15:6379 Redis 7.2.6 -> rollback required",
-        "10.10.0.17:6379 Redis 7.2.6 -> rollback required",
+        "10.10.0.18:6379 Redis 7.2.6 -> rollback required",
         "10.10.0.13:6379 Redis 7.2.6 -> rollback required",
-        "10.10.0.11:6379 Redis 7.2.6 -> rollback required",
+        "10.10.0.17:6379 Redis 7.2.6 -> rollback required",
         "10.10.0.16:6379 Redis 7.2.6 -> rollback required"
     ]
 }
@@ -79,107 +78,14 @@ ok: [redis-node-6]
 ok: [redis-node-5]
 
 TASK [Group nodes by their initial Redis role] *********************************
-ok: [redis-node-8]
 ok: [redis-node-7]
-ok: [redis-node-2]
 ok: [redis-node-1]
+ok: [redis-node-8]
+ok: [redis-node-2]
 ok: [redis-node-3]
 ok: [redis-node-4]
 ok: [redis-node-5]
 ok: [redis-node-6]
-
-PLAY [Roll back each original replica and promote it immediately] **************
-
-TASK [Process replica rollback decision] ***************************************
-included: /Users/nileshkrishnamurthy/Documents/Projects/submission/ansible/playbooks/tasks/rollback_node.yml for redis-node-8
-
-TASK [Read current Redis version for slave pass] *******************************
-ok: [redis-node-8]
-
-TASK [Read current Redis role for slave pass] **********************************
-ok: [redis-node-8]
-
-TASK [Set slave rollback decision] *********************************************
-ok: [redis-node-8]
-
-TASK [Show slave rollback decision] ********************************************
-ok: [redis-node-8] => {
-    "msg": "redis-node-8 role=slave current=7.2.6 target=7.0.15 pass=slave action=rollback"
-}
-
-TASK [Install rollback build dependencies] *************************************
-ok: [redis-node-8]
-
-TASK [Remove previous rollback source directory] *******************************
-changed: [redis-node-8]
-
-TASK [Download rollback Redis source] ******************************************
-ok: [redis-node-8]
-
-TASK [Extract rollback Redis source] *******************************************
-changed: [redis-node-8]
-
-TASK [Build rollback Redis version while the node remains online] **************
-changed: [redis-node-8]
-
-TASK [Find the current master's node id] ***************************************
-skipping: [redis-node-8]
-
-TASK [Find a healthy replica for master failover] ******************************
-skipping: [redis-node-8]
-
-TASK [Fail if a master has no healthy replica] *********************************
-skipping: [redis-node-8]
-
-TASK [Wait until the failover replica is synchronized] *************************
-skipping: [redis-node-8]
-
-TASK [Fail over before rolling back a master] **********************************
-skipping: [redis-node-8]
-
-TASK [Wait until the former master becomes a replica] **************************
-skipping: [redis-node-8]
-
-TASK [Stop Redis on the node being rolled back] ********************************
-changed: [redis-node-8]
-
-TASK [Wait for the Redis port to stop] *****************************************
-ok: [redis-node-8]
-
-TASK [Install rollback Redis binaries] *****************************************
-changed: [redis-node-8]
-
-TASK [Remove only local persistence that may be incompatible] ******************
-changed: [redis-node-8]
-
-TASK [Remove unsupported cluster address metadata before rollback restart] *****
-changed: [redis-node-8]
-
-TASK [Start Redis with the existing cluster configuration] *********************
-changed: [redis-node-8]
-
-TASK [Wait for the Redis port to start] ****************************************
-ok: [redis-node-8]
-
-TASK [Wait for the target-version replica to be ready for takeover] ************
-ok: [redis-node-8]
-
-TASK [Wait for the rolled back former master to synchronize as a replica] ******
-skipping: [redis-node-8]
-
-TASK [Promote the target-version replica immediately] **************************
-changed: [redis-node-8]
-
-TASK [Wait until the target-version node becomes master] ***********************
-ok: [redis-node-8]
-
-TASK [Verify cluster health after this node rollback] **************************
-ok: [redis-node-8 -> redis-node-1(localhost)]
-
-TASK [Print rollback result for this node] *************************************
-ok: [redis-node-8] => {
-    "msg": "redis-node-8 rollback complete: Redis 7.0.15, promoted master, cluster_state:ok"
-}
 
 PLAY [Roll back each original replica and promote it immediately] **************
 
@@ -204,7 +110,7 @@ TASK [Install rollback build dependencies] *************************************
 ok: [redis-node-1]
 
 TASK [Remove previous rollback source directory] *******************************
-changed: [redis-node-1]
+ok: [redis-node-1]
 
 TASK [Download rollback Redis source] ******************************************
 ok: [redis-node-1]
@@ -277,6 +183,99 @@ ok: [redis-node-1] => {
 PLAY [Roll back each original replica and promote it immediately] **************
 
 TASK [Process replica rollback decision] ***************************************
+included: /Users/nileshkrishnamurthy/Documents/Projects/submission/ansible/playbooks/tasks/rollback_node.yml for redis-node-8
+
+TASK [Read current Redis version for slave pass] *******************************
+ok: [redis-node-8]
+
+TASK [Read current Redis role for slave pass] **********************************
+ok: [redis-node-8]
+
+TASK [Set slave rollback decision] *********************************************
+ok: [redis-node-8]
+
+TASK [Show slave rollback decision] ********************************************
+ok: [redis-node-8] => {
+    "msg": "redis-node-8 role=slave current=7.2.6 target=7.0.15 pass=slave action=rollback"
+}
+
+TASK [Install rollback build dependencies] *************************************
+ok: [redis-node-8]
+
+TASK [Remove previous rollback source directory] *******************************
+ok: [redis-node-8]
+
+TASK [Download rollback Redis source] ******************************************
+changed: [redis-node-8]
+
+TASK [Extract rollback Redis source] *******************************************
+changed: [redis-node-8]
+
+TASK [Build rollback Redis version while the node remains online] **************
+changed: [redis-node-8]
+
+TASK [Find the current master's node id] ***************************************
+skipping: [redis-node-8]
+
+TASK [Find a healthy replica for master failover] ******************************
+skipping: [redis-node-8]
+
+TASK [Fail if a master has no healthy replica] *********************************
+skipping: [redis-node-8]
+
+TASK [Wait until the failover replica is synchronized] *************************
+skipping: [redis-node-8]
+
+TASK [Fail over before rolling back a master] **********************************
+skipping: [redis-node-8]
+
+TASK [Wait until the former master becomes a replica] **************************
+skipping: [redis-node-8]
+
+TASK [Stop Redis on the node being rolled back] ********************************
+changed: [redis-node-8]
+
+TASK [Wait for the Redis port to stop] *****************************************
+ok: [redis-node-8]
+
+TASK [Install rollback Redis binaries] *****************************************
+changed: [redis-node-8]
+
+TASK [Remove only local persistence that may be incompatible] ******************
+changed: [redis-node-8]
+
+TASK [Remove unsupported cluster address metadata before rollback restart] *****
+changed: [redis-node-8]
+
+TASK [Start Redis with the existing cluster configuration] *********************
+changed: [redis-node-8]
+
+TASK [Wait for the Redis port to start] ****************************************
+ok: [redis-node-8]
+
+TASK [Wait for the target-version replica to be ready for takeover] ************
+ok: [redis-node-8]
+
+TASK [Wait for the rolled back former master to synchronize as a replica] ******
+skipping: [redis-node-8]
+
+TASK [Promote the target-version replica immediately] **************************
+changed: [redis-node-8]
+
+TASK [Wait until the target-version node becomes master] ***********************
+ok: [redis-node-8]
+
+TASK [Verify cluster health after this node rollback] **************************
+ok: [redis-node-8 -> redis-node-1(localhost)]
+
+TASK [Print rollback result for this node] *************************************
+ok: [redis-node-8] => {
+    "msg": "redis-node-8 rollback complete: Redis 7.0.15, promoted master, cluster_state:ok"
+}
+
+PLAY [Roll back each original replica and promote it immediately] **************
+
+TASK [Process replica rollback decision] ***************************************
 included: /Users/nileshkrishnamurthy/Documents/Projects/submission/ansible/playbooks/tasks/rollback_node.yml for redis-node-2
 
 TASK [Read current Redis version for slave pass] *******************************
@@ -297,7 +296,7 @@ TASK [Install rollback build dependencies] *************************************
 ok: [redis-node-2]
 
 TASK [Remove previous rollback source directory] *******************************
-changed: [redis-node-2]
+ok: [redis-node-2]
 
 TASK [Download rollback Redis source] ******************************************
 ok: [redis-node-2]
@@ -390,7 +389,7 @@ TASK [Install rollback build dependencies] *************************************
 ok: [redis-node-3]
 
 TASK [Remove previous rollback source directory] *******************************
-changed: [redis-node-3]
+ok: [redis-node-3]
 
 TASK [Download rollback Redis source] ******************************************
 ok: [redis-node-3]
@@ -483,10 +482,10 @@ TASK [Install rollback build dependencies] *************************************
 ok: [redis-node-7]
 
 TASK [Remove previous rollback source directory] *******************************
-changed: [redis-node-7]
+ok: [redis-node-7]
 
 TASK [Download rollback Redis source] ******************************************
-ok: [redis-node-7]
+changed: [redis-node-7]
 
 TASK [Extract rollback Redis source] *******************************************
 changed: [redis-node-7]
@@ -940,7 +939,7 @@ TASK [Install rollback build dependencies] *************************************
 ok: [redis-node-4]
 
 TASK [Remove previous rollback source directory] *******************************
-changed: [redis-node-4]
+ok: [redis-node-4]
 
 TASK [Download rollback Redis source] ******************************************
 ok: [redis-node-4]
@@ -1033,7 +1032,7 @@ TASK [Install rollback build dependencies] *************************************
 ok: [redis-node-5]
 
 TASK [Remove previous rollback source directory] *******************************
-changed: [redis-node-5]
+ok: [redis-node-5]
 
 TASK [Download rollback Redis source] ******************************************
 ok: [redis-node-5]
@@ -1126,7 +1125,7 @@ TASK [Install rollback build dependencies] *************************************
 ok: [redis-node-6]
 
 TASK [Remove previous rollback source directory] *******************************
-changed: [redis-node-6]
+ok: [redis-node-6]
 
 TASK [Download rollback Redis source] ******************************************
 ok: [redis-node-6]
@@ -1204,21 +1203,20 @@ ok: [redis-node-1]
 TASK [Print final Redis versions] **********************************************
 ok: [redis-node-1] => {
     "msg": [
-        "10.10.0.16:6379 -> Redis 7.0.15",
-        "10.10.0.12:6379 -> Redis 7.0.15",
-        "10.10.0.18:6379 -> Redis 7.0.15",
-        "10.10.0.17:6379 -> Redis 7.0.15",
+        "10.10.0.11:6379 -> Redis 7.0.15",
         "10.10.0.15:6379 -> Redis 7.0.15",
+        "10.10.0.12:6379 -> Redis 7.0.15",
+        "10.10.0.17:6379 -> Redis 7.0.15",
+        "10.10.0.16:6379 -> Redis 7.0.15",
         "10.10.0.14:6379 -> Redis 7.0.15",
         "10.10.0.13:6379 -> Redis 7.0.15",
-        "10.10.0.11:6379 -> Redis 7.0.15"
+        "10.10.0.18:6379 -> Redis 7.0.15"
     ]
 }
 
 TASK [Verify final cluster health and replica links] ***************************
 FAILED - RETRYING: [redis-node-1]: Verify final cluster health and replica links (19 retries left).
 FAILED - RETRYING: [redis-node-1]: Verify final cluster health and replica links (18 retries left).
-FAILED - RETRYING: [redis-node-1]: Verify final cluster health and replica links (17 retries left).
 ok: [redis-node-1]
 
 TASK [Print final rollback health] *********************************************
@@ -1231,12 +1229,12 @@ ok: [redis-node-1] => {
 }
 
 PLAY RECAP *********************************************************************
-redis-node-1               : ok=36   changed=9    unreachable=0    failed=0    skipped=31   rescued=0    ignored=0   
-redis-node-2               : ok=29   changed=9    unreachable=0    failed=0    skipped=31   rescued=0    ignored=0   
-redis-node-3               : ok=29   changed=9    unreachable=0    failed=0    skipped=31   rescued=0    ignored=0   
-redis-node-4               : ok=22   changed=8    unreachable=0    failed=0    skipped=9    rescued=0    ignored=0   
-redis-node-5               : ok=22   changed=8    unreachable=0    failed=0    skipped=9    rescued=0    ignored=0   
-redis-node-6               : ok=22   changed=8    unreachable=0    failed=0    skipped=9    rescued=0    ignored=0   
+redis-node-1               : ok=36   changed=8    unreachable=0    failed=0    skipped=31   rescued=0    ignored=0   
+redis-node-2               : ok=29   changed=8    unreachable=0    failed=0    skipped=31   rescued=0    ignored=0   
+redis-node-3               : ok=29   changed=8    unreachable=0    failed=0    skipped=31   rescued=0    ignored=0   
+redis-node-4               : ok=22   changed=7    unreachable=0    failed=0    skipped=9    rescued=0    ignored=0   
+redis-node-5               : ok=22   changed=7    unreachable=0    failed=0    skipped=9    rescued=0    ignored=0   
+redis-node-6               : ok=22   changed=7    unreachable=0    failed=0    skipped=9    rescued=0    ignored=0   
 redis-node-7               : ok=22   changed=8    unreachable=0    failed=0    skipped=9    rescued=0    ignored=0   
 redis-node-8               : ok=29   changed=9    unreachable=0    failed=0    skipped=31   rescued=0    ignored=0   
 
@@ -1253,10 +1251,10 @@ ok: [redis-node-1] => {
     "msg": [
         "",
         "Key distribution across masters:",
-        "10.10.0.12:6379 -> 248 keys",
-        "10.10.0.18:6379 -> 251 keys",
-        "10.10.0.13:6379 -> 251 keys",
-        "10.10.0.11:6379 -> 250 keys",
+        "10.10.0.11:6379 -> 248 keys",
+        "10.10.0.12:6379 -> 252 keys",
+        "10.10.0.13:6379 -> 250 keys",
+        "10.10.0.18:6379 -> 250 keys",
         "",
         "PASS - 1000/1000 keys inserted; failures: 0"
     ]
@@ -1299,4 +1297,4 @@ redis-node-1               : ok=2    changed=0    unreachable=0    failed=0    s
 
 ROLLBACK COMPLETE - changed nodes restored to v7.0.15, data integrity verified
 ===== Redis Rollback Completed =====
-Mon Jun 15 13:03:31 IST 2026
+Tue Jun 16 00:41:16 IST 2026

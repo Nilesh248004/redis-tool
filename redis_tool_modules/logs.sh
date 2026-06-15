@@ -23,16 +23,30 @@ finish_operation_log() {
   local exit_code=$?
   local outcome="success"
   local level="INFO"
+  local details="exit_code=$exit_code"
   local temp_file
 
   trap - EXIT
 
-  if [ "$exit_code" -ne 0 ]; then
+  if [ "$exit_code" -eq 130 ]; then
+    outcome="interrupted"
+    level="WARN"
+    details="exit_code=130 signal=SIGINT reason=user_pressed_ctrl_c"
+  elif [ "$exit_code" -eq 143 ]; then
+    outcome="terminated"
+    level="WARN"
+    details="exit_code=143 signal=SIGTERM"
+  elif [ "$exit_code" -ne 0 ]; then
     outcome="failed"
     level="ERROR"
   fi
 
-  structured_log "$level" "all" "operation" "$outcome" "exit_code=$exit_code"
+  structured_log "$level" "all" "operation" "$outcome" "$details"
+
+  if [ "$exit_code" -eq 130 ]; then
+    echo "[WARN] Operation interrupted by Ctrl+C. Run the same command again to resume safely."
+  fi
+
   echo "Structured operation log: $OPERATION_LOG"
 
   for temp_file in "${TEMP_FILES[@]}"; do
