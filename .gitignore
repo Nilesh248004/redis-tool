@@ -5,3 +5,4 @@ logs/*.log
 
 infra/redis_cluster_key
 
+output/*.pdf
