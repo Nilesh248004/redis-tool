@@ -4,5 +4,3 @@ logs/*.log
 !logs/.gitkeep
 
 infra/redis_cluster_key
-
-output/*.pdf
