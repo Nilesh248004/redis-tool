@@ -1,9 +1,7 @@
 .DS_Store
 
-# Runtime logs are generated for every redis-tool invocation.
 logs/*.log
 !logs/.gitkeep
 
-# Never commit private SSH keys. The public key copy in infra/ is safe to show.
 infra/redis_cluster_key
 

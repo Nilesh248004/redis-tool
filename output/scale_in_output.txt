@@ -1,5 +1,16 @@
-===== Redis Full Verification Started =====
-Tue Jun 16 15:56:44 IST 2026
+===== Redis Scale In Started =====
+Tue Jun 16 15:56:33 IST 2026
+
+===== Target Node Details =====
+Master IP: 10.10.0.18
+Master ID: 
+Replica IP: 10.10.0.17
+Replica ID: 
+
+===== Scale-In Already Complete =====
+[OK] Requested scale-out pair is already absent
+
+===== Full Verification After Scale In =====
 
 PLAY [Full Redis Cluster verification] *****************************************
 
@@ -29,5 +40,8 @@ ok: [redis-node-1] => {
 PLAY RECAP *********************************************************************
 redis-node-1               : ok=2    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 
-===== Redis Full Verification Completed =====
-Tue Jun 16 15:56:45 IST 2026
+
+timestamp=2026-06-16T10:26:34Z level=INFO command=scale node=scale_in action=success outcome=already_complete details="missing_master_ip=10.10.0.18 missing_replica_ip=10.10.0.17"
+SCALE IN COMPLETE - requested nodes already absent
+===== Redis Scale In Completed =====
+Tue Jun 16 15:56:34 IST 2026

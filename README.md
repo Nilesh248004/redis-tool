@@ -65,6 +65,7 @@ submission/
 │       ├── install_redis.yml
 │       ├── provision.yml
 │       ├── rollback.yml
+│       ├── scale_in.yml
 │       ├── scale_out.yml
 │       ├── status.yml
 │       ├── upgrade.yml
@@ -81,6 +82,7 @@ submission/
 │   ├── full_verify_output.txt
 │   ├── provision_output.txt
 │   ├── rollback_output.txt
+│   ├── scale_in_output.txt
 │   ├── scale_out_output.txt
 │   ├── status_output.txt
 │   ├── upgrade_output.txt
@@ -92,6 +94,7 @@ submission/
     ├── prerequisite.sh
     ├── provision.sh
     ├── rollback.sh
+    ├── scale_in.sh
     ├── scale_out.sh
     ├── status_check.sh
     ├── upgrade.sh
@@ -199,6 +202,34 @@ Output:
 output/scale_out_output.txt
 ```
 
+Scale in the cluster (removes a master-replica pair):
+
+```bash
+./redis-tool scale --remove-node 10.10.0.17
+```
+
+This removes:
+
+```text
+redis-node-7 (master at 10.10.0.17) and its replica
+```
+
+The operation:
+
+```text
+1. Identifies the target master and its replica
+2. Migrates all slots from the master to remaining healthy masters
+3. Removes both nodes from the cluster
+4. Stops the containers
+5. Verifies cluster health
+```
+
+Output:
+
+```text
+output/scale_in_output.txt
+```
+
 Rollback to a target Redis version:
 
 ```bash
@@ -222,6 +253,9 @@ Recommended demo flow:
 ./redis-tool upgrade --target-version 7.2.6 --strategy rolling
 ./redis-tool verify --full
 ./redis-tool scale --add-nodes 2
+./redis-tool status
+./redis-tool scale --remove-node 10.10.0.17
+./redis-tool verify --full
 ./redis-tool rollback --target-version 7.0.15
 ```
 
@@ -335,11 +369,26 @@ inventory.sh      Temporary dynamic inventories
 ## Stretch Goals Implemented
 
 ```text
-S1 Scale Out
-S3 Rollback
-S4 Idempotency
-S5 Structured Logging
+S1 Scale Out     - Add new master-replica pairs to the cluster
+S2 Scale In      - Remove master-replica pairs from the cluster
+S3 Rollback      - Rollback cluster to a previous Redis version
+S4 Idempotency   - Operations are safe to re-run on existing state
+S5 Structured Logging - All operations create structured timestamped logs
 ```
+
+Scale Out adds nodes dynamically:
+
+```bash
+./redis-tool scale --add-nodes 2
+```
+
+Scale In removes nodes gracefully:
+
+```bash
+./redis-tool scale --remove-node 10.10.0.17
+```
+
+The scale-in operation safely migrates all slots before removing nodes, ensuring no data loss.
 
 Provision is idempotent on a healthy existing cluster:
 

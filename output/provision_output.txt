@@ -1,5 +1,5 @@
 ===== Redis Cluster Provision Started =====
-Tue Jun 16 03:43:36 IST 2026
+Tue Jun 16 15:39:56 IST 2026
 Redis version: 7.0.15
 Masters: 3
 Replicas per master: 1
@@ -20,71 +20,71 @@ skipping: [redis-node-1]
 PLAY [Install exact Redis version on all Redis nodes] **************************
 
 TASK [Gathering Facts] *********************************************************
+ok: [redis-node-1]
 ok: [redis-node-5]
 ok: [redis-node-4]
-ok: [redis-node-3]
 ok: [redis-node-2]
-ok: [redis-node-1]
+ok: [redis-node-3]
 ok: [redis-node-6]
 
 TASK [Update apt package index] ************************************************
 changed: [redis-node-2]
-changed: [redis-node-4]
-changed: [redis-node-6]
 changed: [redis-node-3]
-changed: [redis-node-1]
 changed: [redis-node-5]
+changed: [redis-node-4]
+changed: [redis-node-1]
+changed: [redis-node-6]
 
 TASK [Install build dependencies required for Redis source installation] *******
-ok: [redis-node-2]
-ok: [redis-node-3]
 ok: [redis-node-5]
+ok: [redis-node-2]
 ok: [redis-node-4]
 ok: [redis-node-1]
+ok: [redis-node-3]
 ok: [redis-node-6]
 
 TASK [Stop any existing Redis process] *****************************************
-ok: [redis-node-4]
-ok: [redis-node-2]
 ok: [redis-node-3]
-ok: [redis-node-1]
+ok: [redis-node-4]
 ok: [redis-node-5]
+ok: [redis-node-1]
+ok: [redis-node-2]
 ok: [redis-node-6]
 
 TASK [Remove Ubuntu repository Redis packages if installed] ********************
-ok: [redis-node-2]
 ok: [redis-node-3]
-ok: [redis-node-1]
 ok: [redis-node-5]
+ok: [redis-node-1]
+ok: [redis-node-2]
 ok: [redis-node-4]
 ok: [redis-node-6]
 
 TASK [Remove old Redis binaries from /usr/bin if present] **********************
-ok: [redis-node-4] => (item=/usr/bin/redis-server)
 ok: [redis-node-5] => (item=/usr/bin/redis-server)
+ok: [redis-node-3] => (item=/usr/bin/redis-server)
 ok: [redis-node-2] => (item=/usr/bin/redis-server)
 ok: [redis-node-1] => (item=/usr/bin/redis-server)
-ok: [redis-node-3] => (item=/usr/bin/redis-server)
-ok: [redis-node-1] => (item=/usr/bin/redis-cli)
-ok: [redis-node-4] => (item=/usr/bin/redis-cli)
+ok: [redis-node-4] => (item=/usr/bin/redis-server)
 ok: [redis-node-5] => (item=/usr/bin/redis-cli)
 ok: [redis-node-2] => (item=/usr/bin/redis-cli)
 ok: [redis-node-3] => (item=/usr/bin/redis-cli)
-ok: [redis-node-1] => (item=/usr/bin/redis-check-rdb)
-ok: [redis-node-4] => (item=/usr/bin/redis-check-rdb)
-ok: [redis-node-2] => (item=/usr/bin/redis-check-rdb)
-ok: [redis-node-5] => (item=/usr/bin/redis-check-rdb)
+ok: [redis-node-4] => (item=/usr/bin/redis-cli)
+ok: [redis-node-1] => (item=/usr/bin/redis-cli)
 ok: [redis-node-3] => (item=/usr/bin/redis-check-rdb)
-ok: [redis-node-1] => (item=/usr/bin/redis-check-aof)
-ok: [redis-node-4] => (item=/usr/bin/redis-check-aof)
+ok: [redis-node-5] => (item=/usr/bin/redis-check-rdb)
+ok: [redis-node-2] => (item=/usr/bin/redis-check-rdb)
+ok: [redis-node-4] => (item=/usr/bin/redis-check-rdb)
+ok: [redis-node-1] => (item=/usr/bin/redis-check-rdb)
 ok: [redis-node-5] => (item=/usr/bin/redis-check-aof)
-ok: [redis-node-2] => (item=/usr/bin/redis-check-aof)
 ok: [redis-node-3] => (item=/usr/bin/redis-check-aof)
-ok: [redis-node-1] => (item=/usr/bin/redis-benchmark)
+ok: [redis-node-2] => (item=/usr/bin/redis-check-aof)
+ok: [redis-node-4] => (item=/usr/bin/redis-check-aof)
+ok: [redis-node-1] => (item=/usr/bin/redis-check-aof)
 ok: [redis-node-5] => (item=/usr/bin/redis-benchmark)
-ok: [redis-node-4] => (item=/usr/bin/redis-benchmark)
-ok: [redis-node-2] => (item=/usr/bin/redis-benchmark)
 ok: [redis-node-3] => (item=/usr/bin/redis-benchmark)
+ok: [redis-node-2] => (item=/usr/bin/redis-benchmark)
+ok: [redis-node-4] => (item=/usr/bin/redis-benchmark)
+ok: [redis-node-1] => (item=/usr/bin/redis-benchmark)
 ok: [redis-node-6] => (item=/usr/bin/redis-server)
 ok: [redis-node-6] => (item=/usr/bin/redis-cli)
 ok: [redis-node-6] => (item=/usr/bin/redis-check-rdb)
@@ -92,59 +92,59 @@ ok: [redis-node-6] => (item=/usr/bin/redis-check-aof)
 ok: [redis-node-6] => (item=/usr/bin/redis-benchmark)
 
 TASK [Remove old Redis source directory for this version if present] ***********
-ok: [redis-node-2]
 ok: [redis-node-1]
-ok: [redis-node-4]
+ok: [redis-node-2]
 ok: [redis-node-3]
+ok: [redis-node-4]
 ok: [redis-node-5]
 ok: [redis-node-6]
 
 TASK [Download Redis source tarball] *******************************************
 changed: [redis-node-4]
 changed: [redis-node-2]
-changed: [redis-node-1]
 changed: [redis-node-3]
+changed: [redis-node-1]
 changed: [redis-node-5]
 changed: [redis-node-6]
 
 TASK [Extract Redis source code] ***********************************************
-changed: [redis-node-4]
-changed: [redis-node-3]
 changed: [redis-node-5]
 changed: [redis-node-2]
 changed: [redis-node-1]
+changed: [redis-node-4]
+changed: [redis-node-3]
 changed: [redis-node-6]
 
 TASK [Build Redis from source] *************************************************
-changed: [redis-node-4]
-changed: [redis-node-3]
 changed: [redis-node-2]
-changed: [redis-node-1]
 changed: [redis-node-5]
+changed: [redis-node-3]
+changed: [redis-node-1]
+changed: [redis-node-4]
 changed: [redis-node-6]
 
 TASK [Install Redis binaries into /usr/local/bin] ******************************
-changed: [redis-node-1]
 changed: [redis-node-3]
-changed: [redis-node-2]
-changed: [redis-node-4]
 changed: [redis-node-5]
+changed: [redis-node-1]
+changed: [redis-node-4]
+changed: [redis-node-2]
 changed: [redis-node-6]
 
 TASK [Link redis-server command to source-installed binary] ********************
-changed: [redis-node-1]
 changed: [redis-node-2]
-changed: [redis-node-5]
 changed: [redis-node-3]
+changed: [redis-node-1]
+changed: [redis-node-5]
 changed: [redis-node-4]
 changed: [redis-node-6]
 
 TASK [Link redis-cli command to source-installed binary] ***********************
-changed: [redis-node-1]
 changed: [redis-node-2]
+changed: [redis-node-1]
 changed: [redis-node-3]
-changed: [redis-node-4]
 changed: [redis-node-5]
+changed: [redis-node-4]
 changed: [redis-node-6]
 
 TASK [Link redis-benchmark command to source-installed binary] *****************
@@ -156,32 +156,32 @@ changed: [redis-node-5]
 changed: [redis-node-6]
 
 TASK [Create redis system user] ************************************************
-changed: [redis-node-4]
-changed: [redis-node-5]
 changed: [redis-node-2]
-changed: [redis-node-3]
 changed: [redis-node-1]
+changed: [redis-node-3]
+changed: [redis-node-5]
+changed: [redis-node-4]
 changed: [redis-node-6]
 
 TASK [Create Redis required directories] ***************************************
+changed: [redis-node-3] => (item=/etc/redis)
 changed: [redis-node-2] => (item=/etc/redis)
 changed: [redis-node-1] => (item=/etc/redis)
-changed: [redis-node-4] => (item=/etc/redis)
-changed: [redis-node-3] => (item=/etc/redis)
 changed: [redis-node-5] => (item=/etc/redis)
-changed: [redis-node-2] => (item=/var/lib/redis)
-changed: [redis-node-1] => (item=/var/lib/redis)
+changed: [redis-node-4] => (item=/etc/redis)
 changed: [redis-node-3] => (item=/var/lib/redis)
-changed: [redis-node-4] => (item=/var/lib/redis)
+changed: [redis-node-1] => (item=/var/lib/redis)
+changed: [redis-node-2] => (item=/var/lib/redis)
 changed: [redis-node-5] => (item=/var/lib/redis)
+changed: [redis-node-4] => (item=/var/lib/redis)
 changed: [redis-node-1] => (item=/var/log/redis)
-changed: [redis-node-2] => (item=/var/log/redis)
 changed: [redis-node-3] => (item=/var/log/redis)
+changed: [redis-node-2] => (item=/var/log/redis)
 changed: [redis-node-4] => (item=/var/log/redis)
 changed: [redis-node-5] => (item=/var/log/redis)
+changed: [redis-node-3] => (item=/var/run/redis)
 changed: [redis-node-2] => (item=/var/run/redis)
 changed: [redis-node-1] => (item=/var/run/redis)
-changed: [redis-node-3] => (item=/var/run/redis)
 changed: [redis-node-4] => (item=/var/run/redis)
 changed: [redis-node-5] => (item=/var/run/redis)
 changed: [redis-node-6] => (item=/etc/redis)
@@ -207,106 +207,106 @@ skipping: [redis-node-6]
 
 TASK [Show installed Redis version] ********************************************
 ok: [redis-node-1] => {
-    "msg": "redis-node-1 installed Redis server v=7.0.15 sha=00000000:0 malloc=jemalloc-5.2.1 bits=64 build=443124e73ae6507"
+    "msg": "redis-node-1 installed Redis server v=7.0.15 sha=00000000:0 malloc=jemalloc-5.2.1 bits=64 build=9acb946952f88fcd"
 }
 ok: [redis-node-2] => {
-    "msg": "redis-node-2 installed Redis server v=7.0.15 sha=00000000:0 malloc=jemalloc-5.2.1 bits=64 build=7f10a577f28a3ee0"
+    "msg": "redis-node-2 installed Redis server v=7.0.15 sha=00000000:0 malloc=jemalloc-5.2.1 bits=64 build=e1982350d3dcd42a"
 }
 ok: [redis-node-3] => {
-    "msg": "redis-node-3 installed Redis server v=7.0.15 sha=00000000:0 malloc=jemalloc-5.2.1 bits=64 build=b0e92a51ba1b7964"
+    "msg": "redis-node-3 installed Redis server v=7.0.15 sha=00000000:0 malloc=jemalloc-5.2.1 bits=64 build=2e61ac769b4d93ae"
 }
 ok: [redis-node-4] => {
-    "msg": "redis-node-4 installed Redis server v=7.0.15 sha=00000000:0 malloc=jemalloc-5.2.1 bits=64 build=89b7cb04f0c2892e"
+    "msg": "redis-node-4 installed Redis server v=7.0.15 sha=00000000:0 malloc=jemalloc-5.2.1 bits=64 build=173f4d23d19463e4"
 }
 ok: [redis-node-5] => {
-    "msg": "redis-node-5 installed Redis server v=7.0.15 sha=00000000:0 malloc=jemalloc-5.2.1 bits=64 build=464e4422b853ceaa"
+    "msg": "redis-node-5 installed Redis server v=7.0.15 sha=00000000:0 malloc=jemalloc-5.2.1 bits=64 build=d8c6c20599052460"
 }
 ok: [redis-node-6] => {
-    "msg": "redis-node-6 installed Redis server v=7.0.15 sha=00000000:0 malloc=jemalloc-5.2.1 bits=64 build=6d88282238e4873e"
+    "msg": "redis-node-6 installed Redis server v=7.0.15 sha=00000000:0 malloc=jemalloc-5.2.1 bits=64 build=31e4b2174b75a346"
 }
 
 PLAY [Configure Redis nodes for cluster mode] **********************************
 
 TASK [Gathering Facts] *********************************************************
-ok: [redis-node-3]
-ok: [redis-node-5]
-ok: [redis-node-4]
 ok: [redis-node-2]
+ok: [redis-node-5]
 ok: [redis-node-1]
+ok: [redis-node-4]
+ok: [redis-node-3]
 ok: [redis-node-6]
 
 TASK [Stop any running Redis process] ******************************************
-ok: [redis-node-3]
 ok: [redis-node-1]
-ok: [redis-node-4]
 ok: [redis-node-2]
+ok: [redis-node-3]
+ok: [redis-node-4]
 ok: [redis-node-5]
 ok: [redis-node-6]
 
 TASK [Ensure Redis directories exist] ******************************************
 ok: [redis-node-2] => (item=/etc/redis)
-ok: [redis-node-3] => (item=/etc/redis)
 ok: [redis-node-1] => (item=/etc/redis)
-ok: [redis-node-5] => (item=/etc/redis)
+ok: [redis-node-3] => (item=/etc/redis)
 ok: [redis-node-4] => (item=/etc/redis)
+ok: [redis-node-5] => (item=/etc/redis)
+ok: [redis-node-3] => (item=/var/lib/redis)
 ok: [redis-node-1] => (item=/var/lib/redis)
 ok: [redis-node-2] => (item=/var/lib/redis)
-ok: [redis-node-3] => (item=/var/lib/redis)
-ok: [redis-node-5] => (item=/var/lib/redis)
 ok: [redis-node-4] => (item=/var/lib/redis)
+ok: [redis-node-5] => (item=/var/lib/redis)
+ok: [redis-node-3] => (item=/var/log/redis)
 ok: [redis-node-2] => (item=/var/log/redis)
 ok: [redis-node-1] => (item=/var/log/redis)
-ok: [redis-node-5] => (item=/var/log/redis)
-ok: [redis-node-3] => (item=/var/log/redis)
 ok: [redis-node-4] => (item=/var/log/redis)
+ok: [redis-node-5] => (item=/var/log/redis)
 ok: [redis-node-3] => (item=/var/run/redis)
 ok: [redis-node-2] => (item=/var/run/redis)
-ok: [redis-node-5] => (item=/var/run/redis)
-ok: [redis-node-1] => (item=/var/run/redis)
 ok: [redis-node-4] => (item=/var/run/redis)
+ok: [redis-node-1] => (item=/var/run/redis)
+ok: [redis-node-5] => (item=/var/run/redis)
 ok: [redis-node-6] => (item=/etc/redis)
 ok: [redis-node-6] => (item=/var/lib/redis)
 ok: [redis-node-6] => (item=/var/log/redis)
 ok: [redis-node-6] => (item=/var/run/redis)
 
 TASK [Remove old Redis data and cluster state] *********************************
+changed: [redis-node-2]
 changed: [redis-node-1]
 changed: [redis-node-3]
-changed: [redis-node-4]
-changed: [redis-node-2]
 changed: [redis-node-5]
+changed: [redis-node-4]
 changed: [redis-node-6]
 
 TASK [Write Redis cluster configuration] ***************************************
+changed: [redis-node-2]
+changed: [redis-node-3]
+changed: [redis-node-1]
 changed: [redis-node-4]
 changed: [redis-node-5]
-changed: [redis-node-1]
-changed: [redis-node-3]
-changed: [redis-node-2]
 changed: [redis-node-6]
 
 TASK [Start Redis with cluster config] *****************************************
-changed: [redis-node-2]
 changed: [redis-node-1]
-changed: [redis-node-3]
+changed: [redis-node-2]
 changed: [redis-node-4]
+changed: [redis-node-3]
 changed: [redis-node-5]
 changed: [redis-node-6]
 
 TASK [Wait for Redis port 6379] ************************************************
 ok: [redis-node-1]
-ok: [redis-node-4]
 ok: [redis-node-5]
 ok: [redis-node-2]
 ok: [redis-node-3]
+ok: [redis-node-4]
 ok: [redis-node-6]
 
 TASK [Check Redis ping] ********************************************************
-ok: [redis-node-1]
 ok: [redis-node-2]
-ok: [redis-node-4]
-ok: [redis-node-5]
+ok: [redis-node-1]
 ok: [redis-node-3]
+ok: [redis-node-5]
+ok: [redis-node-4]
 ok: [redis-node-6]
 
 TASK [Show Redis ping result] **************************************************
@@ -356,42 +356,42 @@ ok: [redis-node-1] => {
         "Adding replica 10.10.0.15:6379 to 10.10.0.11:6379",
         "Adding replica 10.10.0.16:6379 to 10.10.0.12:6379",
         "Adding replica 10.10.0.14:6379 to 10.10.0.13:6379",
-        "M: 414efac2582830da79c19ebefeb6fe79cf664c86 10.10.0.11:6379",
+        "M: cad4e6ed2a83200ba81ca2a52b6ea264d9ec01fb 10.10.0.11:6379",
         "   slots:[0-5460] (5461 slots) master",
-        "M: bdf2e48bc4d71fbff03348b27f9f843693ca40e3 10.10.0.12:6379",
+        "M: 24f86966f5c73d5b951ae1d622d964d93581a658 10.10.0.12:6379",
         "   slots:[5461-10922] (5462 slots) master",
-        "M: 3672da2743725aee89a4ebec844feac6a60aa0b7 10.10.0.13:6379",
+        "M: 752bd91e84d89d12627115a199653da94505f2e6 10.10.0.13:6379",
         "   slots:[10923-16383] (5461 slots) master",
-        "S: ec6b51ecdea491de4e8ab04620306d79b2bfac4f 10.10.0.14:6379",
-        "   replicates 3672da2743725aee89a4ebec844feac6a60aa0b7",
-        "S: 31bfe38f99bc3cc9933e6b731e9951b8f2622395 10.10.0.15:6379",
-        "   replicates 414efac2582830da79c19ebefeb6fe79cf664c86",
-        "S: fd3f25c14f138b6be8065e707e18924ecae4db73 10.10.0.16:6379",
-        "   replicates bdf2e48bc4d71fbff03348b27f9f843693ca40e3",
+        "S: 628b47c1c831fa0eea7d6d1b1e6404a94674c599 10.10.0.14:6379",
+        "   replicates 752bd91e84d89d12627115a199653da94505f2e6",
+        "S: 1f349c7d98f8e3807983e50c9f113885f1841558 10.10.0.15:6379",
+        "   replicates cad4e6ed2a83200ba81ca2a52b6ea264d9ec01fb",
+        "S: 45504a66e71655fe947a1dfd58e2d5ec6b9f5d3f 10.10.0.16:6379",
+        "   replicates 24f86966f5c73d5b951ae1d622d964d93581a658",
         "Can I set the above configuration? (type 'yes' to accept): \u001b[29;1m>>> Nodes configuration updated",
         "\u001b[0m\u001b[29;1m>>> Assign a different config epoch to each node",
         "\u001b[0m\u001b[29;1m>>> Sending CLUSTER MEET messages to join the cluster",
         "\u001b[0mWaiting for the cluster to join",
-        ".",
+        "",
         "\u001b[29;1m>>> Performing Cluster Check (using node 10.10.0.11:6379)",
-        "\u001b[0mM: 414efac2582830da79c19ebefeb6fe79cf664c86 10.10.0.11:6379",
+        "\u001b[0mM: cad4e6ed2a83200ba81ca2a52b6ea264d9ec01fb 10.10.0.11:6379",
         "   slots:[0-5460] (5461 slots) master",
         "   1 additional replica(s)",
-        "M: bdf2e48bc4d71fbff03348b27f9f843693ca40e3 10.10.0.12:6379",
-        "   slots:[5461-10922] (5462 slots) master",
-        "   1 additional replica(s)",
-        "S: 31bfe38f99bc3cc9933e6b731e9951b8f2622395 10.10.0.15:6379",
-        "   slots: (0 slots) slave",
-        "   replicates 414efac2582830da79c19ebefeb6fe79cf664c86",
-        "S: ec6b51ecdea491de4e8ab04620306d79b2bfac4f 10.10.0.14:6379",
-        "   slots: (0 slots) slave",
-        "   replicates 3672da2743725aee89a4ebec844feac6a60aa0b7",
-        "S: fd3f25c14f138b6be8065e707e18924ecae4db73 10.10.0.16:6379",
-        "   slots: (0 slots) slave",
-        "   replicates bdf2e48bc4d71fbff03348b27f9f843693ca40e3",
-        "M: 3672da2743725aee89a4ebec844feac6a60aa0b7 10.10.0.13:6379",
+        "M: 752bd91e84d89d12627115a199653da94505f2e6 10.10.0.13:6379",
         "   slots:[10923-16383] (5461 slots) master",
         "   1 additional replica(s)",
+        "S: 628b47c1c831fa0eea7d6d1b1e6404a94674c599 10.10.0.14:6379",
+        "   slots: (0 slots) slave",
+        "   replicates 752bd91e84d89d12627115a199653da94505f2e6",
+        "S: 45504a66e71655fe947a1dfd58e2d5ec6b9f5d3f 10.10.0.16:6379",
+        "   slots: (0 slots) slave",
+        "   replicates 24f86966f5c73d5b951ae1d622d964d93581a658",
+        "M: 24f86966f5c73d5b951ae1d622d964d93581a658 10.10.0.12:6379",
+        "   slots:[5461-10922] (5462 slots) master",
+        "   1 additional replica(s)",
+        "S: 1f349c7d98f8e3807983e50c9f113885f1841558 10.10.0.15:6379",
+        "   slots: (0 slots) slave",
+        "   replicates cad4e6ed2a83200ba81ca2a52b6ea264d9ec01fb",
         "\u001b[32;1m[OK] All nodes agree about slots configuration.",
         "\u001b[0m\u001b[29;1m>>> Check for open slots...",
         "\u001b[0m\u001b[29;1m>>> Check slots coverage...",
@@ -422,13 +422,13 @@ ok: [redis-node-1] => {
         "cluster_size:3",
         "cluster_current_epoch:6",
         "cluster_my_epoch:1",
-        "cluster_stats_messages_ping_sent:13",
-        "cluster_stats_messages_pong_sent:16",
-        "cluster_stats_messages_sent:29",
-        "cluster_stats_messages_ping_received:11",
-        "cluster_stats_messages_pong_received:13",
+        "cluster_stats_messages_ping_sent:9",
+        "cluster_stats_messages_pong_sent:12",
+        "cluster_stats_messages_sent:21",
+        "cluster_stats_messages_ping_received:7",
+        "cluster_stats_messages_pong_received:9",
         "cluster_stats_messages_meet_received:5",
-        "cluster_stats_messages_received:29",
+        "cluster_stats_messages_received:21",
         "total_cluster_links_buffer_limit_exceeded:0",
         "topology_masters:3",
         "topology_replicas:3"
@@ -441,12 +441,12 @@ ok: [redis-node-1]
 TASK [Show final cluster topology] *********************************************
 ok: [redis-node-1] => {
     "msg": [
-        "bdf2e48bc4d71fbff03348b27f9f843693ca40e3 10.10.0.12:6379@16379 master - 0 1781561709388 2 connected 5461-10922",
-        "31bfe38f99bc3cc9933e6b731e9951b8f2622395 10.10.0.15:6379@16379 slave 414efac2582830da79c19ebefeb6fe79cf664c86 0 1781561710419 1 connected",
-        "414efac2582830da79c19ebefeb6fe79cf664c86 10.10.0.11:6379@16379 myself,master - 0 1781561709000 1 connected 0-5460",
-        "ec6b51ecdea491de4e8ab04620306d79b2bfac4f 10.10.0.14:6379@16379 slave 3672da2743725aee89a4ebec844feac6a60aa0b7 0 1781561709000 3 connected",
-        "fd3f25c14f138b6be8065e707e18924ecae4db73 10.10.0.16:6379@16379 slave bdf2e48bc4d71fbff03348b27f9f843693ca40e3 0 1781561709000 2 connected",
-        "3672da2743725aee89a4ebec844feac6a60aa0b7 10.10.0.13:6379@16379 master - 0 1781561709000 3 connected 10923-16383"
+        "752bd91e84d89d12627115a199653da94505f2e6 10.10.0.13:6379@16379 master - 0 1781604785502 3 connected 10923-16383",
+        "628b47c1c831fa0eea7d6d1b1e6404a94674c599 10.10.0.14:6379@16379 slave 752bd91e84d89d12627115a199653da94505f2e6 0 1781604785000 3 connected",
+        "45504a66e71655fe947a1dfd58e2d5ec6b9f5d3f 10.10.0.16:6379@16379 slave 24f86966f5c73d5b951ae1d622d964d93581a658 0 1781604784000 2 connected",
+        "24f86966f5c73d5b951ae1d622d964d93581a658 10.10.0.12:6379@16379 master - 0 1781604784677 2 connected 5461-10922",
+        "cad4e6ed2a83200ba81ca2a52b6ea264d9ec01fb 10.10.0.11:6379@16379 myself,master - 0 1781604785000 1 connected 0-5460",
+        "1f349c7d98f8e3807983e50c9f113885f1841558 10.10.0.15:6379@16379 slave cad4e6ed2a83200ba81ca2a52b6ea264d9ec01fb 0 1781604785604 1 connected"
     ]
 }
 
@@ -470,23 +470,23 @@ cluster_known_nodes:6
 cluster_size:3
 cluster_current_epoch:6
 cluster_my_epoch:1
-cluster_stats_messages_ping_sent:13
-cluster_stats_messages_pong_sent:17
-cluster_stats_messages_sent:30
-cluster_stats_messages_ping_received:12
-cluster_stats_messages_pong_received:13
+cluster_stats_messages_ping_sent:11
+cluster_stats_messages_pong_sent:16
+cluster_stats_messages_sent:27
+cluster_stats_messages_ping_received:11
+cluster_stats_messages_pong_received:11
 cluster_stats_messages_meet_received:5
-cluster_stats_messages_received:30
+cluster_stats_messages_received:27
 total_cluster_links_buffer_limit_exceeded:0
 
 ===== Final Cluster Nodes =====
 redis-node-1 | CHANGED | rc=0 >>
-bdf2e48bc4d71fbff03348b27f9f843693ca40e3 10.10.0.12:6379@16379 master - 0 1781561710000 2 connected 5461-10922
-31bfe38f99bc3cc9933e6b731e9951b8f2622395 10.10.0.15:6379@16379 slave 414efac2582830da79c19ebefeb6fe79cf664c86 0 1781561710419 1 connected
-414efac2582830da79c19ebefeb6fe79cf664c86 10.10.0.11:6379@16379 myself,master - 0 1781561711000 1 connected 0-5460
-ec6b51ecdea491de4e8ab04620306d79b2bfac4f 10.10.0.14:6379@16379 slave 3672da2743725aee89a4ebec844feac6a60aa0b7 0 1781561711543 3 connected
-fd3f25c14f138b6be8065e707e18924ecae4db73 10.10.0.16:6379@16379 slave bdf2e48bc4d71fbff03348b27f9f843693ca40e3 0 1781561710000 2 connected
-3672da2743725aee89a4ebec844feac6a60aa0b7 10.10.0.13:6379@16379 master - 0 1781561711441 3 connected 10923-16383
+752bd91e84d89d12627115a199653da94505f2e6 10.10.0.13:6379@16379 master - 0 1781604785502 3 connected 10923-16383
+628b47c1c831fa0eea7d6d1b1e6404a94674c599 10.10.0.14:6379@16379 slave 752bd91e84d89d12627115a199653da94505f2e6 0 1781604785000 3 connected
+45504a66e71655fe947a1dfd58e2d5ec6b9f5d3f 10.10.0.16:6379@16379 slave 24f86966f5c73d5b951ae1d622d964d93581a658 0 1781604786528 2 connected
+24f86966f5c73d5b951ae1d622d964d93581a658 10.10.0.12:6379@16379 master - 0 1781604784677 2 connected 5461-10922
+cad4e6ed2a83200ba81ca2a52b6ea264d9ec01fb 10.10.0.11:6379@16379 myself,master - 0 1781604785000 1 connected 0-5460
+1f349c7d98f8e3807983e50c9f113885f1841558 10.10.0.15:6379@16379 slave cad4e6ed2a83200ba81ca2a52b6ea264d9ec01fb 0 1781604785604 1 connected
 
 ===== Redis Cluster Provision Completed =====
-Tue Jun 16 03:45:11 IST 2026
+Tue Jun 16 15:43:06 IST 2026

@@ -22,6 +22,7 @@ export UPGRADE_OUTPUT="$OUTPUT_DIR/upgrade_output.txt"
 export VERIFY_OUTPUT="$OUTPUT_DIR/verify_output.txt"
 export FULL_VERIFY_OUTPUT="$OUTPUT_DIR/full_verify_output.txt"
 export SCALE_OUT_OUTPUT="$OUTPUT_DIR/scale_out_output.txt"
+export SCALE_IN_OUTPUT="$OUTPUT_DIR/scale_in_output.txt"
 export ROLLBACK_OUTPUT="$OUTPUT_DIR/rollback_output.txt"
 
 # Temporary files tracking (cleared at end of each operation)

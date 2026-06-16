@@ -51,6 +51,34 @@ ensure_scale_out_infra_running() {
 
 scale_command() {
   local action="${1:-}"
+  
+  if [ -z "$action" ]; then
+    echo "Usage:"
+    echo "  ./redis-tool scale --add-nodes 2"
+    echo "  ./redis-tool scale --remove-node <node-ip>"
+    exit 1
+  fi
+  
+  # Dispatch to appropriate handler
+  case "$action" in
+    --add-nodes)
+      scale_out_add_nodes "$@"
+      ;;
+    --remove-node)
+      scale_in_command "$@"
+      ;;
+    *)
+      echo "[ERROR] Unknown scale action: $action"
+      echo "Usage:"
+      echo "  ./redis-tool scale --add-nodes 2"
+      echo "  ./redis-tool scale --remove-node <node-ip>"
+      exit 1
+      ;;
+  esac
+}
+
+scale_out_add_nodes() {
+  local action="${1:-}"
   local value="${2:-}"
 
   if [ "$action" != "--add-nodes" ] || [ "$value" != "2" ] || [ "$#" -ne 2 ]; then

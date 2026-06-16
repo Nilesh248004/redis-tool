@@ -1,0 +1,163 @@
+---
+- name: Remove a master-replica pair from Redis Cluster
+  hosts: redis-node-1
+  become: no
+  gather_facts: no
+
+  tasks:
+    - name: Check current cluster health before scale in
+      shell: redis-cli -h 10.10.0.11 -p 6379 cluster info | grep cluster_state
+      register: cluster_state_before
+      changed_when: false
+
+    - name: Fail if cluster is not healthy before scale in
+      fail:
+        msg: "Cluster is not healthy before scale in: {{ cluster_state_before.stdout }}"
+      when: "'cluster_state:ok' not in cluster_state_before.stdout"
+
+    - name: Verify target master exists in cluster
+      shell: redis-cli -h 10.10.0.11 -p 6379 cluster nodes | grep -q "^{{ target_master_id }} "
+      register: master_exists
+      failed_when: false
+      changed_when: false
+
+    - name: Fail if target master does not exist
+      fail:
+        msg: "Target master {{ target_master_id }} not found in cluster"
+      when: master_exists.rc != 0
+
+    - name: Get current slots owned by target master
+      shell: |
+        redis-cli -h 10.10.0.11 -p 6379 cluster nodes |
+          awk -v node_id="{{ target_master_id }}" '
+            $1 == node_id {
+              for (i=9; i<=NF; i++) {
+                if ($i !~ /^\[/) {
+                  print $i
+                }
+              }
+            }
+          '
+      register: target_slots
+      changed_when: false
+
+    - name: Show target master's current slot assignment
+      debug:
+        msg: "Target master {{ target_master_id }} owns slots: {{ target_slots.stdout if target_slots.stdout else 'none' }}"
+
+    - name: Migrate slots from target master to remaining masters
+      shell: |
+        set -eu
+        
+        target_id="{{ target_master_id }}"
+        cluster_info=$(redis-cli -h 10.10.0.11 -p 6379 cluster nodes)
+        
+        # Check if target master owns any slots
+        target_slots=$(
+          echo "$cluster_info" |
+            awk -v node_id="$target_id" '
+              $1 == node_id {
+                for (i=9; i<=NF; i++) {
+                  if ($i !~ /^\[/) {
+                    count++
+                  }
+                }
+              }
+              END { print count }
+            '
+        )
+        
+        if [ "$target_slots" -eq 0 ]; then
+          echo "Target master already owns no slots"
+          exit 0
+        fi
+        
+        echo "Starting slot migration from target master..."
+        
+        # Rebalance slots away from the target master by setting its weight to 0
+        redis-cli --cluster rebalance 10.10.0.11:6379 \
+          --cluster-weight "$target_id=0" \
+          --cluster-use-empty-masters \
+          --cluster-yes
+        
+        # Verify migration completed
+        new_slots=$(
+          redis-cli -h 10.10.0.11 -p 6379 cluster nodes |
+            awk -v node_id="$target_id" '
+              $1 == node_id {
+                for (i=9; i<=NF; i++) {
+                  if ($i !~ /^\[/) {
+                    count++
+                  }
+                }
+              }
+              END { print count }
+            '
+        )
+        
+        if [ "$new_slots" -gt 0 ]; then
+          echo "[ERROR] Migration failed - target master still owns $new_slots slots"
+          exit 1
+        fi
+        
+        echo "Slot migration completed successfully"
+      register: slot_migration
+      retries: 10
+      delay: 3
+      until: slot_migration.rc == 0
+      changed_when: "'completed' in slot_migration.stdout"
+
+    - name: Show slot migration result
+      debug:
+        msg: "{{ slot_migration.stdout }}"
+
+    - name: Verify replica is no longer serving any slots
+      shell: |
+        redis-cli -h 10.10.0.11 -p 6379 cluster nodes |
+          awk -v node_id="{{ target_replica_id }}" '
+            $1 == node_id {
+              for (i=9; i<=NF; i++) {
+                if ($i !~ /^\[/) {
+                  print $i
+                }
+              }
+            }
+          '
+      register: replica_slots
+      changed_when: false
+      when: target_replica_id | length > 0
+
+    - name: Show replica slot status
+      debug:
+        msg: "Target replica {{ target_replica_id }} owns slots: {{ replica_slots.stdout if replica_slots.stdout else 'none' }}"
+      when: target_replica_id | length > 0
+
+    - name: Wait for cluster to stabilize after slot migration
+      shell: |
+        for attempt in $(seq 1 30); do
+          cluster_state=$(redis-cli -h 10.10.0.11 -p 6379 cluster info | grep "^cluster_state:" | cut -d: -f2 | tr -d '\r')
+          if [ "$cluster_state" = "ok" ]; then
+            echo "Cluster stabilized"
+            exit 0
+          fi
+          echo "Waiting for cluster to stabilize (attempt $attempt/30)..."
+          sleep 2
+        done
+        
+        echo "[ERROR] Cluster did not stabilize within timeout"
+        exit 1
+      register: cluster_stabilize
+      changed_when: false
+
+    - name: Show cluster stabilization result
+      debug:
+        msg: "{{ cluster_stabilize.stdout }}"
+
+    - name: Print final cluster state before node removal
+      shell: redis-cli -h 10.10.0.11 -p 6379 cluster info
+      register: final_cluster_info
+      changed_when: false
+
+    - name: Show final cluster info
+      debug:
+        msg: "{{ final_cluster_info.stdout_lines }}"

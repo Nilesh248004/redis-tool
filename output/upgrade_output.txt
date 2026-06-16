@@ -1,5 +1,5 @@
 ===== Redis Rolling Upgrade Started =====
-Tue Jun 16 03:07:07 IST 2026
+Tue Jun 16 15:44:50 IST 2026
 Target version: 7.2.6
 Strategy: rolling
 
@@ -14,13 +14,13 @@ cluster_known_nodes:6
 cluster_size:3
 cluster_current_epoch:6
 cluster_my_epoch:1
-cluster_stats_messages_ping_sent:202
-cluster_stats_messages_pong_sent:215
-cluster_stats_messages_sent:417
-cluster_stats_messages_ping_received:210
-cluster_stats_messages_pong_received:202
+cluster_stats_messages_ping_sent:198
+cluster_stats_messages_pong_sent:197
+cluster_stats_messages_sent:395
+cluster_stats_messages_ping_received:192
+cluster_stats_messages_pong_received:198
 cluster_stats_messages_meet_received:5
-cluster_stats_messages_received:417
+cluster_stats_messages_received:395
 total_cluster_links_buffer_limit_exceeded:0
 
 ===== Pre-upgrade Data Verification =====
@@ -961,11 +961,11 @@ TASK [Print final Redis versions] **********************************************
 ok: [redis-node-1] => {
     "msg": [
         "10.10.0.15:6379 -> Redis 7.2.6",
+        "10.10.0.16:6379 -> Redis 7.2.6",
         "10.10.0.13:6379 -> Redis 7.2.6",
-        "10.10.0.11:6379 -> Redis 7.2.6",
         "10.10.0.12:6379 -> Redis 7.2.6",
-        "10.10.0.14:6379 -> Redis 7.2.6",
-        "10.10.0.16:6379 -> Redis 7.2.6"
+        "10.10.0.11:6379 -> Redis 7.2.6",
+        "10.10.0.14:6379 -> Redis 7.2.6"
     ]
 }
 
@@ -984,13 +984,13 @@ ok: [redis-node-1] => {
         "cluster_size:3",
         "cluster_current_epoch:9",
         "cluster_my_epoch:7",
-        "cluster_stats_messages_ping_sent:195",
-        "cluster_stats_messages_pong_sent:181",
-        "cluster_stats_messages_sent:376",
-        "cluster_stats_messages_ping_received:181",
-        "cluster_stats_messages_pong_received:197",
+        "cluster_stats_messages_ping_sent:180",
+        "cluster_stats_messages_pong_sent:189",
+        "cluster_stats_messages_sent:369",
+        "cluster_stats_messages_ping_received:189",
+        "cluster_stats_messages_pong_received:181",
         "cluster_stats_messages_auth-req_received:2",
-        "cluster_stats_messages_received:380",
+        "cluster_stats_messages_received:372",
         "total_cluster_links_buffer_limit_exceeded:0"
     ]
 }
@@ -1001,12 +1001,12 @@ ok: [redis-node-1]
 TASK [Print final cluster nodes] ***********************************************
 ok: [redis-node-1] => {
     "msg": [
-        "1aaab28b44b47624b4e9002fb3c5e926b4df7198 10.10.0.15:6379@16379 master - 0 1781559717851 7 connected 0-5460",
-        "8e654f60fb5fe8392b4a582d27c5430dafc95e68 10.10.0.13:6379@16379 slave 1a7f3182bf7a4cc9abe44977051efb57af1a63af 0 1781559717000 9 connected",
-        "d99d502a5199afcde8ec9e73e947da1a3b149e8f 10.10.0.11:6379@16379 myself,slave 1aaab28b44b47624b4e9002fb3c5e926b4df7198 0 1781559716000 7 connected",
-        "422582987acdd63948f962257e5d60455ec40221 10.10.0.12:6379@16379 slave b1c8a0f6b9c1ccfc935b5a13d6518ed8a1f5f628 0 1781559717335 8 connected",
-        "1a7f3182bf7a4cc9abe44977051efb57af1a63af 10.10.0.14:6379@16379 master - 0 1781559718362 9 connected 10923-16383",
-        "b1c8a0f6b9c1ccfc935b5a13d6518ed8a1f5f628 10.10.0.16:6379@16379 master - 0 1781559716320 8 connected 5461-10922"
+        "1f349c7d98f8e3807983e50c9f113885f1841558 10.10.0.15:6379@16379 master - 0 1781605177000 7 connected 0-5460",
+        "45504a66e71655fe947a1dfd58e2d5ec6b9f5d3f 10.10.0.16:6379@16379 master - 0 1781605177709 8 connected 5461-10922",
+        "752bd91e84d89d12627115a199653da94505f2e6 10.10.0.13:6379@16379 slave 628b47c1c831fa0eea7d6d1b1e6404a94674c599 0 1781605177204 9 connected",
+        "24f86966f5c73d5b951ae1d622d964d93581a658 10.10.0.12:6379@16379 slave 45504a66e71655fe947a1dfd58e2d5ec6b9f5d3f 0 1781605177507 8 connected",
+        "cad4e6ed2a83200ba81ca2a52b6ea264d9ec01fb 10.10.0.11:6379@16379 myself,slave 1f349c7d98f8e3807983e50c9f113885f1841558 0 1781605177000 7 connected",
+        "628b47c1c831fa0eea7d6d1b1e6404a94674c599 10.10.0.14:6379@16379 master - 0 1781605176000 9 connected 10923-16383"
     ]
 }
 
@@ -1020,7 +1020,7 @@ redis-node-6               : ok=24   changed=6    unreachable=0    failed=0    s
 
 
 ===== Rolling Upgrade Availability Result =====
-Availability probes: 493
+Availability probes: 487
 Client-visible read outages: 0
 
 ===== Post-upgrade Cluster Info =====
@@ -1034,37 +1034,37 @@ cluster_known_nodes:6
 cluster_size:3
 cluster_current_epoch:9
 cluster_my_epoch:7
-cluster_stats_messages_ping_sent:197
-cluster_stats_messages_pong_sent:183
-cluster_stats_messages_sent:380
-cluster_stats_messages_ping_received:183
-cluster_stats_messages_pong_received:199
+cluster_stats_messages_ping_sent:182
+cluster_stats_messages_pong_sent:189
+cluster_stats_messages_sent:371
+cluster_stats_messages_ping_received:189
+cluster_stats_messages_pong_received:183
 cluster_stats_messages_auth-req_received:2
-cluster_stats_messages_received:384
+cluster_stats_messages_received:374
 total_cluster_links_buffer_limit_exceeded:0
 
 ===== Post-upgrade Cluster Nodes =====
 redis-node-1 | CHANGED | rc=0 >>
-1aaab28b44b47624b4e9002fb3c5e926b4df7198 10.10.0.15:6379@16379 master - 0 1781559719000 7 connected 0-5460
-8e654f60fb5fe8392b4a582d27c5430dafc95e68 10.10.0.13:6379@16379 slave 1a7f3182bf7a4cc9abe44977051efb57af1a63af 0 1781559719596 9 connected
-d99d502a5199afcde8ec9e73e947da1a3b149e8f 10.10.0.11:6379@16379 myself,slave 1aaab28b44b47624b4e9002fb3c5e926b4df7198 0 1781559719000 7 connected
-422582987acdd63948f962257e5d60455ec40221 10.10.0.12:6379@16379 slave b1c8a0f6b9c1ccfc935b5a13d6518ed8a1f5f628 0 1781559719390 8 connected
-1a7f3182bf7a4cc9abe44977051efb57af1a63af 10.10.0.14:6379@16379 master - 0 1781559719000 9 connected 10923-16383
-b1c8a0f6b9c1ccfc935b5a13d6518ed8a1f5f628 10.10.0.16:6379@16379 master - 0 1781559719000 8 connected 5461-10922
+1f349c7d98f8e3807983e50c9f113885f1841558 10.10.0.15:6379@16379 master - 0 1781605177000 7 connected 0-5460
+45504a66e71655fe947a1dfd58e2d5ec6b9f5d3f 10.10.0.16:6379@16379 master - 0 1781605178232 8 connected 5461-10922
+752bd91e84d89d12627115a199653da94505f2e6 10.10.0.13:6379@16379 slave 628b47c1c831fa0eea7d6d1b1e6404a94674c599 0 1781605177204 9 connected
+24f86966f5c73d5b951ae1d622d964d93581a658 10.10.0.12:6379@16379 slave 45504a66e71655fe947a1dfd58e2d5ec6b9f5d3f 0 1781605177507 8 connected
+cad4e6ed2a83200ba81ca2a52b6ea264d9ec01fb 10.10.0.11:6379@16379 myself,slave 1f349c7d98f8e3807983e50c9f113885f1841558 0 1781605177000 7 connected
+628b47c1c831fa0eea7d6d1b1e6404a94674c599 10.10.0.14:6379@16379 master - 0 1781605178543 9 connected 10923-16383
 
 ===== Post-upgrade Redis Versions =====
-redis-node-4 | CHANGED | rc=0 >>
-Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=b1f97e1306afcdb7
-redis-node-1 | CHANGED | rc=0 >>
-Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=a968842e11be593b
-redis-node-5 | CHANGED | rc=0 >>
-Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=8004347bb2b5964f
 redis-node-2 | CHANGED | rc=0 >>
-Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=21ec3093bf2306d7
+Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=7dc6f08e84ca28dc
 redis-node-3 | CHANGED | rc=0 >>
-Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=d9879068ceea287
+Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=9892e7b8f831072
+redis-node-1 | CHANGED | rc=0 >>
+Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=900a6ab3ccf25b21
+redis-node-4 | CHANGED | rc=0 >>
+Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=37d297120a7c8044
+redis-node-5 | CHANGED | rc=0 >>
+Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=4ea3c66a9fbf1781
 redis-node-6 | CHANGED | rc=0 >>
-Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=40e1d2917049b282
+Redis server v=7.2.6 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=59f0b6b59a081125
 
 ===== Post-upgrade Data Verification =====
 
@@ -1100,13 +1100,13 @@ ok: [redis-node-1] => {
         "",
         "MASTERS",
         "10.10.0.15:6379 [master] v7.2.6 slots: 0-5460  keys: 332 mem: 1.84M",
-        "10.10.0.14:6379 [master] v7.2.6 slots: 10923-16383  keys: 331 mem: 1.84M",
         "10.10.0.16:6379 [master] v7.2.6 slots: 5461-10922  keys: 337 mem: 1.84M",
+        "10.10.0.14:6379 [master] v7.2.6 slots: 10923-16383  keys: 331 mem: 1.84M",
         "",
         "REPLICAS",
         "10.10.0.13:6379 [replica] v7.2.6 replicating: 10.10.0.14:6379 keys: 331 mem: 1.73M",
-        "10.10.0.11:6379 [replica] v7.2.6 replicating: 10.10.0.15:6379 keys: 332 mem: 1.77M",
-        "10.10.0.12:6379 [replica] v7.2.6 replicating: 10.10.0.16:6379 keys: 337 mem: 1.73M"
+        "10.10.0.12:6379 [replica] v7.2.6 replicating: 10.10.0.16:6379 keys: 337 mem: 1.73M",
+        "10.10.0.11:6379 [replica] v7.2.6 replicating: 10.10.0.15:6379 keys: 332 mem: 1.77M"
     ]
 }
 
@@ -1116,4 +1116,4 @@ redis-node-1               : ok=2    changed=0    unreachable=0    failed=0    s
 
 UPGRADE COMPLETE - all nodes on v7.2.6, data integrity verified
 ===== Redis Rolling Upgrade Completed =====
-Tue Jun 16 03:12:01 IST 2026
+Tue Jun 16 15:49:40 IST 2026
