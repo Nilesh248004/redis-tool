@@ -1,5 +1,5 @@
 .DS_Store
-
+infra/redis_cluster_key.pub
 logs/*.log
 !logs/.gitkeep
 
